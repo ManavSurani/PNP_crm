@@ -8,7 +8,7 @@ async function main() {
   
   const adminOffsetUser = await prisma.user.upsert({
     where: { email: "admin@pnp.com" },
-    update: {},
+    update: { password: hashedPassword },
     create: {
       name: "Super Admin",
       email: "admin@pnp.com",
