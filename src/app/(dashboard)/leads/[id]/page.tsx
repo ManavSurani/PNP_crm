@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { format } from "date-fns";
 import { Phone, MapPin, User, FileText, CalendarCheck, MoreHorizontal, MessageSquarePlus, Clock, Zap, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -37,7 +37,8 @@ type LeadDetails = {
   meetings: any[];
 };
 
-export default function LeadDetailsPage({ params }: { params: { id: string } }) {
+export default function LeadDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const [lead, setLead] = useState<LeadDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -46,7 +47,7 @@ export default function LeadDetailsPage({ params }: { params: { id: string } }) 
 
   const fetchLeadDetails = async () => {
     try {
-      const res = await fetch(`/api/leads/${params.id}`);
+      const res = await fetch(`/api/leads/${id}`);
       if (!res.ok) throw new Error("Failed to fetch lead");
       const data = await res.json();
       setLead(data);
@@ -59,7 +60,7 @@ export default function LeadDetailsPage({ params }: { params: { id: string } }) 
 
   useEffect(() => {
     fetchLeadDetails();
-  }, [params.id]);
+  }, [id]);
 
   const handleAddNote = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,7 +70,7 @@ export default function LeadDetailsPage({ params }: { params: { id: string } }) 
       const res = await fetch("/api/notes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ leadId: params.id, content: noteContent })
+        body: JSON.stringify({ leadId: id, content: noteContent })
       });
       if (res.ok) {
         setNoteContent("");
@@ -87,7 +88,7 @@ export default function LeadDetailsPage({ params }: { params: { id: string } }) 
       const res = await fetch("/api/follow-ups", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ leadId: params.id, outcome, noteGiven: "Quick log" })
+        body: JSON.stringify({ leadId: id, outcome, noteGiven: "Quick log" })
       });
       if (res.ok) {
         fetchLeadDetails();

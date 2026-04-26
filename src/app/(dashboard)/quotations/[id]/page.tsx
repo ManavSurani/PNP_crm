@@ -1,23 +1,24 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { format } from "date-fns";
 import { Printer, MessageCircle, ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-export default function QuotationPDFPage({ params }: { params: { id: string } }) {
+export default function QuotationPDFPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const [quotation, setQuotation] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/quotations/${params.id}`)
+    fetch(`/api/quotations/${id}`)
       .then(res => res.json())
       .then(data => {
         setQuotation(data);
         setIsLoading(false);
       });
-  }, [params.id]);
+  }, [id]);
 
   if (isLoading) return <div className="flex h-[50vh] justify-center items-center"><Loader2 className="h-8 w-8 animate-spin text-indigo-600" /></div>;
   if (!quotation) return <div>Quotation not found.</div>;

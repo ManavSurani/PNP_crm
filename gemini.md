@@ -9,3 +9,6 @@ Q: what is the password and username
 A: The login credentials for your super admin account are:
 Email: admin@pnp.com
 Password: pnpadmin123
+
+Q: there error in login page so solve this first
+A: Fixed Next.js 15+ breaking change where dynamic params were being accessed synchronously. Updated all dynamic routes to unwrap the Promise.
