@@ -47,7 +47,7 @@ export async function GET() {
     });
 
     const chartData = last7Days.map(dateStr => {
-      const count = recentLeads.filter(l => l.createdAt.toISOString().split('T')[0] === dateStr).length;
+      const count = recentLeads.filter((l: any) => l.createdAt.toISOString().split('T')[0] === dateStr).length;
       return { date: new Date(dateStr).toLocaleDateString('en-US', {weekday: 'short'}), leads: count };
     });
 
