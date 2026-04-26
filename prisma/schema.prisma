@@ -1,0 +1,314 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// -----------------------------------------------------------------------------
+// MODULE: Auth & Role Management
+// -----------------------------------------------------------------------------
+
+enum Role {
+  ADMIN
+  STAFF
+  SALES
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(STAFF)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assignedLeads Lead[]
+}
+
+// -----------------------------------------------------------------------------
+// MODULE: Leads & Inquiry Management
+// -----------------------------------------------------------------------------
+
+enum InquirySource {
+  WHATSAPP
+  FACEBOOK
+  INSTAGRAM
+  REFERENCE
+  DIRECT_CALL
+  WEBSITE
+  WALK_IN
+  OTHER
+}
+
+enum ServiceType {
+  SOFA_WORK
+  MODULAR_KITCHEN
+  WARDROBE
+  INTERIOR_DESIGN
+  OFFICE_FURNITURE
+  REPAIR_SERVICE
+  CUSTOM_FURNITURE
+  OTHER
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum LeadStatus {
+  NEW_INQUIRY
+  FOLLOW_UP
+  MEETING_SCHEDULED
+  WON_ORDER
+  CANCELLED
+}
+
+model Lead {
+  id              String        @id @default(uuid())
+  customerName    String
+  contactNumber   String
+  alternateNumber String?
+  fullAddress     String?
+  inquirySource   InquirySource @default(OTHER)
+  serviceType     ServiceType   @default(OTHER)
+  priority        Priority      @default(MEDIUM)
+  status          LeadStatus    @default(NEW_INQUIRY)
+  assignedStaffId String?
+  assignedStaff   User?         @relation(fields: [assignedStaffId], references: [id], onDelete: SetNull)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Cancellations
+  isCancelled   Boolean @default(false)
+  cancelReason  String?
+
+  followUps   FollowUp[]
+  notes       Note[]
+  meetings    Meeting[]
+  quotations  Quotation[]
+  orders      Order[]
+}
+
+// -----------------------------------------------------------------------------
+// MODULE: Call Follow-up & Notes Timeline
+// -----------------------------------------------------------------------------
+
+enum CallOutcome {
+  PICKED
+  NOT_PICKED
+  CALL_LATER
+  WRONG_NUMBER
+}
+
+model FollowUp {
+  id              String      @id @default(uuid())
+  leadId          String
+  lead            Lead        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  attemptNumber   Int         @default(1)
+  outcome         CallOutcome @default(NOT_PICKED)
+  nextCallDate    DateTime?
+  nextCallTime    String?
+  noteGiven       String?
+  scheduledDate   DateTime    @default(now()) // When this follow up is supposed to happen
+  completedDate   DateTime?   // Null means it's pending
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model Note {
+  id        String   @id @default(uuid())
+  leadId    String
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  content   String
+  fileUrl   String?
+  createdAt DateTime @default(now()) // Timeline date
+  updatedAt DateTime @updatedAt
+}
+
+// -----------------------------------------------------------------------------
+// MODULE: Meeting Management
+// -----------------------------------------------------------------------------
+
+enum MeetingStatus {
+  SCHEDULED
+  COMPLETED
+  RESCHEDULED
+  CANCELLED
+}
+
+model Meeting {
+  id            String        @id @default(uuid())
+  leadId        String
+  lead          Lead          @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  address       String
+  date          DateTime
+  time          String
+  status        MeetingStatus @default(SCHEDULED)
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+// -----------------------------------------------------------------------------
+// MODULE: Quotation Module
+// -----------------------------------------------------------------------------
+
+model Quotation {
+  id            String          @id @default(uuid())
+  leadId        String
+  lead          Lead            @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  quotationNo   String          @unique
+  issueDate     DateTime        @default(now())
+  expiryDate    DateTime?
+  materialCost  Float           @default(0)
+  labourCost    Float           @default(0)
+  transportCost Float           @default(0)
+  gstPercentage Float           @default(0)
+  gstAmount     Float           @default(0)
+  finalTotal    Float           @default(0)
+  status        String          @default("DRAFT") // DRAFT, SENT, ACCEPTED, REJECTED
+  
+  items         QuotationItem[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+model QuotationItem {
+  id          String    @id @default(uuid())
+  quotationId String
+  quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Int       @default(1)
+  unitPrice   Float     @default(0)
+  totalPrice  Float     @default(0)
+}
+
+// -----------------------------------------------------------------------------
+// MODULE: Order & Production Management
+// -----------------------------------------------------------------------------
+
+enum OrderStatus {
+  CONFIRMED
+  PRODUCTION
+  INSTALLATION
+  COMPLETED
+  CANCELLED
+}
+
+model Order {
+  id            String      @id @default(uuid())
+  leadId        String
+  lead          Lead        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  orderNo       String      @unique
+  status        OrderStatus @default(CONFIRMED)
+  totalAmount   Float       @default(0)
+  startDate     DateTime?
+  endDate       DateTime?
+
+  payments      Payment[]
+  expenses      Expense[]
+  assignments   WorkerAssignment[]
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+// -----------------------------------------------------------------------------
+// MODULE: Payment & Financials
+// -----------------------------------------------------------------------------
+
+enum PaymentType {
+  ADVANCE
+  PARTIAL
+  FULL
+}
+
+model Payment {
+  id          String      @id @default(uuid())
+  orderId     String
+  order       Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amount      Float
+  type        PaymentType @default(ADVANCE)
+  paymentDate DateTime    @default(now())
+  notes       String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Expense {
+  id          String   @id @default(uuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  category    String   // LABOUR, MATERIAL, TRANSPORT, INSTALLATION, MISC
+  amount      Float
+  description String?
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// -----------------------------------------------------------------------------
+// MODULE: Worker & Supplier Management
+// -----------------------------------------------------------------------------
+
+enum WorkerType {
+  CARPENTER
+  INSTALLER
+  HELPER
+}
+
+model Worker {
+  id           String             @id @default(uuid())
+  name         String
+  phone        String
+  type         WorkerType         @default(CARPENTER)
+  assignments  WorkerAssignment[]
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+}
+
+model WorkerAssignment {
+  id        String   @id @default(uuid())
+  workerId  String
+  worker    Worker   @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status    String   @default("ASSIGNED") // ASSIGNED, IN_PROGRESS, COMPLETED
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Supplier {
+  id           String            @id @default(uuid())
+  name         String
+  phone        String
+  address      String?
+  materials    String?           // What they supply
+  payments     SupplierPayment[]
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+}
+
+model SupplierPayment {
+  id          String   @id @default(uuid())
+  supplierId  String
+  supplier    Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  amount      Float
+  date        DateTime @default(now())
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
