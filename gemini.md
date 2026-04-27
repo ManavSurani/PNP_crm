@@ -12,3 +12,6 @@ Password: pnpadmin123
 
 Q: there error in login page so solve this first
 A: Fixed Next.js 15+ breaking change where dynamic params were being accessed synchronously. Updated all dynamic routes to unwrap the Promise.
+
+Q: fist can you crete me an a text file for this full project in which you first put file name first then this file code so give me in this formate
+A: Created `project_code.txt` containing all project source files formatted with filenames and their respective code contents.

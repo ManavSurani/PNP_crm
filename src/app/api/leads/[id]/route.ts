@@ -52,3 +52,23 @@ export async function PUT(
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  try {
+    const session = await auth();
+    if (!session) return new NextResponse("Unauthorized", { status: 401 });
+
+    await prisma.lead.delete({
+      where: { id }
+    });
+
+    return new NextResponse(null, { status: 204 });
+  } catch (error) {
+    console.error("[LEAD_DELETE]", error);
+    return new NextResponse("Internal Error", { status: 500 });
+  }
+}

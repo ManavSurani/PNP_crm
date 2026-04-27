@@ -32,13 +32,8 @@ export async function POST(request: Request) {
     });
 
     // Log this action to the Notes Timeline too
-    await prisma.note.create({
-      data: {
-        leadId,
-        content: `Meeting scheduled for ${date} at ${time}. Location: ${address}. ${notes ? "Notes: " + notes : ""}`
-      }
-    });
-
+    // [DEPRECATED] We now render the Meeting record directly in the professional timeline to avoid duplicates.
+    
     return NextResponse.json(meeting);
   } catch (error) {
     console.error("[MEETINGS_POST]", error);

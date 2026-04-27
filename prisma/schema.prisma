@@ -90,6 +90,13 @@ model Lead {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
+  // Extra Details requested by user
+  budgetRange       String?
+  requirementDetails String?
+  siteLocation      String?
+  landmark          String?
+  preferredVisitTime String?
+
   // Cancellations
   isCancelled   Boolean @default(false)
   cancelReason  String?

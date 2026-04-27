@@ -75,14 +75,9 @@ export async function POST(request: Request) {
       }
     });
 
-    // 2. Update Lead Timeline Note Automatically
-    await prisma.note.create({
-      data: {
-        leadId,
-        content: `Call attempt ${attemptCount} - ${outcome.replace("_", " ")}. ${noteGiven ? "Notes: " + noteGiven : ""}`,
-      }
-    });
-
+    // 2. [DEPRECATED] Update Lead Timeline Note Automatically
+    // We no longer create a separate Note, the frontend now renders the FollowUp record directly as a professional timeline item.
+    
     // 3. Update the Lead Status
     await prisma.lead.update({
       where: { id: leadId },
