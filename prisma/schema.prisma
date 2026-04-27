@@ -97,9 +97,11 @@ model Lead {
   landmark          String?
   preferredVisitTime String?
 
-  // Cancellations
-  isCancelled   Boolean @default(false)
-  cancelReason  String?
+  // Cancellations & Reactivation
+  isCancelled       Boolean   @default(false)
+  cancelReason      String?
+  reactivatedAt     DateTime?
+  reactivationNote  String?
 
   followUps   FollowUp[]
   notes       Note[]
@@ -117,6 +119,7 @@ enum CallOutcome {
   NOT_PICKED
   CALL_LATER
   WRONG_NUMBER
+  CANCELLED
 }
 
 model FollowUp {
