@@ -2,19 +2,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { 
-  LayoutDashboard, 
-  Users, 
-  PhoneCall, 
-  CalendarCheck, 
-  FileText, 
-  ShoppingCart, 
-  IndianRupee, 
-  Truck, 
-  HardHat, 
+import {
+  LayoutDashboard,
+  Users,
+  PhoneCall,
+  CalendarCheck,
+  FileText,
+  ShoppingCart,
+  IndianRupee,
+  Truck,
+  HardHat,
   Banknote,
   TrendingUp,
-  Settings
+  Settings,
+  Star
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +27,7 @@ const navigation = [
   { name: "Quotations", href: "/quotations", icon: FileText },
   { name: "Orders", href: "/orders", icon: ShoppingCart },
   { name: "Payments", href: "/payments", icon: IndianRupee },
+  { name: "Interested", href: "/interested", icon: Star },
   { name: "Suppliers", href: "/suppliers", icon: Truck },
   { name: "Workers", href: "/workers", icon: HardHat },
   { name: "Expenses", href: "/expenses", icon: Banknote },

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { format } from "date-fns";
 import {
   CopyCheck, Loader2, Package, ArrowRight, Clock, IndianRupee,
@@ -112,7 +113,9 @@ export default function OrdersPage() {
                   return (
                     <tr key={order.id} className="hover:bg-slate-50/80 transition-all">
                       <td className="py-6 pl-8 pr-3">
-                        <p className="font-black text-slate-900 uppercase">{order.orderNo}</p>
+                        <Link href={`/orders/${order.id}`} className="hover:underline">
+                          <p className="font-black text-slate-900 uppercase">{order.orderNo}</p>
+                        </Link>
                         <p className="text-xs text-slate-400 font-bold mt-1"><Clock className="h-3 w-3 inline mr-1" />{format(new Date(order.createdAt), "dd MMM yyyy")}</p>
                       </td>
                       <td className="px-3 py-6">

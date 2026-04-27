@@ -135,17 +135,67 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Status Breakdown */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Alerts & Today Summary (Module 16 & Smart Features) */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* Red Alert: Overdue */}
+        {metrics.overdueFollowUps > 0 && (
+          <div className="bg-rose-50 border-2 border-rose-200 p-5 rounded-2xl animate-pulse">
+            <div className="flex items-center gap-3">
+              <div className="bg-rose-600 p-2 rounded-xl shadow-lg shadow-rose-200"><AlertTriangle className="h-5 w-5 text-white" /></div>
+              <div>
+                <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest">Red Alert</p>
+                <p className="text-sm font-black text-slate-900">{metrics.overdueFollowUps} Overdue Calls</p>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Today's Meetings */}
+        <div className={cn("p-5 rounded-2xl border-2 transition-all", metrics.todayMeetings > 0 ? "bg-indigo-50 border-indigo-200" : "bg-slate-50 border-slate-100")}>
+          <div className="flex items-center gap-3">
+            <div className={cn("p-2 rounded-xl", metrics.todayMeetings > 0 ? "bg-indigo-600 shadow-lg shadow-indigo-100" : "bg-slate-300")}><Calendar className="h-5 w-5 text-white" /></div>
+            <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Today's Schedule</p>
+              <p className="text-sm font-black text-slate-900">{metrics.todayMeetings} Meetings Today</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Interested Leads */}
+        <div className="bg-amber-50 border-2 border-amber-100 p-5 rounded-2xl">
+          <div className="flex items-center gap-3">
+            <div className="bg-amber-500 p-2 rounded-xl shadow-lg shadow-amber-100"><Zap className="h-5 w-5 text-white" /></div>
+            <div>
+              <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Interested Leads</p>
+              <p className="text-sm font-black text-slate-900">{metrics.interestedLeads} Active Prospect(s)</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Pending Payments */}
+        <div className="bg-emerald-50 border-2 border-emerald-100 p-5 rounded-2xl">
+          <div className="flex items-center gap-3">
+            <div className="bg-emerald-600 p-2 rounded-xl shadow-lg shadow-emerald-100"><IndianRupee className="h-5 w-5 text-white" /></div>
+            <div>
+              <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Collection Alert</p>
+              <p className="text-sm font-black text-slate-900">₹{metrics.totalPending.toLocaleString()} Pending</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Status Breakdown (Module 16) */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {[
           { label: "New Inquiries", val: metrics.newLeads || 0, color: "border-amber-500 text-amber-600" },
-          { label: "Follow-ups Active", val: metrics.followUpLeads || 0, color: "border-sky-500 text-sky-600" },
-          { label: "Meetings Scheduled", val: metrics.meetingLeads || 0, color: "border-indigo-500 text-indigo-600" },
+          { label: "Pending Calls", val: metrics.todayFollowUps || 0, color: "border-sky-500 text-sky-600" },
+          { label: "Meetings Held", val: metrics.meetingLeads || 0, color: "border-indigo-500 text-indigo-600" },
+          { label: "Converted", val: metrics.wonOrders || 0, color: "border-emerald-500 text-emerald-600" },
           { label: "Cancelled", val: metrics.cancelledLeads || 0, color: "border-rose-500 text-rose-600" },
         ].map((s, i) => (
           <div key={i} className={cn("bg-white p-5 rounded-2xl border-l-4 shadow-sm border border-slate-100", s.color.split(" ")[0])}>
-            <p className={cn("text-3xl font-black", s.color.split(" ")[1])}>{s.val}</p>
-            <p className="text-xs font-black text-slate-400 uppercase tracking-widest mt-1">{s.label}</p>
+            <p className={cn("text-2xl font-black md:text-3xl", s.color.split(" ")[1])}>{s.val}</p>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">{s.label}</p>
           </div>
         ))}
       </div>

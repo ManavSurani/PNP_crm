@@ -12,12 +12,15 @@ export async function GET() {
       wonOrders,
       totalRevenueData,
       totalExpensesData,
-      todayFollowUps,
+      todayFollowUpsCount,
       newLeads,
       followUpLeads,
       meetingLeads,
       cancelledLeads,
       totalPendingData,
+      overdueFollowUpsCount,
+      todayMeetingsCount,
+      interestedLeadsCount,
     ] = await Promise.all([
       prisma.lead.count(),
       prisma.order.count({ where: { status: "COMPLETED" } }),
@@ -29,14 +32,34 @@ export async function GET() {
             gte: new Date(new Date().setHours(0, 0, 0, 0)),
             lte: new Date(new Date().setHours(23, 59, 59, 999)),
           },
+          completedDate: null,
         },
       }),
       prisma.lead.count({ where: { status: "NEW_INQUIRY" } }),
       prisma.lead.count({ where: { status: "FOLLOW_UP" } }),
       prisma.lead.count({ where: { status: "MEETING_SCHEDULED" } }),
       prisma.lead.count({ where: { status: "CANCELLED" } }),
-      // Approximate pending = sum of order totals - sum of payments
       prisma.order.aggregate({ _sum: { totalAmount: true } }),
+      prisma.followUp.count({
+        where: {
+          nextCallDate: { lt: new Date(new Date().setHours(0, 0, 0, 0)) },
+          completedDate: null,
+        },
+      }),
+      prisma.meeting.count({
+        where: {
+          date: {
+            gte: new Date(new Date().setHours(0, 0, 0, 0)),
+            lte: new Date(new Date().setHours(23, 59, 59, 999)),
+          },
+          status: "SCHEDULED",
+        },
+      }),
+      prisma.lead.count({ 
+        where: { 
+          status: { in: ["FOLLOW_UP", "MEETING_SCHEDULED"] }
+        } 
+      }),
     ]);
 
     const totalRevenue = totalRevenueData._sum.amount || 0;
@@ -53,7 +76,7 @@ export async function GET() {
       return d.toISOString().split("T")[0];
     });
 
-    const recentLeads = await prisma.lead.findMany({
+    const recentLeadsActivity = await prisma.lead.findMany({
       where: {
         createdAt: { gte: new Date(new Date().setDate(new Date().getDate() - 7)) },
       },
@@ -61,7 +84,7 @@ export async function GET() {
     });
 
     const chartData = last7Days.map(dateStr => {
-      const count = recentLeads.filter(
+      const count = recentLeadsActivity.filter(
         (l: any) => l.createdAt.toISOString().split("T")[0] === dateStr
       ).length;
       return { date: new Date(dateStr).toLocaleDateString("en-US", { weekday: "short" }), leads: count };
@@ -74,7 +97,10 @@ export async function GET() {
         totalRevenue,
         totalExpenses,
         netProfit,
-        todayFollowUps,
+        todayFollowUps: todayFollowUpsCount,
+        overdueFollowUps: overdueFollowUpsCount,
+        todayMeetings: todayMeetingsCount,
+        interestedLeads: interestedLeadsCount,
         newLeads,
         followUpLeads,
         meetingLeads,

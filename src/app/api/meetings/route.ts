@@ -40,3 +40,24 @@ export async function POST(request: Request) {
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
+
+export async function GET(request: Request) {
+  try {
+    const session = await auth();
+    if (!session) return new NextResponse("Unauthorized", { status: 401 });
+
+    const meetings = await prisma.meeting.findMany({
+      orderBy: { date: "asc" },
+      include: {
+        lead: {
+          select: { customerName: true, contactNumber: true, serviceType: true, status: true, priority: true }
+        }
+      }
+    });
+
+    return NextResponse.json(meetings);
+  } catch (error) {
+    console.error("[MEETINGS_GET]", error);
+    return new NextResponse("Internal Error", { status: 500 });
+  }
+}
