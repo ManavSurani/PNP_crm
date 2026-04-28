@@ -25,7 +25,7 @@ type LeadDetails = {
   requirement: any | null;
 };
 
-type ModalType = "EDIT" | "PICKED" | "NOT_PICKED" | "MEETING" | "CANCEL" | "REACTIVATE" | null;
+type ModalType = "EDIT" | "PICKED" | "NOT_PICKED" | "MEETING" | "CANCEL" | "REACTIVATE" | "CONVERT" | null;
 
 const CANCEL_REASONS = [
   "No Response",
@@ -101,6 +101,21 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
       if (res.ok) { closeModal(); fetchLead(); }
     } catch (e) { console.error(e); }
     finally { setIsSubmitting(false); }
+  };
+
+  const handleConvertToCustomer = async () => {
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`/api/leads/${id}/convert`, { method: "POST" });
+      if (res.ok) {
+        closeModal();
+        fetchLead();
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (isLoading) return <div className="flex h-[60vh] items-center justify-center"><Loader2 className="h-10 w-10 animate-spin text-indigo-500" /></div>;
@@ -187,11 +202,14 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                     <PhoneMissed className="h-5 w-5" /> No Answer
                   </button>
                 </div>
-                <button onClick={() => setActiveModal("MEETING")} className="w-full bg-white text-slate-900 hover:bg-slate-100 py-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all border border-slate-200 shadow-sm">
+                <button onClick={() => setActiveModal("MEETING")} className="w-full bg-white text-slate-900 hover:bg-slate-100 py-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all border border-slate-200 shadow-sm mt-3">
                   <Calendar className="h-4 w-4 text-indigo-600" /> Schedule Site Visit
                 </button>
+                <button onClick={() => setActiveModal("CONVERT")} className="w-full bg-indigo-50 text-indigo-700 hover:bg-indigo-100 py-3 rounded-lg text-[11px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all border border-indigo-200 mt-2 shadow-sm relative overflow-hidden group">
+                  <Zap className="h-4 w-4 text-indigo-500 group-hover:scale-110 transition-transform" /> Convert to Customer
+                </button>
                 <div className="pt-2">
-                  <button onClick={() => setActiveModal("CANCEL")} className="w-full text-slate-400 hover:text-rose-400 py-2 text-[10px] font-semibold uppercase tracking-widest transition-colors flex items-center justify-center gap-2">
+                  <button onClick={() => setActiveModal("CANCEL")} className="w-full text-slate-400 hover:text-rose-400 py-2 text-[10px] font-semibold uppercase tracking-widest transition-colors flex items-center justify-center gap-2 mt-2">
                     <Ban className="h-3 w-3" /> Cancel Lead
                   </button>
                 </div>
@@ -430,6 +448,22 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
             </Field>
             <ModalFooter onClose={closeModal} isSubmitting={isSubmitting} label="Restore Lead"
               onSubmit={() => post(`/api/leads/${id}/reactivate`, { reactivationNote })}
+            />
+          </div>
+        </Modal>
+      )}
+
+      {/* ─── MODAL: CONVERT ─── */}
+      {activeModal === "CONVERT" && (
+        <Modal title="Convert to Customer" icon={<Zap className="h-5 w-5 text-emerald-500" />} color="primary" onClose={closeModal}>
+          <div className="p-8 space-y-6">
+            <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-4 text-center">
+              <CheckCircle2 className="h-8 w-8 text-emerald-500 mx-auto mb-2" />
+              <p className="text-sm font-semibold text-emerald-800">Ready to formalize this relationship?</p>
+              <p className="text-xs text-emerald-600 mt-1">This will move the lead out of your active pipeline and into the Customer Directory.</p>
+            </div>
+            <ModalFooter onClose={closeModal} isSubmitting={isSubmitting} label="Confirm Conversion"
+              onSubmit={handleConvertToCustomer}
             />
           </div>
         </Modal>

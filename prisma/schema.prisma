@@ -121,6 +121,7 @@ model Lead {
   meetings    Meeting[]
   quotations  Quotation[]
   orders      Order[]
+  transactions CustomerTransaction[]
 }
 
 model Requirement {
@@ -455,4 +456,28 @@ model Notification {
   link        String?  // Optional target page
   isRead      Boolean  @default(false)
   createdAt   DateTime @default(now())
+}
+
+// -----------------------------------------------------------------------------
+// MODULE: Customer Financial Ledger
+// -----------------------------------------------------------------------------
+
+enum TransactionType {
+  INCOMING
+  OUTGOING
+}
+
+model CustomerTransaction {
+  id          String          @id @default(uuid())
+  leadId      String
+  lead        Lead            @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  type        TransactionType
+  category    String          // Generic string to avoid strict enums
+  amount      Float
+  date        DateTime        @default(now())
+  notes       String?
+  addedBy     String?         // Who added it
+  fileUrl     String?         // URL for attachment (bill, invoice, etc.)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 }

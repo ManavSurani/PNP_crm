@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
+  Briefcase,
   PhoneCall,
   CalendarCheck,
   FileText,
@@ -16,12 +17,14 @@ import {
   TrendingUp,
   Settings,
   Star,
-  ChevronRight
+  ChevronRight,
+  Wallet
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navigation = [
   { name: "Business Intelligence", href: "/", icon: LayoutDashboard },
+  { name: "Customer Directory", href: "/customers", icon: Briefcase },
   { name: "Lead Pipeline", href: "/leads", icon: Users },
   { name: "Follow-Up Queue", href: "/follow-ups", icon: PhoneCall },
   { name: "Site Visits", href: "/meetings", icon: CalendarCheck },
@@ -31,6 +34,7 @@ const navigation = [
   { name: "Interested Leads", href: "/interested", icon: Star },
   { name: "Vendor Directory", href: "/suppliers", icon: Truck },
   { name: "Field Staff", href: "/workers", icon: HardHat },
+  { name: "Customer Expenses", href: "/customer-expenses", icon: Wallet },
   { name: "Business Expenses", href: "/expenses", icon: Banknote },
   { name: "Reports & Analytics", href: "/reports", icon: TrendingUp },
   { name: "General Settings", href: "/settings", icon: Settings },

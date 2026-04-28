@@ -13,6 +13,7 @@ export default function MeetingsPage() {
   const [meetings, setMeetings] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [viewTab, setViewTab] = useState<"LEAD" | "CUSTOMER">("LEAD");
 
   const fetchMeetings = async () => {
     setIsLoading(true);
@@ -26,11 +27,12 @@ export default function MeetingsPage() {
   useEffect(() => { fetchMeetings(); }, []);
 
   const filtered = meetings.filter(m => 
-    m.lead.customerName.toLowerCase().includes(search.toLowerCase()) ||
-    m.address.toLowerCase().includes(search.toLowerCase())
+    (m.lead.customerName.toLowerCase().includes(search.toLowerCase()) ||
+    m.address.toLowerCase().includes(search.toLowerCase())) &&
+    (viewTab === "CUSTOMER" ? m.lead.status === "WON_ORDER" : m.lead.status !== "WON_ORDER")
   );
 
-  const pending = meetings.filter(m => m.status === "SCHEDULED");
+  const pending = filtered.filter(m => m.status === "SCHEDULED");
   const today = pending.filter(m => isToday(new Date(m.date)));
   const upcoming = pending.filter(m => !isPast(new Date(m.date)) && !isToday(new Date(m.date)));
 
@@ -53,6 +55,22 @@ export default function MeetingsPage() {
              <span className="text-[10px] font-bold text-primary/60 uppercase tracking-wider mt-1">Upcoming</span>
           </div>
         </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex border-b border-slate-200">
+        <button 
+          onClick={() => setViewTab("LEAD")} 
+          className={cn("px-6 py-3 text-sm font-semibold border-b-2 transition-all", viewTab === "LEAD" ? "text-primary border-primary" : "text-slate-500 border-transparent hover:text-slate-900")}
+        >
+          Pre-Sales (Leads)
+        </button>
+        <button 
+          onClick={() => setViewTab("CUSTOMER")} 
+          className={cn("px-6 py-3 text-sm font-semibold border-b-2 transition-all", viewTab === "CUSTOMER" ? "text-emerald-600 border-emerald-600" : "text-slate-500 border-transparent hover:text-slate-900")}
+        >
+          Project Site Check (Customers)
+        </button>
       </div>
 
       {/* Toolset */}
@@ -153,10 +171,10 @@ export default function MeetingsPage() {
                       </td>
                       <td className="py-5 pr-8 text-right">
                         <Link 
-                          href={`/leads/${m.leadId}`}
+                          href={m.lead.status === "WON_ORDER" ? `/customers/${m.leadId}` : `/leads/${m.leadId}`}
                           className="inline-flex items-center gap-2 text-indigo-600 hover:bg-slate-50 px-4 py-2 rounded-lg text-xs font-bold transition-all group/btn border border-slate-200"
                         >
-                          View Lead <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover/btn:translate-x-1" />
+                          View {m.lead.status === "WON_ORDER" ? "Customer" : "Lead"} <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover/btn:translate-x-1" />
                         </Link>
                       </td>
                     </tr>

@@ -72,9 +72,11 @@ export default function LeadsPage() {
 
   const filteredLeads = leads.filter(
     (lead) => 
-      lead.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lead.status !== "WON_ORDER" &&
+      lead.status !== "CANCELLED" &&
+      (lead.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.contactNumber.includes(searchTerm) ||
-      lead.serviceType.toLowerCase().includes(searchTerm.toLowerCase())
+      lead.serviceType.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (

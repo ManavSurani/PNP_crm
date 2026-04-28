@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 
+// Force Next.js to reload this file and pick up the newly generated Prisma schema
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -19,6 +21,9 @@ export async function GET(
         followUps: { orderBy: { createdAt: "desc" } },
         meetings: { orderBy: { date: "asc" } },
         requirement: true,
+        quotations: true,
+        orders: true,
+        transactions: { orderBy: { date: "desc" } }
       }
     });
 
