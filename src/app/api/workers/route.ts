@@ -31,7 +31,7 @@ export async function POST(request: Request) {
       data: {
         name,
         phone,
-        role: role || "CARPENTER",
+        type: role || "CARPENTER",
         dailyRate: dailyRate ? parseFloat(dailyRate) : null,
       }
     });

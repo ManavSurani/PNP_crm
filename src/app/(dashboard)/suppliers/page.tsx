@@ -1,10 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Truck, Plus, Loader2, Check, X, Phone, MapPin, Building2 } from "lucide-react";
+import { Truck, Plus, Loader2, Check, X, Phone, MapPin, Building2, User, UserCheck, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const inputCls = "w-full rounded-2xl border-2 border-slate-200 bg-white py-3.5 px-4 text-slate-900 font-bold placeholder:text-slate-300 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/5 transition-all outline-none text-sm";
 
 export default function SuppliersPage() {
   const [suppliers, setSuppliers] = useState<any[]>([]);
@@ -44,84 +42,104 @@ export default function SuppliersPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 pb-10">
+    <div className="max-w-7xl mx-auto space-y-6 pb-10">
       {/* Header */}
-      <div className="bg-slate-900 p-10 rounded-3xl shadow-2xl border-b-4 border-teal-500 relative overflow-hidden flex items-center justify-between">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500 rounded-full blur-[100px] opacity-10 -mr-32 -mt-32" />
+      <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-primary rounded-full blur-[100px] opacity-5 -mr-24 -mt-24" />
         <div className="relative z-10">
-          <h1 className="text-4xl font-black text-white uppercase tracking-tight">Suppliers & Vendors</h1>
-          <p className="text-slate-400 text-xs font-black uppercase tracking-widest mt-2">Material suppliers, vendor contacts & GST records</p>
+          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Vendor Directory</h1>
+          <p className="text-slate-500 text-sm mt-1">Manage material vendors, suppliers, and specialized service providers.</p>
         </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="relative z-10 bg-teal-600 hover:bg-teal-500 px-8 py-5 rounded-2xl text-white font-black flex items-center gap-3 text-sm uppercase tracking-widest transition-all active:scale-95 shadow-2xl"
-        >
-          <Plus className="h-5 w-5" /> Add Supplier
-        </button>
+        <div className="relative z-10">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="bg-indigo-600 hover:bg-indigo-700 px-5 py-2.5 rounded-lg text-white font-semibold flex items-center gap-2 text-sm transition-all active:scale-95 shadow-md border border-indigo-500/20"
+          >
+            <Plus className="h-4 w-4" /> Add New Vendor
+          </button>
+        </div>
       </div>
 
-      {/* Summary */}
-      <div className="grid grid-cols-3 gap-4">
+      {/* Analytics Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[
-          { label: "Total Suppliers", val: suppliers.length, icon: Truck, color: "text-teal-600 bg-teal-50" },
-          { label: "GST Registered", val: suppliers.filter(s => s.gstNumber).length, icon: Building2, color: "text-indigo-600 bg-indigo-50" },
-          { label: "Active Contacts", val: suppliers.filter(s => s.phone).length, icon: Phone, color: "text-emerald-600 bg-emerald-50" },
+          { label: "Active Partners", val: suppliers.length, icon: Truck, color: "text-primary bg-indigo-50 border-indigo-100" },
+          { label: "Verified GST", val: suppliers.filter(s => s.gstNumber).length, icon: ShieldCheck, color: "text-emerald-600 bg-emerald-50 border-emerald-100" },
+          { label: "Operational Contacts", val: suppliers.filter(s => s.phone).length, icon: Phone, color: "text-amber-600 bg-amber-50 border-amber-100" },
         ].map((card, i) => (
-          <div key={i} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex gap-4 items-center">
-            <div className={cn("h-11 w-11 rounded-xl flex items-center justify-center", card.color)}>
+          <div key={i} className={cn("bg-white p-5 rounded-xl border shadow-sm flex gap-4 items-center transition-all", card.color)}>
+            <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-white shadow-sm ring-1 ring-black/5">
               <card.icon className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{card.label}</p>
-              <p className="text-2xl font-black text-slate-900 mt-0.5">{card.val}</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">{card.label}</p>
+              <p className="text-lg font-bold mt-0.5 tracking-tight">{card.val}</p>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Cards Grid */}
+      {/* Directory Grid */}
       {isLoading ? (
-        <div className="flex justify-center h-64 items-center"><Loader2 className="animate-spin h-8 w-8 text-teal-500" /></div>
+        <div className="flex flex-col items-center justify-center h-64 text-slate-400">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
+          <span className="text-sm font-medium tracking-wide">Syncing Vendor Directory...</span>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {suppliers.map(s => (
-            <div key={s.id} className="bg-white rounded-[1.5rem] border border-slate-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all overflow-hidden">
-              <div className="bg-gradient-to-r from-teal-600 to-teal-700 p-5 flex items-center gap-4">
-                <div className="h-12 w-12 bg-white rounded-2xl flex items-center justify-center font-black text-teal-700 text-lg uppercase">
+            <div key={s.id} className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all group overflow-hidden">
+              <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center gap-4">
+                <div className="h-12 w-12 bg-white rounded-lg border border-slate-200 flex items-center justify-center font-bold text-slate-400 text-lg group-hover:text-primary group-hover:border-primary/20 transition-all">
                   {s.name.charAt(0)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-black text-white uppercase truncate">{s.name}</p>
-                  <p className="text-xs text-teal-200 font-bold">{s.contactPerson || "No contact person"}</p>
+                  <p className="font-bold text-slate-900 truncate group-hover:text-primary transition-colors">{s.name}</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <User className="h-3 w-3 text-slate-400" />
+                    <p className="text-[11px] text-slate-500 font-medium truncate">{s.contactPerson || "Point of Contact Not Set"}</p>
+                  </div>
                 </div>
               </div>
-              <div className="p-5 space-y-3">
-                {s.phone && (
-                  <div className="flex items-center gap-3">
-                    <Phone className="h-4 w-4 text-teal-500 shrink-0" />
-                    <a href={`tel:${s.phone}`} className="text-sm font-black text-slate-900 hover:text-teal-600 transition-colors">{s.phone}</a>
+              <div className="p-6 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">Contact</p>
+                    {s.phone ? (
+                      <a href={`tel:${s.phone}`} className="flex items-center gap-1.5 text-xs font-semibold text-slate-900 hover:text-primary">
+                        <Phone className="h-3 w-3 text-slate-300" />
+                        {s.phone}
+                      </a>
+                    ) : <span className="text-xs text-slate-300 italic font-medium">N/A</span>}
                   </div>
-                )}
-                {s.address && (
-                  <div className="flex items-start gap-3">
-                    <MapPin className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
-                    <p className="text-xs text-slate-500 font-bold leading-relaxed">{s.address}</p>
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">Tax Identity</p>
+                    <div className="flex items-center gap-1.5">
+                       <Building2 className="h-3 w-3 text-slate-300" />
+                       <span className={cn(
+                         "text-[10px] font-bold px-1.5 py-0.5 rounded border uppercase",
+                         s.gstNumber ? "bg-emerald-50 text-emerald-700 border-emerald-100 font-mono" : "bg-slate-100 text-slate-400 border-slate-200"
+                       )}>
+                         {s.gstNumber || "Unregistered"}
+                       </span>
+                    </div>
                   </div>
-                )}
-                {s.gstNumber && (
-                  <div className="bg-indigo-50 p-3 rounded-xl flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-indigo-500 shrink-0" />
-                    <span className="font-mono text-xs text-indigo-700 font-black uppercase">{s.gstNumber}</span>
-                  </div>
-                )}
-                {!s.gstNumber && <p className="text-xs text-slate-400 italic font-bold">GST: Unregistered</p>}
+                </div>
+                <div className="space-y-1 pt-1">
+                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">Registered Address</p>
+                   <div className="flex items-start gap-2">
+                     <MapPin className="h-3.5 w-3.5 text-slate-300 shrink-0 mt-0.5" />
+                     <p className="text-xs text-slate-500 font-medium leading-relaxed">{s.address || "Corporate address not provided."}</p>
+                   </div>
+                </div>
               </div>
             </div>
           ))}
           {suppliers.length === 0 && (
-            <div className="col-span-3 text-center py-24 text-slate-300">
-              <Truck className="h-12 w-12 mx-auto mb-3" />
-              <p className="font-black uppercase tracking-widest text-sm">No suppliers registered yet.</p>
+            <div className="col-span-1 md:col-span-2 xl:col-span-3 py-20 text-center border-2 border-dashed border-slate-200 rounded-xl">
+               <Truck className="h-10 w-10 text-slate-200 mx-auto mb-4" />
+               <h3 className="text-sm font-semibold text-slate-900">No vendors registered</h3>
+               <p className="text-xs text-slate-500 mt-1">Register your first supply partner to manage material logistics.</p>
             </div>
           )}
         </div>
@@ -129,42 +147,42 @@ export default function SuppliersPage() {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95">
-            <div className="bg-teal-600 px-10 py-8 flex items-center justify-between text-white">
-              <div className="flex items-center gap-4">
-                <div className="bg-white/20 p-3 rounded-2xl"><Truck className="h-6 w-6" /></div>
-                <h2 className="text-xl font-black uppercase tracking-tight">Add Supplier</h2>
-              </div>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-white/20 rounded-xl transition-all"><X className="h-5 w-5" /></button>
-            </div>
-            <form onSubmit={handleSubmit} className="p-10 space-y-5">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/10 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 animate-in zoom-in-95 duration-200">
+            <div className="px-8 py-6 flex items-center justify-between border-b border-slate-100 bg-slate-50/50">
               <div>
-                <label className="block text-[10px] font-black text-slate-700 uppercase tracking-widest mb-2">Company / Vendor Name *</label>
-                <input required className={inputCls} placeholder="e.g. Sharma Timber Co." value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+                <h2 className="text-lg font-semibold text-slate-900 tracking-tight">Partner Registration</h2>
+                <p className="text-[11px] text-slate-500 font-medium uppercase tracking-wide">Onboarding new material vendor</p>
+              </div>
+              <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-200 rounded-lg transition-all text-slate-400 hover:text-slate-900"><X className="h-5 w-5" /></button>
+            </div>
+            <form onSubmit={handleSubmit} className="p-8 space-y-5">
+              <div>
+                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2 ml-1">Entity Name *</label>
+                <input required className={inputCls} placeholder="Legal company name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-black text-slate-700 uppercase tracking-widest mb-2">Contact Person</label>
-                  <input className={inputCls} placeholder="Name" value={form.contactPerson} onChange={e => setForm({ ...form, contactPerson: e.target.value })} />
+                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2 ml-1">Key Contact Person</label>
+                  <input className={inputCls} placeholder="Full Name" value={form.contactPerson} onChange={e => setForm({ ...form, contactPerson: e.target.value })} />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-slate-700 uppercase tracking-widest mb-2">Phone *</label>
-                  <input required className={inputCls} placeholder="9876543210" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
+                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2 ml-1">Phone Number *</label>
+                  <input required className={inputCls} placeholder="000 000 0000" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
                 </div>
               </div>
               <div>
-                <label className="block text-[10px] font-black text-slate-700 uppercase tracking-widest mb-2">GST Number</label>
+                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2 ml-1">GST Identification (Optional)</label>
                 <input className={cn(inputCls, "font-mono uppercase")} placeholder="27XXXXX..." value={form.gstNumber} onChange={e => setForm({ ...form, gstNumber: e.target.value.toUpperCase() })} />
               </div>
               <div>
-                <label className="block text-[10px] font-black text-slate-700 uppercase tracking-widest mb-2">Warehouse / Office Address</label>
-                <textarea rows={2} className={inputCls} placeholder="Supplier address..." value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
+                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2 ml-1">Operational Address</label>
+                <textarea rows={2} className={inputCls} placeholder="Warehouse or corporate HQ address..." value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
               </div>
-              <div className="flex items-center justify-end gap-4 pt-6 border-t border-slate-100 mt-4">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="text-slate-400 font-black uppercase tracking-widest text-xs hover:text-slate-900 transition-colors">Cancel</button>
-                <button type="submit" disabled={isSaving} className="bg-teal-600 hover:bg-teal-700 px-10 py-4 rounded-2xl text-white font-black text-sm uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2">
-                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Save Supplier
+              <div className="flex items-center justify-end gap-4 pt-6 border-t border-slate-100">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="text-slate-400 font-semibold text-sm hover:text-slate-900 transition-colors">Cancel</button>
+                <button type="submit" disabled={isSaving} className="bg-indigo-600 hover:bg-indigo-700 px-8 py-2.5 rounded-lg text-white font-semibold flex items-center gap-2 text-sm transition-all active:scale-95 shadow-md border border-indigo-500/20">
+                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Complete Registration
                 </button>
               </div>
             </form>
@@ -174,3 +192,5 @@ export default function SuppliersPage() {
     </div>
   );
 }
+
+const inputCls = "w-full rounded-lg border border-slate-200 bg-white py-2.5 px-4 text-slate-900 font-medium placeholder:text-slate-300 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none text-sm";

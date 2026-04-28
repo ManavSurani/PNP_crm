@@ -46,7 +46,7 @@ export async function POST(request: Request) {
         advanceAmount,
         pendingAmount: totalAmount - advanceAmount,
         status: status || "CONFIRMED",
-        completionDate: completionDate ? new Date(completionDate) : null
+        endDate: completionDate ? new Date(completionDate) : null
       }
     });
 

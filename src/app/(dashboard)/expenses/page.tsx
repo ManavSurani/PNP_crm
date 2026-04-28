@@ -2,18 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
-import { Plus, Wallet, Loader2, Check, X, TrendingDown, PieChart, Package, Wrench } from "lucide-react";
+import { Plus, Wallet, Loader2, Check, X, TrendingDown, PieChart, Package, Wrench, IndianRupee } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const inputCls = "w-full rounded-2xl border-2 border-slate-200 bg-white py-3.5 px-4 text-slate-900 font-bold placeholder:text-slate-300 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/5 transition-all outline-none text-sm";
-
 const CATEGORIES = [
-  { val: "MATERIAL", label: "Raw Material", color: "bg-amber-100 text-amber-700" },
-  { val: "WORKER_WAGE", label: "Worker Wage", color: "bg-indigo-100 text-indigo-700" },
-  { val: "PETTY_CASH", label: "Petty Cash", color: "bg-slate-100 text-slate-700" },
-  { val: "SHOWROOM", label: "Showroom", color: "bg-purple-100 text-purple-700" },
-  { val: "MARKETING", label: "Marketing / Ads", color: "bg-sky-100 text-sky-700" },
-  { val: "TRANSPORT", label: "Transport", color: "bg-orange-100 text-orange-700" },
+  { val: "MATERIAL", label: "Raw Materials", color: "bg-slate-100 text-slate-700 border-slate-200" },
+  { val: "WORKER_WAGE", label: "Labor Charges", color: "bg-indigo-50 text-indigo-700 border-indigo-100" },
+  { val: "PETTY_CASH", label: "Petty Cash", color: "bg-slate-50 text-slate-500 border-slate-100" },
+  { val: "SHOWROOM", label: "Showroom Expenses", color: "bg-indigo-50 text-indigo-700 border-indigo-100" },
+  { val: "MARKETING", label: "Marketing", color: "bg-sky-50 text-sky-700 border-sky-100" },
+  { val: "TRANSPORT", label: "Transport & Logistics", color: "bg-amber-50 text-amber-700 border-amber-100" },
 ];
 
 export default function ExpensesPage() {
@@ -57,133 +55,163 @@ export default function ExpensesPage() {
     finally { setIsSaving(false); }
   };
 
-  const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
+  const totalExpenses = expenses.reduce((s, e) => s + (Number(e.amount) || 0), 0);
   const filtered = filterCat === "ALL" ? expenses : expenses.filter(e => e.category === filterCat);
 
-  // Category breakdown
   const breakdown = CATEGORIES.map(cat => ({
     ...cat,
-    total: expenses.filter(e => e.category === cat.val).reduce((s, e) => s + e.amount, 0),
+    total: expenses.filter(e => e.category === cat.val).reduce((s, e) => s + (Number(e.amount) || 0), 0),
     count: expenses.filter(e => e.category === cat.val).length,
   }));
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 pb-10">
+    <div className="max-w-7xl mx-auto space-y-6 pb-10">
       {/* Header */}
-      <div className="bg-slate-900 p-10 rounded-3xl shadow-2xl border-b-4 border-rose-500 relative overflow-hidden flex items-center justify-between">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500 rounded-full blur-[100px] opacity-10 -mr-32 -mt-32" />
+      <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-primary rounded-full blur-[100px] opacity-5 -mr-24 -mt-24" />
         <div className="relative z-10">
-          <h1 className="text-4xl font-black text-white uppercase tracking-tight">Expense Ledger</h1>
-          <p className="text-slate-400 text-xs font-black uppercase tracking-widest mt-2">Operational cost tracking — All categories</p>
+          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Business Expenses</h1>
+          <p className="text-slate-500 text-sm mt-1 font-medium">Track your operations costs and monthly expenditures.</p>
         </div>
-        <div className="relative z-10 text-right">
-          <p className="text-xs text-slate-400 font-black uppercase tracking-widest mb-1">Total Spent</p>
-          <p className="text-3xl font-black text-rose-400">₹{totalExpenses.toLocaleString()}</p>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="mt-4 bg-rose-600 hover:bg-rose-500 px-6 py-4 rounded-2xl text-white font-black flex items-center gap-2 text-sm uppercase tracking-widest transition-all active:scale-95 shadow-xl"
-          >
-            <Plus className="h-4 w-4" /> Add Expense
-          </button>
+        <div className="relative z-10 flex flex-col md:items-end gap-3">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Total Spent</p>
+          <div className="flex items-center gap-3">
+             <span className="text-2xl font-bold text-slate-900">₹{totalExpenses.toLocaleString()}</span>
+             <button
+               onClick={() => setIsModalOpen(true)}
+               className="bg-indigo-600 hover:bg-indigo-700 px-5 py-2.5 rounded-lg text-white font-semibold flex items-center gap-2 text-sm transition-all active:scale-95 shadow-md border border-indigo-500/20"
+             >
+               <Plus className="h-4 w-4" /> Add New Expense
+             </button>
+          </div>
         </div>
       </div>
 
-      {/* Category Breakdown Cards (P3) */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      {/* Categories Horizontal Scroll/Grid */}
+      <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
+        <button
+          onClick={() => setFilterCat("ALL")}
+          className={cn(
+            "p-5 rounded-xl border min-w-[160px] text-left transition-all shrink-0",
+            filterCat === "ALL" ? "bg-slate-900 border-slate-900 shadow-lg" : "bg-white border-slate-200 hover:border-primary/30"
+          )}
+        >
+          <p className={cn("text-[10px] font-semibold uppercase tracking-wider mb-1", filterCat === "ALL" ? "text-slate-400" : "text-slate-400")}>Consolidated</p>
+          <p className={cn("text-lg font-bold", filterCat === "ALL" ? "text-white" : "text-slate-900")}>₹{totalExpenses.toLocaleString()}</p>
+          <p className={cn("text-[10px] font-medium mt-0.5", filterCat === "ALL" ? "text-indigo-400" : "text-slate-400")}>{expenses.length} Records</p>
+        </button>
         {breakdown.map(cat => (
           <button key={cat.val}
             onClick={() => setFilterCat(filterCat === cat.val ? "ALL" : cat.val)}
             className={cn(
-              "p-4 rounded-2xl border-2 text-left transition-all hover:-translate-y-0.5 hover:shadow-md",
-              filterCat === cat.val ? "border-slate-900 bg-slate-900 text-white" : "bg-white border-slate-100"
+              "p-5 rounded-xl border min-w-[160px] text-left transition-all shrink-0 group",
+              filterCat === cat.val ? "bg-primary border-primary shadow-lg" : "bg-white border-slate-200 hover:border-primary/30"
             )}>
-            <p className={cn("text-[9px] font-black uppercase tracking-widest mb-1", filterCat === cat.val ? "text-slate-400" : "text-slate-400")}>{cat.label}</p>
-            <p className={cn("text-lg font-black", filterCat === cat.val ? "text-white" : "text-slate-900")}>₹{cat.total.toLocaleString()}</p>
-            <p className={cn("text-[10px] font-bold mt-0.5", filterCat === cat.val ? "text-slate-400" : "text-slate-400")}>{cat.count} entries</p>
+            <p className={cn("text-[10px] font-semibold uppercase tracking-wider mb-1", filterCat === cat.val ? "text-white/60" : "text-slate-400")}>{cat.label}</p>
+            <p className={cn("text-lg font-bold", filterCat === cat.val ? "text-white" : "text-slate-900")}>₹{cat.total.toLocaleString()}</p>
+            <p className={cn("text-[10px] font-medium mt-0.5", filterCat === cat.val ? "text-white/60" : "text-slate-400")}>{cat.count} Entries</p>
           </button>
         ))}
       </div>
 
-      {/* Expenses Table */}
-      <div className="bg-white rounded-[2rem] shadow-xl border border-slate-100 overflow-hidden">
+      {/* Main List Table */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         {isLoading ? (
-          <div className="flex justify-center h-64 items-center"><Loader2 className="animate-spin h-8 w-8 text-rose-500" /></div>
+          <div className="flex flex-col items-center justify-center h-64 text-slate-400">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
+            <span className="text-sm font-medium">Fetching Financial Records...</span>
+          </div>
         ) : (
-          <table className="min-w-full divide-y divide-slate-50">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="py-5 pl-8 pr-3 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Category</th>
-                <th className="px-3 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Amount</th>
-                <th className="px-3 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Description</th>
-                <th className="px-3 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Date</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50 bg-white">
-              {filtered.map(exp => {
-                const cat = CATEGORIES.find(c => c.val === exp.category);
-                return (
-                  <tr key={exp.id} className="hover:bg-slate-50 transition-all">
-                    <td className="py-5 pl-8 pr-3">
-                      <span className={cn("px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest", cat?.color || "bg-slate-100 text-slate-700")}>
-                        {cat?.label || exp.category.replace(/_/g, " ")}
-                      </span>
-                    </td>
-                    <td className="px-3 py-5">
-                      <p className="text-xl font-black text-rose-600">₹{exp.amount.toLocaleString()}</p>
-                    </td>
-                    <td className="px-3 py-5">
-                      <p className="text-sm text-slate-700 font-bold max-w-sm truncate">{exp.description || "—"}</p>
-                    </td>
-                    <td className="px-3 py-5 text-sm text-slate-500 font-bold">
-                      {format(new Date(exp.date || exp.createdAt), "dd MMM yyyy")}
-                    </td>
-                  </tr>
-                );
-              })}
-              {filtered.length === 0 && (
-                <tr><td colSpan={4} className="py-20 text-center text-slate-400 font-black uppercase tracking-widest text-xs">No expenses found.</td></tr>
-              )}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto min-h-[300px]">
+             <table className="min-w-full divide-y divide-slate-200">
+               <thead className="bg-slate-50/50">
+                 <tr>
+                   <th scope="col" className="py-4 pl-8 pr-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Category</th>
+                   <th scope="col" className="px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Description</th>
+                   <th scope="col" className="px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
+                   <th scope="col" className="px-3 py-4 text-right pr-8 text-xs font-semibold text-slate-500 uppercase tracking-wider">Amount</th>
+                 </tr>
+               </thead>
+               <tbody className="divide-y divide-slate-100 bg-white">
+                 {filtered.map(exp => {
+                   const cat = CATEGORIES.find(c => c.val === exp.category);
+                   return (
+                     <tr key={exp.id} className="group hover:bg-slate-50 transition-all">
+                       <td className="whitespace-nowrap py-5 pl-8 pr-3">
+                         <span className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider border", cat?.color || "bg-slate-100 text-slate-700")}>
+                           {cat?.label || exp.category.replace(/_/g, " ")}
+                         </span>
+                       </td>
+                       <td className="px-3 py-5">
+                          <p className="text-sm font-medium text-slate-700 max-w-sm truncate">{exp.description || "No detail provided"}</p>
+                       </td>
+                       <td className="whitespace-nowrap px-3 py-5 text-xs text-slate-500 font-medium">
+                         {format(new Date(exp.date || exp.createdAt), "dd MMM, yyyy")}
+                       </td>
+                       <td className="whitespace-nowrap py-5 px-3 text-right pr-8">
+                         <div className="text-sm font-bold text-slate-900 group-hover:text-rose-600 transition-colors">
+                           ₹{exp.amount.toLocaleString()}
+                         </div>
+                       </td>
+                     </tr>
+                   );
+                 })}
+                 {filtered.length === 0 && (
+                   <tr>
+                     <td colSpan={4} className="py-20 text-center">
+                       <div className="h-12 w-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3 border border-slate-200 text-slate-300">
+                         <Wallet className="h-6 w-6" />
+                       </div>
+                       <h3 className="text-sm font-semibold text-slate-900">No transactions found</h3>
+                       <p className="mt-1 text-xs text-slate-500">Record an expense to see it in your ledger.</p>
+                     </td>
+                   </tr>
+                 )}
+               </tbody>
+             </table>
+          </div>
         )}
       </div>
 
-      {/* Add Expense Modal */}
+      {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95">
-            <div className="bg-rose-600 px-10 py-8 flex items-center justify-between text-white">
-              <div className="flex items-center gap-4">
-                <div className="bg-white/20 p-3 rounded-2xl"><Wallet className="h-6 w-6" /></div>
-                <h2 className="text-xl font-black uppercase tracking-tight">Add Expense</h2>
-              </div>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-white/20 rounded-xl transition-all"><X className="h-5 w-5" /></button>
-            </div>
-            <form onSubmit={handleSubmit} className="p-10 space-y-5">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/10 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 animate-in zoom-in-95 duration-200">
+            <div className="px-8 py-6 flex items-center justify-between border-b border-slate-100 bg-slate-50/50">
               <div>
-                <label className="block text-[10px] font-black text-slate-700 uppercase tracking-widest mb-2">Category</label>
+                <h2 className="text-lg font-semibold text-slate-900 tracking-tight">Record Expense</h2>
+                <p className="text-[11px] text-slate-500 font-medium uppercase tracking-wide">Financial Outflow documentation</p>
+              </div>
+              <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-200 rounded-lg transition-all text-slate-400 hover:text-slate-900"><X className="h-5 w-5" /></button>
+            </div>
+            <form onSubmit={handleSubmit} className="p-8 space-y-6">
+              <div>
+                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2 ml-1">Classification</label>
                 <select className={inputCls} value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
                   {CATEGORIES.map(c => <option key={c.val} value={c.val}>{c.label}</option>)}
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-black text-slate-700 uppercase tracking-widest mb-2">Amount (₹) *</label>
+                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2 ml-1">Amount (₹) *</label>
                   <input required type="number" min="1" className={inputCls} placeholder="e.g. 5000" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-slate-700 uppercase tracking-widest mb-2">Date *</label>
+                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2 ml-1">Transaction Date *</label>
                   <input required type="date" className={inputCls} value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} />
                 </div>
               </div>
               <div>
-                <label className="block text-[10px] font-black text-slate-700 uppercase tracking-widest mb-2">Description *</label>
-                <textarea required rows={3} className={inputCls} placeholder="Material purchased from supplier, worker wages for project #12..." value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
+                <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2 ml-1">Narration / Notes *</label>
+                <textarea required rows={3} className={inputCls} 
+                  placeholder="Material purchased, site overheads, worker disbursements..." 
+                  value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} 
+                />
               </div>
-              <div className="flex items-center justify-end gap-4 pt-6 border-t border-slate-100 mt-4">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="text-slate-400 font-black uppercase tracking-widest text-xs hover:text-slate-900 transition-colors">Cancel</button>
-                <button type="submit" disabled={isSaving} className="bg-rose-600 hover:bg-rose-700 px-10 py-4 rounded-2xl text-white font-black text-sm uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2">
-                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Save Expense
+              <div className="flex items-center justify-end gap-4 pt-6 border-t border-slate-100">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="text-slate-400 font-semibold text-sm hover:text-slate-900 transition-colors">Cancel</button>
+                <button type="submit" disabled={isSaving} className="bg-indigo-600 hover:bg-indigo-700 px-8 py-2.5 rounded-lg text-white font-semibold flex items-center gap-2 text-sm transition-all active:scale-95 shadow-md border border-indigo-500/20">
+                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Record Expense
                 </button>
               </div>
             </form>
@@ -193,3 +221,5 @@ export default function ExpensesPage() {
     </div>
   );
 }
+
+const inputCls = "w-full rounded-lg border border-slate-200 bg-white py-2.5 px-4 text-slate-900 font-medium placeholder:text-slate-300 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none text-sm";

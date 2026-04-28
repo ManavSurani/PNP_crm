@@ -19,8 +19,10 @@ datasource db {
 
 enum Role {
   ADMIN
-  STAFF
-  SALES
+  MANAGER
+  SALES_EXECUTIVE
+  PROJECT_MANAGER
+  SITE_SUPERVISOR
 }
 
 model User {
@@ -28,7 +30,7 @@ model User {
   name      String
   email     String   @unique
   password  String
-  role      Role     @default(STAFF)
+  role      Role     @default(SALES_EXECUTIVE)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -51,13 +53,21 @@ enum InquirySource {
 }
 
 enum ServiceType {
-  SOFA_WORK
-  MODULAR_KITCHEN
-  WARDROBE
   INTERIOR_DESIGN
-  OFFICE_FURNITURE
-  REPAIR_SERVICE
-  CUSTOM_FURNITURE
+  MODULAR_KITCHEN
+  WARDROBE_PLANNING
+  FULL_HOME_INTERIOR
+  TWO_BHK_INTERIOR
+  THREE_BHK_INTERIOR
+  VILLA_INTERIOR
+  OFFICE_INTERIOR
+  CUSTOM_FURNITURE_DESIGN
+  MATERIAL_SUPPLY
+  LABOUR_ONLY
+  FULL_COMBO_PROJECT
+  SOFA_WORK
+  CHAIR_WORK
+  REPAIRING_WORK
   OTHER
 }
 
@@ -90,7 +100,7 @@ model Lead {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  // Extra Details requested by user
+  // Extra Details 
   budgetRange       String?
   requirementDetails String?
   siteLocation      String?
@@ -103,11 +113,35 @@ model Lead {
   reactivatedAt     DateTime?
   reactivationNote  String?
 
+  // New Service-Based Relations
+  requirement Requirement?
+
   followUps   FollowUp[]
   notes       Note[]
   meetings    Meeting[]
   quotations  Quotation[]
   orders      Order[]
+}
+
+model Requirement {
+  id              String   @id @default(uuid())
+  leadId          String   @unique
+  lead            Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  propertyType    String?  // 2BHK, 3BHK, Villa, etc.
+  areaSize        String?  // sq.ft.
+  numRooms        Int?
+  kitchenType     String?
+  wardrobeCount   Int?
+  tvUnitReq       Boolean  @default(false)
+  bedroomFurnitureReq Boolean @default(false)
+  officeSetupReq  Boolean  @default(false)
+  materialPref    String?
+  finishPref      String?
+  budgetRange     String?
+  timeline        String?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 // -----------------------------------------------------------------------------
@@ -175,6 +209,13 @@ model Meeting {
 // MODULE: Quotation Module
 // -----------------------------------------------------------------------------
 
+enum PackageType {
+  DESIGN_ONLY
+  MATERIALS_ONLY
+  FULL_COMBO
+  CUSTOM
+}
+
 model Quotation {
   id            String          @id @default(uuid())
   leadId        String
@@ -182,15 +223,34 @@ model Quotation {
   quotationNo   String          @unique
   issueDate     DateTime        @default(now())
   expiryDate    DateTime?
+  
+  // Package & Project Costs
+  packageType   PackageType     @default(FULL_COMBO)
+  designCost    Float           @default(0)
   materialCost  Float           @default(0)
   labourCost    Float           @default(0)
   transportCost Float           @default(0)
+  supervisionCharges Float      @default(0)
+  siteVisitCharges   Float      @default(0)
+  
   gstPercentage Float           @default(0)
   gstAmount     Float           @default(0)
+  discount      Float           @default(0)
   finalTotal    Float           @default(0)
   status        String          @default("DRAFT") // DRAFT, SENT, ACCEPTED, REJECTED
   
+  // Terms & Scope
+  workScope       String?
+  milestoneTerms  String?
+  projectTimeline String?
+  
+  version         Int             @default(1)
+  
   items         QuotationItem[]
+  milestones    QuotationMilestone[]
+  
+  orders        Order[]
+  
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 }
@@ -199,10 +259,24 @@ model QuotationItem {
   id          String    @id @default(uuid())
   quotationId String
   quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  section     String    @default("GENERAL") // DESIGN, MATERIAL, LABOUR, etc.
   description String
   quantity    Int       @default(1)
   unitPrice   Float     @default(0)
   totalPrice  Float     @default(0)
+}
+
+model QuotationMilestone {
+  id            String    @id @default(uuid())
+  quotationId   String
+  quotation     Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  description   String
+  percentage    Float?
+  amount        Float
+  status        String    @default("PENDING") // PENDING, PAID
+  dueDate       DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 
 // -----------------------------------------------------------------------------
@@ -211,8 +285,12 @@ model QuotationItem {
 
 enum OrderStatus {
   CONFIRMED
+  DESIGN
+  MATERIAL_PROCUREMENT
   PRODUCTION
   INSTALLATION
+  QUALITY_CHECK
+  HANDOVER
   COMPLETED
   CANCELLED
 }
@@ -221,18 +299,42 @@ model Order {
   id            String      @id @default(uuid())
   leadId        String
   lead          Lead        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  
+  quotationId   String?     // Link to the quotation that generated this order
+  quotation     Quotation?  @relation(fields: [quotationId], references: [id], onDelete: SetNull)
+
   orderNo       String      @unique
-  status        OrderStatus @default(CONFIRMED)
+  status        OrderStatus @default(DESIGN)
+  packageType   PackageType @default(FULL_COMBO)
+  
   totalAmount   Float       @default(0)
+  advanceAmount Float       @default(0)
+  pendingAmount Float       @default(0)
+
   startDate     DateTime?
   endDate       DateTime?
 
+  isBlocked     Boolean     @default(false)
+  blockReason   String?
+  
   payments      Payment[]
   expenses      Expense[]
   assignments   WorkerAssignment[]
+  updates       OrderUpdate[]
 
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+}
+
+model OrderUpdate {
+  id          String      @id @default(uuid())
+  orderId     String
+  order       Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  fromStatus  OrderStatus?
+  toStatus    OrderStatus
+  note        String?
+  userId      String?     // Who made the update
+  createdAt   DateTime    @default(now())
 }
 
 // -----------------------------------------------------------------------------
@@ -251,6 +353,9 @@ model Payment {
   order       Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
   amount      Float
   type        PaymentType @default(ADVANCE)
+  paymentMode String      @default("CASH")
+  status      String      @default("COMPLETED")
+  referenceNo String?
   paymentDate DateTime    @default(now())
   notes       String?
   createdAt   DateTime    @default(now())
@@ -284,6 +389,7 @@ model Worker {
   name         String
   phone        String
   type         WorkerType         @default(CARPENTER)
+  dailyRate    Float?
   assignments  WorkerAssignment[]
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
@@ -321,4 +427,32 @@ model SupplierPayment {
   notes       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// -----------------------------------------------------------------------------
+// MODULE: System & Security (Phase 7)
+// -----------------------------------------------------------------------------
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?
+  action      String   // CREATE, UPDATE, DELETE
+  entity      String   // LEAD, QUOTATION, ORDER, PAYMENT, EXPENSE
+  entityId    String
+  oldValue    Json?
+  newValue    Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  userId      String   // Target user
+  title       String
+  message     String
+  type        String   @default("INFO") // INFO, WARNING, SUCCESS, ERROR
+  link        String?  // Optional target page
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
 }

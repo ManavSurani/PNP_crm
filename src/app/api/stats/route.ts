@@ -7,21 +7,7 @@ export async function GET() {
     const session = await auth();
     if (!session) return new NextResponse("Unauthorized", { status: 401 });
 
-    const [
-      totalLeads,
-      wonOrders,
-      totalRevenueData,
-      totalExpensesData,
-      todayFollowUpsCount,
-      newLeads,
-      followUpLeads,
-      meetingLeads,
-      cancelledLeads,
-      totalPendingData,
-      overdueFollowUpsCount,
-      todayMeetingsCount,
-      interestedLeadsCount,
-    ] = await Promise.all([
+    const stats = await Promise.all([
       prisma.lead.count(),
       prisma.order.count({ where: { status: "COMPLETED" } }),
       prisma.payment.aggregate({ _sum: { amount: true } }),
@@ -60,14 +46,47 @@ export async function GET() {
           status: { in: ["FOLLOW_UP", "MEETING_SCHEDULED"] }
         } 
       }),
+      // Most Profitable Projects
+      prisma.order.findMany({
+        take: 5,
+        orderBy: { totalAmount: 'desc' },
+        include: { 
+          lead: { select: { customerName: true } },
+          payments: { select: { amount: true } },
+          expenses: { select: { amount: true } }
+        }
+      }),
+      // Package Popularity
+      prisma.order.groupBy({
+        by: ['packageType'] as any,
+        _count: { id: true }
+      })
     ]);
 
-    const totalRevenue = totalRevenueData._sum.amount || 0;
-    const totalExpenses = totalExpensesData._sum.amount || 0;
+    const topProjects = (stats[13] as unknown as any[] || []).map((o: any) => {
+      const revenue = o.payments.reduce((s: number, p: any) => s + p.amount, 0);
+      const expenses = o.expenses.reduce((s: number, e: any) => s + e.amount, 0);
+      const profit = revenue - expenses;
+      return {
+        name: o.lead.customerName,
+        orderNo: o.orderNo,
+        revenue,
+        expenses,
+        profit,
+        margin: revenue > 0 ? ((profit / revenue) * 100).toFixed(1) : "0"
+      };
+    }).sort((a: any, b: any) => b.profit - a.profit);
+
+    const packageStats = (stats[14] as unknown as any[] || []).map((p: any) => ({
+      name: p.packageType?.replace(/_/g, " ") || "OTHER",
+      count: p._count.id
+    }));
+
+    const totalRevenue = (stats[2] as any)._sum.amount || 0;
+    const totalExpenses = (stats[3] as any)._sum.amount || 0;
     const netProfit = totalRevenue - totalExpenses;
-    const totalPaid = totalRevenue;
-    const totalOrderValue = totalPendingData._sum.totalAmount || 0;
-    const totalPending = Math.max(0, totalOrderValue - totalPaid);
+    const totalOrderValue = (stats[9] as any)._sum.totalAmount || 0;
+    const totalPending = Math.max(0, totalOrderValue - totalRevenue);
 
     // Last 7 Days Chart Data
     const last7Days = Array.from({ length: 7 }, (_, i) => {
@@ -92,20 +111,22 @@ export async function GET() {
 
     return NextResponse.json({
       metrics: {
-        totalLeads,
-        wonOrders,
+        totalLeads: stats[0],
+        wonOrders: stats[1],
         totalRevenue,
         totalExpenses,
         netProfit,
-        todayFollowUps: todayFollowUpsCount,
-        overdueFollowUps: overdueFollowUpsCount,
-        todayMeetings: todayMeetingsCount,
-        interestedLeads: interestedLeadsCount,
-        newLeads,
-        followUpLeads,
-        meetingLeads,
-        cancelledLeads,
+        todayFollowUps: stats[4],
+        overdueFollowUps: stats[10],
+        todayMeetings: stats[11],
+        interestedLeads: stats[12],
+        newLeads: stats[5],
+        followUpLeads: stats[6],
+        meetingLeads: stats[7],
+        cancelledLeads: stats[8],
         totalPending,
+        topProjects,
+        packageStats
       },
       chartData,
     });

@@ -9,7 +9,7 @@ export async function GET(
   const { id } = await params;
   try {
     const session = await auth();
-    if (!session) return new NextResponse("Unauthorized", { status: 401 });
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const lead = await prisma.lead.findUnique({
       where: { id },
@@ -18,15 +18,16 @@ export async function GET(
         notes: { orderBy: { createdAt: "desc" } },
         followUps: { orderBy: { createdAt: "desc" } },
         meetings: { orderBy: { date: "asc" } },
+        requirement: true,
       }
     });
 
-    if (!lead) return new NextResponse("Lead not found", { status: 404 });
+    if (!lead) return NextResponse.json({ error: "Lead not found" }, { status: 404 });
 
     return NextResponse.json(lead);
   } catch (error) {
     console.error("[LEAD_GET]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }
 
@@ -37,19 +38,33 @@ export async function PUT(
   const { id } = await params;
   try {
     const session = await auth();
-    if (!session) return new NextResponse("Unauthorized", { status: 401 });
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await request.json();
     
+    // Get old value for audit
+    const oldLead = await prisma.lead.findUnique({ where: { id } });
+
     const updatedLead = await prisma.lead.update({
       where: { id },
       data: { ...body }
     });
 
+    // Audit Log
+    const { createAuditLog } = await import("@/lib/audit");
+    await createAuditLog({
+      userId: session.user.id,
+      action: "UPDATE",
+      entity: "LEAD",
+      entityId: id,
+      oldValue: oldLead,
+      newValue: updatedLead
+    });
+
     return NextResponse.json(updatedLead);
   } catch (error) {
     console.error("[LEAD_PUT]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }
 
@@ -60,15 +75,24 @@ export async function DELETE(
   const { id } = await params;
   try {
     const session = await auth();
-    if (!session) return new NextResponse("Unauthorized", { status: 401 });
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     await prisma.lead.delete({
       where: { id }
     });
 
+    // Audit Log
+    const { createAuditLog } = await import("@/lib/audit");
+    await createAuditLog({
+      userId: session.user.id,
+      action: "DELETE",
+      entity: "LEAD",
+      entityId: id
+    });
+
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     console.error("[LEAD_DELETE]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }

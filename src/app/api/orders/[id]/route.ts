@@ -9,20 +9,69 @@ export async function PUT(
   const { id } = await params;
   try {
     const session = await auth();
-    if (!session) return new NextResponse("Unauthorized", { status: 401 });
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await request.json();
-    const { status } = body;
+    const { status, isBlocked, blockReason, note } = body;
 
-    const order = await prisma.order.update({
-      where: { id },
-      data: { status },
+    const currentOrder = await prisma.order.findUnique({
+       where: { id },
+       select: { status: true }
+    });
+
+    if (!currentOrder) {
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
+
+    // Phase 4 Rule: Enforce Sequential Stage Transitions
+    const STAGE_ORDER = [
+      "CONFIRMED", "DESIGN", "MATERIAL_PROCUREMENT", "PRODUCTION", 
+      "INSTALLATION", "QUALITY_CHECK", "HANDOVER", "COMPLETED"
+    ];
+
+    if (status && status !== "CANCELLED") {
+       const currentIndex = STAGE_ORDER.indexOf(currentOrder.status);
+       const nextIndex = STAGE_ORDER.indexOf(status);
+
+       if (nextIndex > currentIndex + 1) {
+          return NextResponse.json({ 
+            error: `Sequential skip not allowed. You must complete '${STAGE_ORDER[currentIndex + 1]}' before moving to '${status}'.` 
+          }, { status: 400 });
+       }
+    }
+
+    const updateData: any = {};
+    if (status !== undefined) updateData.status = status;
+    if (isBlocked !== undefined) updateData.isBlocked = isBlocked;
+    if (blockReason !== undefined) updateData.blockReason = blockReason;
+
+    // Transaction to update Order AND Log the transition
+    const order = await prisma.$transaction(async (tx) => {
+      const updated = await tx.order.update({
+        where: { id },
+        data: updateData,
+      });
+
+      if (status && status !== currentOrder.status) {
+        // Definitive Fix: Use any-casting for dynamic model access
+        await (tx as any).orderUpdate.create({
+          data: {
+            orderId: id,
+            fromStatus: currentOrder.status,
+            toStatus: status,
+            note: note || `Stage transitioned from ${currentOrder.status} to ${status}`,
+            userId: session.user.id // Tracking who made the change
+          }
+        });
+      }
+
+      return updated;
     });
 
     return NextResponse.json(order);
   } catch (error) {
     console.error("[ORDER_PUT]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }
 
@@ -38,16 +87,21 @@ export async function GET(
     const order = await prisma.order.findUnique({
       where: { id },
       include: {
-        lead: { select: { customerName: true, contactNumber: true, serviceType: true } },
-        payments: true,
-        expenses: true,
-      },
+        lead: { select: { customerName: true, contactNumber: true, serviceType: true, fullAddress: true } },
+        payments: { orderBy: { createdAt: "desc" } },
+        expenses: { orderBy: { date: "desc" } },
+        // Definitive Fix: Use any-casting for new dynamic relation
+        updates: { orderBy: { createdAt: "desc" } },
+        assignments: {
+          include: { worker: true }
+        }
+      } as any,
     });
 
-    if (!order) return new NextResponse("Not Found", { status: 404 });
+    if (!order) return NextResponse.json({ error: "Not Found" }, { status: 404 });
     return NextResponse.json(order);
   } catch (error) {
     console.error("[ORDER_GET]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }

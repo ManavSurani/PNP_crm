@@ -13,14 +13,15 @@ export async function GET(request: Request) {
         lead: {
           select: { customerName: true, contactNumber: true, serviceType: true, fullAddress: true }
         },
-        items: true
-      }
+        items: true,
+        milestones: true
+      } as any
     });
 
     return NextResponse.json(quotations);
   } catch (error) {
     console.error("[QUOTATIONS_GET]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }
 
@@ -32,21 +33,41 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { 
       leadId, 
-      materialCost, 
-      labourCost, 
-      transportCost, 
-      gstPercentage, 
-      items 
+      packageType,
+      designCost = 0,
+      materialCost = 0, 
+      labourCost = 0, 
+      transportCost = 0,
+      supervisionCharges = 0,
+      siteVisitCharges = 0,
+      discount = 0,
+      gstPercentage = 18, 
+      items,
+      milestones = [],
+      workScope = "",
+      milestoneTerms = "",
+      projectTimeline = ""
     } = body;
 
     if (!leadId || !items || !Array.isArray(items)) {
-      return new NextResponse("Missing fields", { status: 400 });
+      return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
     // Auto calculate totals
-    const subtotal = materialCost + labourCost + transportCost + items.reduce((acc: number, item: any) => acc + (item.quantity * item.unitPrice), 0);
-    const gstAmount = (subtotal * gstPercentage) / 100;
-    const finalTotal = subtotal + gstAmount;
+    const itemsTotal = items.reduce((acc: number, item: any) => acc + (item.quantity * item.unitPrice), 0);
+    const subtotal = (
+      designCost + 
+      materialCost + 
+      labourCost + 
+      transportCost + 
+      supervisionCharges + 
+      siteVisitCharges + 
+      itemsTotal
+    );
+    
+    const amountAfterDiscount = subtotal - discount;
+    const gstAmount = (amountAfterDiscount * gstPercentage) / 100;
+    const finalTotal = amountAfterDiscount + gstAmount;
 
     // Generate unique Quotation Number
     const count = await prisma.quotation.count();
@@ -56,23 +77,42 @@ export async function POST(request: Request) {
       data: {
         leadId,
         quotationNo,
+        packageType,
+        designCost,
         materialCost,
         labourCost,
         transportCost,
+        supervisionCharges,
+        siteVisitCharges,
+        discount,
         gstPercentage,
         gstAmount,
         finalTotal,
         status: "SENT",
+        workScope,
+        milestoneTerms,
+        projectTimeline,
+        version: 1,
         items: {
           create: items.map((item: any) => ({
+            section: item.section || "GENERAL",
             description: item.description,
             quantity: item.quantity,
             unitPrice: item.unitPrice,
             totalPrice: item.quantity * item.unitPrice
           }))
+        },
+        milestones: {
+          create: milestones.map((m: any) => ({
+            description: m.description,
+            percentage: m.percentage,
+            amount: m.amount,
+            status: "PENDING",
+            dueDate: m.dueDate ? new Date(m.dueDate) : null
+          }))
         }
-      },
-      include: { items: true, lead: true }
+      } as any,
+      include: { items: true, milestones: true, lead: true } as any
     });
 
     // Log this action to the Notes Timeline
@@ -86,6 +126,6 @@ export async function POST(request: Request) {
     return NextResponse.json(quotation);
   } catch (error) {
     console.error("[QUOTATIONS_POST]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }

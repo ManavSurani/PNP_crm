@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Loader2, Lock, Mail } from "lucide-react";
+import { Loader2, Lock, Mail, Shovel, Box, LayoutDashboard, ChevronRight } from "lucide-react";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -25,87 +25,91 @@ export default function LoginForm() {
       });
 
       if (res?.error) {
-        setError("Invalid email or password");
+        setError("Invalid credentials. Please verify your identity.");
       } else {
         router.push("/");
         router.refresh();
       }
     } catch (err) {
-      setError("Something went wrong. Please try again.");
+      setError("Synchronisation failure. Please retry authentication.");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 p-4">
-      <div className="w-full max-w-md bg-white/10 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/20 relative overflow-hidden">
-        {/* Glow Effects */}
-        <div className="absolute top-0 right-0 w-40 h-40 bg-indigo-500 rounded-full blur-[80px] opacity-40 mix-blend-screen pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-40 h-40 bg-pink-500 rounded-full blur-[80px] opacity-40 mix-blend-screen pointer-events-none" />
-
-        <div className="relative z-10">
-          <div className="text-center mb-10">
-            <h1 className="text-4xl font-extrabold text-white tracking-tight mb-2">PNP CRM</h1>
-            <p className="text-indigo-200">Furniture Business Management</p>
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6 font-sans">
+      <div className="w-full max-w-sm space-y-8">
+        {/* Brand/Identity */}
+        <div className="absolute top-0 left-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl -ml-16 -mt-16" />
+        <div className="relative z-10 flex flex-col items-center">
+          <div className="h-12 w-12 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200 mb-4">
+            <LayoutDashboard className="h-6 w-6 text-white" />
           </div>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">PNP CRM</h1>
+          <p className="text-slate-400 text-xs mt-1 font-semibold uppercase tracking-widest">Premium CRM Dashboard</p>
+        </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Auth Card */}
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
+          <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="p-4 bg-red-500/20 border border-red-500/50 rounded-xl text-red-100 text-sm font-medium animate-in fade-in zoom-in duration-300">
+              <div className="p-3 bg-rose-50 border border-rose-100 rounded-lg text-rose-600 text-[11px] font-bold uppercase tracking-wider text-center animate-in fade-in slide-in-from-top-1">
                 {error}
               </div>
             )}
 
             <div className="space-y-4">
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-indigo-300 group-focus-within:text-indigo-400 transition-colors">
-                  <Mail className="h-5 w-5" />
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
+                <div className="relative group">
+                  <Mail className="absolute left-4 top-3 h-4 w-4 text-slate-300 group-focus-within:text-indigo-600 transition-colors" />
+                  <input
+                    type="email"
+                    required
+                    className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-medium focus:bg-white focus:ring-4 focus:ring-indigo-600/5 focus:border-indigo-600 outline-none transition-all placeholder:text-slate-300"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
                 </div>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3.5 bg-indigo-950/40 border border-indigo-500/30 rounded-xl text-white placeholder:text-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all"
-                  placeholder="Email address"
-                  required
-                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Password</label>
+                <div className="relative group">
+                  <Lock className="absolute left-4 top-3 h-4 w-4 text-slate-300 group-focus-within:text-indigo-600 transition-colors" />
+                  <input
+                    type="password"
+                    required
+                    className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-medium focus:bg-white focus:ring-4 focus:ring-indigo-600/5 focus:border-indigo-600 outline-none transition-all placeholder:text-slate-300"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </div>
               </div>
 
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-indigo-300 group-focus-within:text-indigo-400 transition-colors">
-                  <Lock className="h-5 w-5" />
-                </div>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3.5 bg-indigo-950/40 border border-indigo-500/30 rounded-xl text-white placeholder:text-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all"
-                  placeholder="Password"
-                  required
-                />
-              </div>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-95 shadow-md shadow-indigo-200 disabled:opacity-50 border border-indigo-500/20"
+              >
+                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ChevronRight className="h-4 w-4" />} Sign In
+              </button>
             </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-3.5 px-4 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg transform transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  <span>Signing in...</span>
-                </>
-              ) : (
-                <span>Access Dashboard</span>
-              )}
-            </button>
           </form>
+        </div>
 
-          <p className="mt-8 text-center text-sm text-indigo-300">
-            Secure private server. Authorized personnel only.
-          </p>
+        {/* Footer */}
+        <div className="text-center space-y-4 pt-4 border-t border-slate-200">
+           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
+             Secure Gateway • PNP CRM v2.0
+           </p>
+           <div className="flex items-center justify-center gap-4 text-slate-300">
+             <div className="h-px w-8 bg-slate-200" />
+             <div className="h-1.5 w-1.5 rounded-full bg-slate-200" />
+             <div className="h-px w-8 bg-slate-200" />
+           </div>
         </div>
       </div>
     </div>
