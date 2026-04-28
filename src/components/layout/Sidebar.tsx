@@ -18,7 +18,8 @@ import {
   Settings,
   Star,
   ChevronRight,
-  Wallet
+  Wallet,
+  Trash2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -37,6 +38,7 @@ const navigation = [
   { name: "Customer Expenses", href: "/customer-expenses", icon: Wallet },
   { name: "Business Expenses", href: "/expenses", icon: Banknote },
   { name: "Reports & Analytics", href: "/reports", icon: TrendingUp },
+  { name: "Canceled Archive", href: "/canceled", icon: Trash2 },
   { name: "General Settings", href: "/settings", icon: Settings },
 ];
 
@@ -47,10 +49,14 @@ export default function Sidebar() {
     <div className="flex h-full w-64 flex-col bg-slate-950 border-r border-white/5 shadow-2xl relative z-[50]">
       <div className="flex h-20 shrink-0 items-center px-8 border-b border-white/5">
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
-            <LayoutDashboard className="h-5 w-5 text-white" />
+          <div className="h-10 w-10 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20 p-2 overflow-hidden">
+            <img 
+              src="/logo.png" 
+              alt="PNP Logo" 
+              className="h-full w-full object-contain brightness-0 invert scale-[1.35] [filter:brightness(0)_invert(1)_drop-shadow(0_0_0.2px_white)_drop-shadow(0_0_0.2px_white)]" 
+            />
           </div>
-          <span className="text-base font-bold text-white tracking-tight uppercase">PNP <span className="text-indigo-400">CRM</span></span>
+          <span className="text-lg font-bold text-white tracking-tight uppercase">PNP <span className="text-indigo-400">CRM</span></span>
         </div>
       </div>
 

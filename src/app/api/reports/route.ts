@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 export async function GET() {
   try {
     const session = await auth();
-    if (!session) return new NextResponse("Unauthorized", { status: 401 });
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const now = new Date();
     const startOfDay = new Date(now.setHours(0, 0, 0, 0));
@@ -60,9 +60,12 @@ export async function GET() {
       prisma.lead.groupBy({ by: ["status"], _count: { _all: true } }),
       // Count by inquiry source
       prisma.lead.groupBy({ by: ["inquirySource"], _count: { _all: true }, orderBy: { _count: { inquirySource: "desc" } } }),
-      // Last 6 months revenue
-      prisma.payment.findMany({
-        where: { createdAt: { gte: new Date(new Date().setMonth(new Date().getMonth() - 5)) } },
+      // Last 6 months revenue - Unified via LeadTransaction
+      prisma.leadTransaction.findMany({
+        where: { 
+          type: "RECEIVED",
+          createdAt: { gte: new Date(new Date().setMonth(new Date().getMonth() - 5)) } 
+        },
         select: { amount: true, createdAt: true },
       }),
       // Conversion: leads that reached WON_ORDER vs total
@@ -101,6 +104,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error("[REPORTS_GET]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }

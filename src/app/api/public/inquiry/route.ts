@@ -38,7 +38,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json(lead, { headers: corsHeaders() });
   } catch (error) {
-    console.error("[PUBLIC_INQUIRY_POST]", error);
-    return new NextResponse("Internal Error", { status: 500, headers: corsHeaders() });
+    return NextResponse.json({ error: "Internal Error" }, { status: 500, headers: corsHeaders() });
   }
 }

@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 export async function GET(request: Request) {
   try {
     const session = await auth();
-    if (!session) return new NextResponse("Unauthorized", { status: 401 });
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const customers = await prisma.lead.findMany({
       where: {
@@ -24,6 +24,6 @@ export async function GET(request: Request) {
     return NextResponse.json(customers);
   } catch (error) {
     console.error("[CUSTOMERS_GET]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }

@@ -1,30 +1,26 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { auth } from "@/lib/auth";
 
-export async function POST(request: Request) {
-  try {
-    const session = await auth();
-    if (!session) return new NextResponse("Unauthorized", { status: 401 });
+// GET /api/notes?leadId=xxx
+export async function GET(req: NextRequest) {
+  const leadId = req.nextUrl.searchParams.get("leadId");
+  if (!leadId) return NextResponse.json({ error: "leadId required" }, { status: 400 });
+  const notes = await prisma.leadNote.findMany({
+    where: { leadId },
+    orderBy: { createdAt: "desc" },
+  });
+  return NextResponse.json(notes);
+}
 
-    const body = await request.json();
-    const { leadId, content, fileUrl } = body;
-
-    if (!leadId || !content) {
-      return new NextResponse("Missing fields", { status: 400 });
-    }
-
-    const note = await prisma.note.create({
-      data: {
-        leadId,
-        content,
-        fileUrl: fileUrl || null
-      }
-    });
-
-    return NextResponse.json(note);
-  } catch (error) {
-    console.error("[NOTES_POST]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+// POST /api/notes
+export async function POST(req: NextRequest) {
+  const body = await req.json();
+  const { leadId, content, isCompleted } = body;
+  if (!leadId || !content) {
+    return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
+  const note = await prisma.leadNote.create({
+    data: { leadId, content, isCompleted: isCompleted ?? false },
+  });
+  return NextResponse.json(note, { status: 201 });
 }

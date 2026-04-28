@@ -9,10 +9,17 @@ export async function POST(
   const { id } = await params;
   try {
     const session = await auth();
-    if (!session) return new NextResponse("Unauthorized", { status: 401 });
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const body = await request.json();
-    const { reactivationNote } = body;
+    let reactivationNote = null;
+    try {
+      if (request.headers.get("content-length") !== "0") {
+        const body = await request.json();
+        reactivationNote = body.reactivationNote || null;
+      }
+    } catch (e) {
+      // Body might be empty or invalid JSON
+    }
 
     const lead = await prisma.lead.update({
       where: { id },
@@ -26,7 +33,7 @@ export async function POST(
     });
 
     // Log a note in the timeline
-    await prisma.note.create({
+    await prisma.leadNote.create({
       data: {
         leadId: id,
         content: `🔄 Lead Reactivated. ${reactivationNote ? `Reason: ${reactivationNote}` : ""}`,
@@ -36,6 +43,6 @@ export async function POST(
     return NextResponse.json(lead);
   } catch (error) {
     console.error("[LEAD_REACTIVATE]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }

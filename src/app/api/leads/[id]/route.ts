@@ -17,13 +17,17 @@ export async function GET(
       where: { id },
       include: {
         assignedStaff: { select: { name: true } },
-        notes: { orderBy: { createdAt: "desc" } },
         followUps: { orderBy: { createdAt: "desc" } },
-        meetings: { orderBy: { date: "asc" } },
+        meetings: { orderBy: { createdAt: "desc" } },
         requirement: true,
         quotations: true,
         orders: true,
-        transactions: { orderBy: { date: "desc" } }
+        transactions: {
+          orderBy: { date: "desc" },
+        },
+        leadNotes: {
+          orderBy: { createdAt: "desc" },
+        },
       }
     });
 

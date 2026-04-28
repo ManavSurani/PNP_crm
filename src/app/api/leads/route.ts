@@ -6,22 +6,29 @@ export async function GET(request: Request) {
   try {
     const session = await auth();
     if (!session) {
-      return new NextResponse("Unauthorized", { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { searchParams } = new URL(request.url);
+    const status = searchParams.get("status");
+
     const leads = await prisma.lead.findMany({
+      where: status ? { status: status as any } : {},
       orderBy: { createdAt: "desc" },
       include: {
         assignedStaff: {
           select: { id: true, name: true }
+        },
+        followUps: {
+          orderBy: { createdAt: "desc" },
+          take: 1
         }
       }
     });
 
     return NextResponse.json(leads);
   } catch (error) {
-    console.error("[LEADS_GET]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }
 
@@ -29,7 +36,7 @@ export async function POST(request: Request) {
   try {
     const session = await auth();
     if (!session) {
-      return new NextResponse("Unauthorized", { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
@@ -45,7 +52,7 @@ export async function POST(request: Request) {
     } = body;
 
     if (!customerName || !contactNumber) {
-      return new NextResponse("Missing required fields", { status: 400 });
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
     const lead = await prisma.lead.create({
@@ -64,7 +71,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json(lead);
   } catch (error) {
-    console.error("[LEADS_POST]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }

@@ -82,14 +82,16 @@ export async function GET(
   const { id } = await params;
   try {
     const session = await auth();
-    if (!session) return new NextResponse("Unauthorized", { status: 401 });
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const order = await prisma.order.findUnique({
       where: { id },
       include: {
-        lead: { select: { customerName: true, contactNumber: true, serviceType: true, fullAddress: true } },
-        payments: { orderBy: { createdAt: "desc" } },
-        expenses: { orderBy: { date: "desc" } },
+        lead: { 
+          include: { 
+            transactions: { orderBy: { date: "desc" } } 
+          },
+        },
         // Definitive Fix: Use any-casting for new dynamic relation
         updates: { orderBy: { createdAt: "desc" } },
         assignments: {

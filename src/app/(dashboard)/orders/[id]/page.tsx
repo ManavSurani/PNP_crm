@@ -51,8 +51,12 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
   if (!order) return <div className="p-20 text-center font-semibold text-slate-400 uppercase tracking-[0.2em] text-xs underline underline-offset-8 decoration-slate-100">Project Not Profiled</div>;
 
-  const totalReceived = order.payments?.reduce((s: number, p: any) => s + p.amount, 0) || 0;
-  const totalExpenses = order.expenses?.reduce((s: number, e: any) => s + e.amount, 0) || 0;
+  const totalReceived = order.lead?.transactions
+    ?.filter((t: any) => t.type === "RECEIVED")
+    .reduce((s: number, p: any) => s + p.amount, 0) || 0;
+  const totalExpenses = order.lead?.transactions
+    ?.filter((t: any) => t.type === "EXPENSE")
+    .reduce((s: number, e: any) => s + e.amount, 0) || 0;
   const netProfit = totalReceived - totalExpenses;
   const profitMargin = totalReceived > 0 ? ((netProfit / totalReceived) * 100).toFixed(1) : "0";
   const projectedProfit = order.totalAmount - totalExpenses;
@@ -199,7 +203,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                   Recent Inflow <span className="text-[10px] text-emerald-500 font-bold">Payments</span>
                </h4>
                <div className="space-y-4">
-                  {order.payments?.slice(0, 5).map((p: any) => (
+                  {order.lead?.transactions?.filter((t: any) => t.type === "RECEIVED")?.slice(0, 5).map((p: any) => (
                     <div key={p.id} className="flex items-center justify-between">
                        <div className="flex items-center gap-3">
                           <div className="h-1.5 w-1.5 bg-emerald-500 rounded-full" />
@@ -219,7 +223,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                   Project Outflow <span className="text-[10px] text-rose-500 font-bold">Expenses</span>
                </h4>
                <div className="space-y-4">
-                  {order.expenses?.slice(0, 5).map((e: any) => (
+                  {order.lead?.transactions?.filter((t: any) => t.type === "EXPENSE")?.slice(0, 5).map((e: any) => (
                     <div key={e.id} className="flex items-center justify-between">
                        <div className="flex items-center gap-3">
                           <div className="h-1.5 w-1.5 bg-rose-500 rounded-full" />

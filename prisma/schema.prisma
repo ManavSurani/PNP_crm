@@ -117,11 +117,11 @@ model Lead {
   requirement Requirement?
 
   followUps   FollowUp[]
-  notes       Note[]
   meetings    Meeting[]
   quotations  Quotation[]
   orders      Order[]
-  transactions CustomerTransaction[]
+  transactions  LeadTransaction[]
+  leadNotes     LeadNote[]
 }
 
 model Requirement {
@@ -172,15 +172,8 @@ model FollowUp {
   updatedAt       DateTime    @updatedAt
 }
 
-model Note {
-  id        String   @id @default(uuid())
-  leadId    String
-  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  content   String
-  fileUrl   String?
-  createdAt DateTime @default(now()) // Timeline date
-  updatedAt DateTime @updatedAt
-}
+// Note model removed in favor of LeadNote
+
 
 // -----------------------------------------------------------------------------
 // MODULE: Meeting Management
@@ -318,8 +311,6 @@ model Order {
   isBlocked     Boolean     @default(false)
   blockReason   String?
   
-  payments      Payment[]
-  expenses      Expense[]
   assignments   WorkerAssignment[]
   updates       OrderUpdate[]
 
@@ -342,38 +333,8 @@ model OrderUpdate {
 // MODULE: Payment & Financials
 // -----------------------------------------------------------------------------
 
-enum PaymentType {
-  ADVANCE
-  PARTIAL
-  FULL
-}
+// Payment and Expense models consolidated into LeadTransaction
 
-model Payment {
-  id          String      @id @default(uuid())
-  orderId     String
-  order       Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  amount      Float
-  type        PaymentType @default(ADVANCE)
-  paymentMode String      @default("CASH")
-  status      String      @default("COMPLETED")
-  referenceNo String?
-  paymentDate DateTime    @default(now())
-  notes       String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-}
-
-model Expense {
-  id          String   @id @default(uuid())
-  orderId     String
-  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  category    String   // LABOUR, MATERIAL, TRANSPORT, INSTALLATION, MISC
-  amount      Float
-  description String?
-  date        DateTime @default(now())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
 
 // -----------------------------------------------------------------------------
 // MODULE: Worker & Supplier Management
@@ -458,26 +419,32 @@ model Notification {
   createdAt   DateTime @default(now())
 }
 
-// -----------------------------------------------------------------------------
-// MODULE: Customer Financial Ledger
-// -----------------------------------------------------------------------------
-
-enum TransactionType {
-  INCOMING
-  OUTGOING
-}
-
-model CustomerTransaction {
-  id          String          @id @default(uuid())
-  leadId      String
-  lead        Lead            @relation(fields: [leadId], references: [id], onDelete: Cascade)
+model LeadTransaction {
+  id          String          @id @default(cuid())
+  leadId      String?
+  lead        Lead?           @relation(fields: [leadId], references: [id], onDelete: Cascade)
   type        TransactionType
-  category    String          // Generic string to avoid strict enums
   amount      Float
-  date        DateTime        @default(now())
-  notes       String?
-  addedBy     String?         // Who added it
-  fileUrl     String?         // URL for attachment (bill, invoice, etc.)
+  date        DateTime
+  paidTo      String
+  category    String
+  paymentMode String
+  description String?
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
+}
+
+model LeadNote {
+  id          String   @id @default(cuid())
+  leadId      String?
+  lead        Lead?    @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  content     String
+  isCompleted Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum TransactionType {
+  RECEIVED
+  EXPENSE
 }

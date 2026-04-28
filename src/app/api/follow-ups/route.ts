@@ -6,7 +6,7 @@ import { addDays } from "date-fns";
 export async function GET(request: Request) {
   try {
     const session = await auth();
-    if (!session) return new NextResponse("Unauthorized", { status: 401 });
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const followUps = await prisma.followUp.findMany({
       orderBy: { scheduledDate: "asc" },
@@ -20,56 +20,61 @@ export async function GET(request: Request) {
     return NextResponse.json(followUps);
   } catch (error) {
     console.error("[FOLLOWUPS_GET]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   try {
     const session = await auth();
-    if (!session) return new NextResponse("Unauthorized", { status: 401 });
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await request.json();
-    const { leadId, outcome, noteGiven, pickedStatus, cancelReason } = body;
+    const { leadId, outcome, noteGiven, pickedStatus, cancelReason, followUpDate, followUpTime } = body;
 
     const lead = await prisma.lead.findUnique({
       where: { id: leadId },
       include: { followUps: true }
     });
 
-    if (!lead) return new NextResponse("Lead not found", { status: 404 });
+    if (!lead) return NextResponse.json({ error: "Lead not found" }, { status: 404 });
 
     const attemptCount = lead.followUps.length + 1;
 
     let leadStatusUpdate: string = lead.status;
-    let autoNextDate: Date | null = null;
+    let scheduledCallDate: Date | null = null;
+    let scheduledCallTime: string | null = followUpTime || null;
     let isCancelled = false;
     let finalCancelReason: string | null = null;
 
     if (outcome === "NOT_PICKED") {
       if (attemptCount >= 4) {
-        // Auto-cancel after 4 missed attempts — no note required
         leadStatusUpdate = "CANCELLED";
         isCancelled = true;
         finalCancelReason = "No Response - Max 4 Attempts Reached";
       } else {
         leadStatusUpdate = "FOLLOW_UP";
-        autoNextDate = addDays(new Date(), 1); // Always auto-reschedule tomorrow
+        scheduledCallDate = addDays(new Date(), 1); 
       }
     } else if (outcome === "PICKED") {
-      // Apply the status chosen by the user after picking
       if (pickedStatus === "MEETING") {
         leadStatusUpdate = "MEETING_SCHEDULED";
       } else if (pickedStatus === "CANCELLED") {
         leadStatusUpdate = "CANCELLED";
         isCancelled = true;
         finalCancelReason = cancelReason || "Customer Cancelled";
+      } else if (pickedStatus === "NEXT_DAY") {
+        leadStatusUpdate = "FOLLOW_UP";
+        scheduledCallDate = addDays(new Date(), 1);
       } else {
-        // Interested / Reschedule → stay on FOLLOW_UP
         leadStatusUpdate = "FOLLOW_UP";
       }
+
+      // Override with user-provided date if available (for INTERESTED or RESCHEDULE)
+      if (followUpDate) {
+        scheduledCallDate = new Date(followUpDate);
+      }
     } else if (outcome === "CANCELLED") {
-      // Direct cancellation from action menu
       leadStatusUpdate = "CANCELLED";
       isCancelled = true;
       finalCancelReason = cancelReason || "Not Specified";
@@ -81,8 +86,9 @@ export async function POST(request: Request) {
         leadId,
         attemptNumber: attemptCount,
         outcome: outcome as any,
-        noteGiven: noteGiven || null, // Optional for NOT_PICKED
-        nextCallDate: autoNextDate,
+        noteGiven: noteGiven || null, 
+        nextCallDate: scheduledCallDate,
+        nextCallTime: scheduledCallTime,
         completedDate: new Date()
       }
     });
@@ -100,6 +106,6 @@ export async function POST(request: Request) {
     return NextResponse.json(followUp);
   } catch (error) {
     console.error("[FOLLOWUPS_POST]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }

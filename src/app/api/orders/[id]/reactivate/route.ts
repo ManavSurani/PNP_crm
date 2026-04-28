@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 
-export async function GET(
+export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -11,19 +11,24 @@ export async function GET(
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const quotation = await prisma.quotation.findUnique({
+    const order = await prisma.order.update({
       where: { id },
-      include: {
-        lead: true,
-        items: true
-      }
+      data: {
+        status: "CONFIRMED",
+      },
     });
 
-    if (!quotation) return NextResponse.json({ error: "Quotation not found" }, { status: 404 });
+    // Log in lead timeline
+    await prisma.leadNote.create({
+      data: {
+        leadId: order.leadId,
+        content: `🔄 Order Reactivated (Order No: ${order.orderNo})`,
+      },
+    });
 
-    return NextResponse.json(quotation);
+    return NextResponse.json(order);
   } catch (error) {
-    console.error("[QUOTATION_GET]", error);
+    console.error("[ORDER_REACTIVATE]", error);
     return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }

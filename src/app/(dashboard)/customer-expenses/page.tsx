@@ -31,8 +31,8 @@ export default function MasterExpensesPage() {
 
   const data = filtered.map(c => {
     const projectAmount = c.orders?.reduce((acc: number, o: any) => acc + o.totalAmount, 0) || 0;
-    const received = c.transactions?.filter((t: any) => t.type === "INCOMING").reduce((acc: number, t: any) => acc + t.amount, 0) || 0;
-    const expenses = c.transactions?.filter((t: any) => t.type === "OUTGOING").reduce((acc: number, t: any) => acc + t.amount, 0) || 0;
+    const received = c.transactions?.filter((t: any) => t.type === "RECEIVED").reduce((acc: number, t: any) => acc + t.amount, 0) || 0;
+    const expenses = c.transactions?.filter((t: any) => t.type === "EXPENSE").reduce((acc: number, t: any) => acc + t.amount, 0) || 0;
     const pending = projectAmount - received;
     
     globalWorkAmount += projectAmount;
@@ -40,7 +40,7 @@ export default function MasterExpensesPage() {
     globalExpenses += expenses;
 
     return { ...c, projectAmount, received, expenses, pending };
-  });
+  }).filter(c => c.expenses > 0); // Only show accounts with actual expenses
 
   const globalPending = globalWorkAmount - globalReceived;
   const globalProfit = globalWorkAmount - globalExpenses;
@@ -51,17 +51,17 @@ export default function MasterExpensesPage() {
     <div className="max-w-7xl mx-auto space-y-8 pb-24">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Customer Expenses</h1>
-        <p className="text-sm text-slate-500 mt-1">Track comprehensive project-level ledgers, cash flows, and profitability margins.</p>
+        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Project Expenditure</h1>
+        <p className="text-sm text-slate-500 mt-1">Monitor all outgoing capital, vendor payments, and project-level costs.</p>
       </div>
 
       {/* Global Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Asset Value", val: globalWorkAmount, color: "text-slate-900", icon: Wallet, bg: "bg-slate-50 border-slate-200" },
-          { label: "Total Liquidity (Received)", val: globalReceived, color: "text-emerald-600", icon: ArrowDownCircle, bg: "bg-emerald-50 border-emerald-100" },
-          { label: "Outgoing Capital (Expenses)", val: globalExpenses, color: "text-rose-600", icon: ArrowUpCircle, bg: "bg-rose-50 border-rose-100" },
-          { label: "Realized Net Profit", val: globalProfit, color: "text-indigo-600", icon: TrendingUp, bg: "bg-indigo-50 border-indigo-100" },
+          { label: "Total Project Value", val: globalWorkAmount, color: "text-slate-900", icon: Wallet, bg: "bg-slate-50 border-slate-200" },
+          { label: "Total Outflow (Expenses)", val: globalExpenses, color: "text-rose-600", icon: ArrowUpCircle, bg: "bg-rose-50 border-rose-100" },
+          { label: "Accounts with Expenses", val: data.length, color: "text-amber-600", icon: TrendingUp, bg: "bg-amber-50 border-amber-100", isCount: true },
+          { label: "Estimated Net Margin", val: globalProfit, color: "text-indigo-600", icon: TrendingUp, bg: "bg-indigo-50 border-indigo-100" },
         ].map((card, i) => (
           <div key={i} className={cn("p-5 rounded-xl border shadow-sm", card.bg)}>
              <div className="flex items-center gap-2 mb-3">
@@ -69,7 +69,7 @@ export default function MasterExpensesPage() {
                 <h3 className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{card.label}</h3>
              </div>
              <p className={cn("text-2xl font-black font-mono tracking-tight", card.color)}>
-               ₹{card.val.toLocaleString()}
+               {card.isCount ? card.val : `₹${card.val.toLocaleString()}`}
              </p>
           </div>
         ))}
@@ -119,7 +119,7 @@ export default function MasterExpensesPage() {
                   <td className="px-6 py-4 text-right font-mono font-bold text-amber-600">₹{c.pending.toLocaleString()}</td>
                   <td className="px-6 py-4 text-center">
                     <Link
-                      href={`/customers/${c.id}/financials`}
+                      href={`/customers/${c.id}/financials?type=EXPENSE`}
                       className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors shadow-sm"
                     >
                       Ledger <ArrowRight className="h-3 w-3" />

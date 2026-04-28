@@ -1,33 +1,45 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-export async function POST(req: Request) {
-  try {
-    const body = await req.json();
-    const { leadId, type, category, amount, date, notes, addedBy } = body;
+// GET /api/transactions?leadId=xxx&type=RECEIVED|EXPENSE
+export async function GET(req: NextRequest) {
+  const leadId = req.nextUrl.searchParams.get("leadId");
+  const type = req.nextUrl.searchParams.get("type") as "RECEIVED" | "EXPENSE" | null;
+  
+  const where: any = {};
+  if (leadId) where.leadId = leadId;
+  if (type) where.type = type;
 
-    if (!leadId || !type || !category || amount === undefined) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-    }
+  const transactions = await prisma.leadTransaction.findMany({
+    where,
+    include: {
+      lead: {
+        select: { customerName: true }
+      }
+    },
+    orderBy: { date: "desc" },
+  });
+  return NextResponse.json(transactions);
+}
 
-    const transaction = await prisma.customerTransaction.create({
-      data: {
-        leadId,
-        type, // 'INCOMING' | 'OUTGOING'
-        category,
-        amount: parseFloat(amount),
-        date: date ? new Date(date) : new Date(),
-        notes,
-        addedBy,
-      },
-    });
-
-    return NextResponse.json(transaction, { status: 201 });
-  } catch (error: any) {
-    console.error("[TRANSACTIONS_POST]", error);
-    return NextResponse.json(
-      { error: "Internal Error", details: error.message },
-      { status: 500 }
-    );
+// POST /api/transactions
+export async function POST(req: NextRequest) {
+  const body = await req.json();
+  const { leadId, type, amount, date, paidTo, category, paymentMode, description } = body;
+  if (!leadId || !type || !amount || !date || !paidTo || !category || !paymentMode) {
+    return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
+  const transaction = await prisma.leadTransaction.create({
+    data: {
+      leadId,
+      type,
+      amount: parseFloat(amount),
+      date: new Date(date),
+      paidTo,
+      category,
+      paymentMode,
+      description: description || null,
+    },
+  });
+  return NextResponse.json(transaction, { status: 201 });
 }

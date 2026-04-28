@@ -5,31 +5,44 @@ import { auth } from "@/lib/auth";
 export async function GET(request: Request) {
   try {
     const session = await auth();
-    if (!session) return new NextResponse("Unauthorized", { status: 401 });
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const orders = await prisma.order.findMany({
       orderBy: { createdAt: "desc" },
       include: {
         lead: {
-          select: { customerName: true, contactNumber: true, serviceType: true }
+          include: { 
+            transactions: {
+              where: { type: "RECEIVED" },
+              select: { amount: true }
+            }
+          }
         },
         quotation: {
-          select: { quotationNo: true, finalTotal: true }
+          select: { finalTotal: true }
         }
       }
     });
 
-    return NextResponse.json(orders);
+    const ordersWithFinancials = orders.map(order => {
+      const totalCollections = order.lead?.transactions.reduce((acc, t) => acc + t.amount, 0) || 0;
+      return {
+        ...order,
+        advanceAmount: totalCollections,
+        pendingAmount: Math.max(0, order.totalAmount - totalCollections)
+      };
+    });
+
+    return NextResponse.json(ordersWithFinancials);
   } catch (error) {
-    console.error("[ORDERS_GET]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   try {
     const session = await auth();
-    if (!session) return new NextResponse("Unauthorized", { status: 401 });
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await request.json();
     const { leadId, quotationId, totalAmount, advanceAmount, status, completionDate } = body;
@@ -56,22 +69,24 @@ export async function POST(request: Request) {
       data: { status: "WON_ORDER", isCancelled: false }
     });
 
-    // If advance amount exists, automatically create a Payment entry
+    // If advance amount exists, automatically create a LeadTransaction entry
     if (advanceAmount > 0) {
-      await prisma.payment.create({
+      await prisma.leadTransaction.create({
         data: {
-          orderId: order.id,
-          amount: advanceAmount,
-          paymentMode: "BANK_TRANSFER", // Defaulting, can be changed later
-          status: "COMPLETED",
-          referenceNo: `ADV-${orderNo}`
+          leadId,
+          amount: parseFloat(advanceAmount.toString()),
+          type: "RECEIVED",
+          date: new Date(),
+          paidTo: "PNP Projects",
+          category: "Advance",
+          paymentMode: "BANK_TRANSFER",
+          description: `Advance received for Order ${orderNo}`
         }
       });
     }
 
     return NextResponse.json(order);
   } catch (error) {
-    console.error("[ORDERS_POST]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }

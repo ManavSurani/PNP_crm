@@ -5,13 +5,13 @@ import { auth } from "@/lib/auth";
 export async function POST(request: Request) {
   try {
     const session = await auth();
-    if (!session) return new NextResponse("Unauthorized", { status: 401 });
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await request.json();
     const { leadId, address, date, time, notes } = body;
 
     if (!leadId || !address || !date || !time) {
-      return new NextResponse("Missing required fields", { status: 400 });
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
     const meeting = await prisma.meeting.create({
@@ -37,14 +37,14 @@ export async function POST(request: Request) {
     return NextResponse.json(meeting);
   } catch (error) {
     console.error("[MEETINGS_POST]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }
 
 export async function GET(request: Request) {
   try {
     const session = await auth();
-    if (!session) return new NextResponse("Unauthorized", { status: 401 });
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const meetings = await prisma.meeting.findMany({
       orderBy: { date: "asc" },
@@ -58,6 +58,6 @@ export async function GET(request: Request) {
     return NextResponse.json(meetings);
   } catch (error) {
     console.error("[MEETINGS_GET]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }

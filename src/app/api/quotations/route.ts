@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 export async function GET(request: Request) {
   try {
     const session = await auth();
-    if (!session) return new NextResponse("Unauthorized", { status: 401 });
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const quotations = await prisma.quotation.findMany({
       orderBy: { createdAt: "desc" },
@@ -28,7 +28,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const session = await auth();
-    if (!session) return new NextResponse("Unauthorized", { status: 401 });
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await request.json();
     const { 
@@ -116,7 +116,7 @@ export async function POST(request: Request) {
     });
 
     // Log this action to the Notes Timeline
-    await prisma.note.create({
+    await prisma.leadNote.create({
       data: {
         leadId,
         content: `Quotation ${quotationNo} generated for ₹${finalTotal.toFixed(2)}`

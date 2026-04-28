@@ -20,6 +20,7 @@ type Lead = {
   inquirySource: string;
   requirementDetails: string | null;
   assignedStaff?: { name: string } | null;
+  followUps?: { nextCallDate: string | null; nextCallTime: string | null }[];
 };
 
 export default function InterestedLeadsPage() {
@@ -32,10 +33,14 @@ export default function InterestedLeadsPage() {
     fetch("/api/leads?status=FOLLOW_UP")
       .then(r => r.json())
       .then(data => {
-        const interested = Array.isArray(data)
-          ? data.filter((l: Lead) => l.status === "FOLLOW_UP" || l.status === "MEETING_SCHEDULED")
-          : [];
-        setLeads(interested);
+        const interested = Array.isArray(data) ? data : [];
+        // Sort by nextCallDate
+        const sorted = [...interested].sort((a, b) => {
+          const dateA = a.followUps?.[0]?.nextCallDate ? new Date(a.followUps[0].nextCallDate).getTime() : Infinity;
+          const dateB = b.followUps?.[0]?.nextCallDate ? new Date(b.followUps[0].nextCallDate).getTime() : Infinity;
+          return dateA - dateB;
+        });
+        setLeads(sorted);
       })
       .catch(console.error)
       .finally(() => setIsLoading(false));
@@ -149,11 +154,15 @@ export default function InterestedLeadsPage() {
                       <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Estimated Budget</p>
                       <p className="text-xs font-bold text-slate-900 mt-0.5 whitespace-nowrap">{lead.budgetRange || "Flexible"}</p>
                    </div>
-                   <div>
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Inquiry Date</p>
-                      <p className="text-xs font-bold text-slate-900 mt-0.5 whitespace-nowrap">{format(new Date(lead.createdAt), "dd MMM, yy")}</p>
-                   </div>
-                </div>
+                    <div>
+                      <p className="text-[9px] font-bold text-indigo-400 uppercase tracking-widest">Next Follow-up</p>
+                      <p className="text-xs font-bold text-slate-900 mt-0.5 whitespace-nowrap">
+                        {lead.followUps?.[0]?.nextCallDate 
+                          ? `${format(new Date(lead.followUps[0].nextCallDate), "dd MMM, yy")} ${lead.followUps[0].nextCallTime || ""}`
+                          : "Unscheduled"}
+                      </p>
+                    </div>
+                  </div>
 
                 <div className="flex gap-2 pt-2">
                    <Link href={`/leads/${lead.id}`}

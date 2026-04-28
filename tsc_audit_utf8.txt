@@ -1,0 +1,12 @@
+﻿.next/types/validator.ts(42,39): error TS2307: Cannot find module '../../src/app/page.js' or its corresponding type declarations.
+src/app/api/leads/[id]/reactivate/route.ts(29,18): error TS2339: Property 'note' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+src/app/api/quotations/route.ts(119,18): error TS2339: Property 'note' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+src/app/api/reports/export/route.ts(30,11): error TS2353: Object literal may only specify known properties, and 'payments' does not exist in type 'OrderInclude<DefaultArgs>'.
+src/app/api/reports/export/route.ts(36,23): error TS2339: Property 'payments' does not exist on type '{ id: string; status: OrderStatus; createdAt: Date; updatedAt: Date; leadId: string; quotationId: string | null; orderNo: string; packageType: PackageType; ... 6 more ...; blockReason: string | null; }'.
+src/app/api/reports/export/route.ts(36,40): error TS7006: Parameter 's' implicitly has an 'any' type.
+src/app/api/reports/export/route.ts(36,43): error TS7006: Parameter 'p' implicitly has an 'any' type.
+src/app/api/reports/export/route.ts(37,23): error TS2339: Property 'expenses' does not exist on type '{ id: string; status: OrderStatus; createdAt: Date; updatedAt: Date; leadId: string; quotationId: string | null; orderNo: string; packageType: PackageType; ... 6 more ...; blockReason: string | null; }'.
+src/app/api/reports/export/route.ts(37,40): error TS7006: Parameter 's' implicitly has an 'any' type.
+src/app/api/reports/export/route.ts(37,43): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/app/api/reports/export/route.ts(40,41): error TS2339: Property 'lead' does not exist on type '{ id: string; status: OrderStatus; createdAt: Date; updatedAt: Date; leadId: string; quotationId: string | null; orderNo: string; packageType: PackageType; ... 6 more ...; blockReason: string | null; }'.
+src/app/api/suppliers/route.ts(33,9): error TS2353: Object literal may only specify known properties, and 'contactPerson' does not exist in type '(Without<SupplierCreateInput, SupplierUncheckedCreateInput> & SupplierUncheckedCreateInput) | (Without<...> & SupplierCreateInput)'.

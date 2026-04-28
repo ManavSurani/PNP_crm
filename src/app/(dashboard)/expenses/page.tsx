@@ -31,7 +31,7 @@ export default function ExpensesPage() {
   const fetchExpenses = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch("/api/expenses");
+      const res = await fetch("/api/transactions?type=EXPENSE");
       setExpenses(await res.json());
     } catch (e) { console.error(e); }
     finally { setIsLoading(false); }
@@ -43,10 +43,14 @@ export default function ExpensesPage() {
     e.preventDefault();
     setIsSaving(true);
     try {
-      await fetch("/api/expenses", {
+      await fetch("/api/transactions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          type: "EXPENSE",
+          paidTo: "Vendor / Supplier",
+        }),
       });
       setIsModalOpen(false);
       setForm({ category: "MATERIAL", amount: "", description: "", date: new Date().toISOString().split("T")[0] });
@@ -132,30 +136,30 @@ export default function ExpensesPage() {
                    <th scope="col" className="px-3 py-4 text-right pr-8 text-xs font-semibold text-slate-500 uppercase tracking-wider">Amount</th>
                  </tr>
                </thead>
-               <tbody className="divide-y divide-slate-100 bg-white">
-                 {filtered.map(exp => {
-                   const cat = CATEGORIES.find(c => c.val === exp.category);
-                   return (
-                     <tr key={exp.id} className="group hover:bg-slate-50 transition-all">
-                       <td className="whitespace-nowrap py-5 pl-8 pr-3">
-                         <span className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider border", cat?.color || "bg-slate-100 text-slate-700")}>
-                           {cat?.label || exp.category.replace(/_/g, " ")}
-                         </span>
-                       </td>
-                       <td className="px-3 py-5">
-                          <p className="text-sm font-medium text-slate-700 max-w-sm truncate">{exp.description || "No detail provided"}</p>
-                       </td>
-                       <td className="whitespace-nowrap px-3 py-5 text-xs text-slate-500 font-medium">
-                         {format(new Date(exp.date || exp.createdAt), "dd MMM, yyyy")}
-                       </td>
-                       <td className="whitespace-nowrap py-5 px-3 text-right pr-8">
-                         <div className="text-sm font-bold text-slate-900 group-hover:text-rose-600 transition-colors">
-                           ₹{exp.amount.toLocaleString()}
-                         </div>
-                       </td>
-                     </tr>
-                   );
-                 })}
+                <tbody className="divide-y divide-slate-100 bg-white">
+                  {filtered.map(exp => {
+                    return (
+                      <tr key={exp.id} className="group hover:bg-slate-50 transition-all">
+                        <td className="whitespace-nowrap py-5 pl-8 pr-3">
+                          <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider border bg-slate-100 text-slate-700">
+                            {exp.category?.replace(/_/g, " ")}
+                          </span>
+                        </td>
+                        <td className="px-3 py-5">
+                           <p className="text-sm font-medium text-slate-700 max-w-sm truncate">{exp.description || "No detail provided"}</p>
+                           {exp.lead && <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5 tracking-wider">Project: {exp.lead.customerName}</p>}
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-5 text-xs text-slate-500 font-medium">
+                          {format(new Date(exp.date), "dd MMM, yyyy")}
+                        </td>
+                        <td className="whitespace-nowrap py-5 px-3 text-right pr-8">
+                          <div className="text-sm font-bold text-slate-900 group-hover:text-rose-600 transition-colors">
+                            ₹{exp.amount.toLocaleString()}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                  {filtered.length === 0 && (
                    <tr>
                      <td colSpan={4} className="py-20 text-center">

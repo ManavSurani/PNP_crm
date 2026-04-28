@@ -5,13 +5,13 @@ import { auth } from "@/lib/auth";
 export async function GET() {
   try {
     const session = await auth();
-    if (!session) return new NextResponse("Unauthorized", { status: 401 });
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const stats = await Promise.all([
       prisma.lead.count(),
       prisma.order.count({ where: { status: "COMPLETED" } }),
-      prisma.payment.aggregate({ _sum: { amount: true } }),
-      prisma.expense.aggregate({ _sum: { amount: true } }),
+      prisma.leadTransaction.aggregate({ where: { type: "RECEIVED" }, _sum: { amount: true } }),
+      prisma.leadTransaction.aggregate({ where: { type: "EXPENSE" }, _sum: { amount: true } }),
       prisma.followUp.count({
         where: {
           nextCallDate: {
@@ -46,14 +46,17 @@ export async function GET() {
           status: { in: ["FOLLOW_UP", "MEETING_SCHEDULED"] }
         } 
       }),
-      // Most Profitable Projects
+      // Most Profitable Projects - Unified via Lead Transactions
       prisma.order.findMany({
         take: 5,
         orderBy: { totalAmount: 'desc' },
         include: { 
-          lead: { select: { customerName: true } },
-          payments: { select: { amount: true } },
-          expenses: { select: { amount: true } }
+          lead: { 
+            select: { 
+              customerName: true,
+              transactions: { select: { amount: true, type: true } }
+            } 
+          }
         }
       }),
       // Package Popularity
@@ -63,9 +66,13 @@ export async function GET() {
       })
     ]);
 
-    const topProjects = (stats[13] as unknown as any[] || []).map((o: any) => {
-      const revenue = o.payments.reduce((s: number, p: any) => s + p.amount, 0);
-      const expenses = o.expenses.reduce((s: number, e: any) => s + e.amount, 0);
+    const topProjects = (stats[13] as any[] || []).map((o: any) => {
+      const revenue = o.lead.transactions
+        .filter((t: any) => t.type === "RECEIVED")
+        .reduce((s: number, p: any) => s + p.amount, 0);
+      const expenses = o.lead.transactions
+        .filter((t: any) => t.type === "EXPENSE")
+        .reduce((s: number, e: any) => s + e.amount, 0);
       const profit = revenue - expenses;
       return {
         name: o.lead.customerName,
@@ -131,7 +138,6 @@ export async function GET() {
       chartData,
     });
   } catch (error) {
-    console.error("[STATS_GET]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }

@@ -1,29 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-// PUT /api/transactions/[id]
+// PUT /api/notes/[id]
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const body = await req.json();
-  const { type, amount, date, paidTo, category, paymentMode, description } = body;
-  const transaction = await prisma.leadTransaction.update({
+  const note = await prisma.leadNote.update({
     where: { id },
     data: {
-      type,
-      amount: parseFloat(amount),
-      date: new Date(date),
-      paidTo,
-      category,
-      paymentMode,
-      description: description || null,
+      ...(body.content !== undefined && { content: body.content }),
+      ...(body.isCompleted !== undefined && { isCompleted: body.isCompleted }),
     },
   });
-  return NextResponse.json(transaction);
+  return NextResponse.json(note);
 }
 
-// DELETE /api/transactions/[id]
+// DELETE /api/notes/[id]
 export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  await prisma.leadTransaction.delete({ where: { id } });
+  await prisma.leadNote.delete({ where: { id } });
   return NextResponse.json({ success: true });
 }

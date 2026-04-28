@@ -4,13 +4,10 @@ import { useState, useEffect, use } from "react";
 import { format } from "date-fns";
 import {
   Phone, MapPin, FileText, Clock, Zap, Loader2, Pencil, X, CheckCircle2,
-  PhoneMissed, Calendar, Check, RotateCcw, Ban, AlertTriangle, ListTodo, Activity
+  PhoneMissed, Calendar, Check, RotateCcw, Ban, AlertTriangle, ListTodo, Activity, Trash2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import RequirementAnalysis from "@/components/leads/RequirementAnalysis";
-import PackageSelection from "@/components/leads/PackageSelection";
 
-type Note = { id: string; content: string; createdAt: string };
 type FollowUp = { id: string; attemptNumber: number; outcome: string; noteGiven: string | null; createdAt: string };
 type Meeting = { id: string; address: string; date: string; time: string; notes: string | null; status: string; createdAt: string };
 
@@ -21,11 +18,12 @@ type LeadDetails = {
   createdAt: string; budgetRange: string | null; requirementDetails: string | null;
   siteLocation: string | null; landmark: string | null; preferredVisitTime: string | null;
   assignedStaff?: { id: string; name: string } | null;
-  notes: Note[]; followUps: FollowUp[]; meetings: Meeting[];
-  requirement: any | null;
+  followUps: FollowUp[]; meetings: Meeting[];
 };
 
-type ModalType = "EDIT" | "PICKED" | "NOT_PICKED" | "MEETING" | "CANCEL" | "REACTIVATE" | "CONVERT" | null;
+type ModalType = 
+  | "EDIT" | "PICKED" | "NOT_PICKED" | "MEETING" | "CANCEL" | "REACTIVATE" | "CONVERT"
+  | null;
 
 const CANCEL_REASONS = [
   "No Response",
@@ -45,11 +43,15 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
 
   // Form state
   const [noteContent, setNoteContent] = useState("");
-  const [pickedStatus, setPickedStatus] = useState("INTERESTED");
+  const [pickedStatus, setPickedStatus] = useState("");
+  const [followUpDate, setFollowUpDate] = useState("");
+  const [followUpTime, setFollowUpTime] = useState("");
   const [cancelReason, setCancelReason] = useState(CANCEL_REASONS[0]);
   const [reactivationNote, setReactivationNote] = useState("");
   const [meetingForm, setMeetingForm] = useState({ address: "", date: "", time: "", notes: "" });
   const [editForm, setEditForm] = useState<Partial<LeadDetails>>({});
+  const [editingItem, setEditingItem] = useState<{ id: string; type: "FOLLOW_UP" | "MEETING"; noteGiven?: string | null; notes?: string | null; address?: string; date?: string; time?: string } | null>(null);
+  const [editNoteText, setEditNoteText] = useState("");
 
   const fetchLead = async () => {
     try {
@@ -70,7 +72,9 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
   const closeModal = () => {
     setActiveModal(null);
     setNoteContent("");
-    setPickedStatus("INTERESTED");
+    setPickedStatus("");
+    setFollowUpDate("");
+    setFollowUpTime("");
     setCancelReason(CANCEL_REASONS[0]);
     setReactivationNote("");
     setMeetingForm({ address: "", date: "", time: "", notes: "" });
@@ -85,6 +89,44 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
         body: JSON.stringify(body),
       });
       if (res.ok) { closeModal(); fetchLead(); }
+    } catch (e) { console.error(e); }
+    finally { setIsSubmitting(false); }
+  };
+
+  const handleDeleteActivity = async (targetId: string, itemType: "FOLLOW_UP" | "MEETING") => {
+    alert(`Attempting to delete ${itemType} with ID: ${targetId}`);
+    if (!window.confirm("Are you sure you want to delete this activity?")) return;
+    setIsSubmitting(true);
+    try {
+      const apiUrl = itemType === "FOLLOW_UP" ? `/api/follow-ups/${targetId}` : `/api/meetings/${targetId}`;
+      const res = await fetch(apiUrl, { method: "DELETE" });
+      if (res.ok) {
+        alert("Deleted successfully");
+        fetchLead();
+      } else {
+        const err = await res.json();
+        alert(`API Error: ${err.error || "Unknown"}`);
+        fetchLead();
+      }
+    } catch (e) {
+      alert(`Network Error: ${String(e)}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleUpdateActivity = async () => {
+    if (!editingItem) return;
+    setIsSubmitting(true);
+    try {
+      const url = editingItem.type === "FOLLOW_UP" ? `/api/follow-ups/${editingItem.id}` : `/api/meetings/${editingItem.id}`;
+      const body = editingItem.type === "FOLLOW_UP" ? { noteGiven: editNoteText } : { notes: editNoteText };
+      const res = await fetch(url, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) { setEditingItem(null); fetchLead(); }
     } catch (e) { console.error(e); }
     finally { setIsSubmitting(false); }
   };
@@ -122,9 +164,8 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
   if (!lead) return <div className="p-10 text-center text-slate-500 font-bold">Lead not found.</div>;
 
   const timeline = [
-    ...lead.notes.map(n => ({ ...n, type: "NOTE" as const })),
-    ...lead.followUps.map(f => ({ ...f, type: "FOLLOW_UP" as const })),
-    ...lead.meetings.map(m => ({ ...m, type: "MEETING" as const })),
+    ...(lead.followUps || []).map(f => ({ ...f, type: "FOLLOW_UP" as const })),
+    ...(lead.meetings || []).map(m => ({ ...m, type: "MEETING" as const })),
   ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const isCancelled = lead.status === "CANCELLED";
@@ -208,6 +249,7 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                 <button onClick={() => setActiveModal("CONVERT")} className="w-full bg-indigo-50 text-indigo-700 hover:bg-indigo-100 py-3 rounded-lg text-[11px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all border border-indigo-200 mt-2 shadow-sm relative overflow-hidden group">
                   <Zap className="h-4 w-4 text-indigo-500 group-hover:scale-110 transition-transform" /> Convert to Customer
                 </button>
+
                 <div className="pt-2">
                   <button onClick={() => setActiveModal("CANCEL")} className="w-full text-slate-400 hover:text-rose-400 py-2 text-[10px] font-semibold uppercase tracking-widest transition-colors flex items-center justify-center gap-2 mt-2">
                     <Ban className="h-3 w-3" /> Cancel Lead
@@ -216,7 +258,6 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
               </div>
             )}
           </div>
-
 
           {/* Core Lead File */}
           <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative">
@@ -248,13 +289,12 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
           </div>
         </div>
 
-        {/* Right: Timeline */}
-        <div className="lg:col-span-2">
-          <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm min-h-[600px]">
+        <div className="lg:col-span-2 space-y-6">
+          <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm min-h-[500px]">
             <div className="flex items-center gap-4 mb-10">
-              <h3 className="text-lg font-semibold text-slate-900 tracking-tight">Activity Timeline</h3>
+              <h3 className="text-lg font-semibold text-slate-900 tracking-tight">Lead Activity Timeline</h3>
               <div className="h-px flex-1 bg-slate-100" />
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{timeline.length} Activities</p>
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{timeline.length} Events</p>
             </div>
             <div className="relative pl-8 border-l border-slate-100 space-y-10">
               {timeline.map((item: any) => (
@@ -266,7 +306,6 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                       item.outcome === "NOT_PICKED" ? "bg-rose-500" : "bg-slate-800"
                     )}>
                       {item.type === "MEETING" ? <Calendar className="h-3 w-3 text-white" /> :
-                       item.type === "NOTE" ? <FileText className="h-3 w-3 text-white" /> :
                        <Phone className="h-3 w-3 text-white" />}
                     </div>
                   <div className="space-y-2.5">
@@ -280,15 +319,40 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                         item.outcome === "PICKED" ? "text-emerald-600" :
                         item.outcome === "NOT_PICKED" ? "text-rose-600" : "text-slate-600"
                       )}>
-                        {item.type === "MEETING" ? "Site Visit" :
-                         item.outcome ? `Call: ${item.outcome.replace("_", " ")}` : "Internal Note"}
+                        {item.type === "MEETING" ? "Site Update" :
+                         item.outcome ? `Call: ${item.outcome.replace(/_/g, " ")}` : "Manual Log"}
                         {item.outcome === "NOT_PICKED" && ` (#${item.attemptNumber})`}
                       </span>
                     </div>
-                    <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 text-sm text-slate-700 leading-relaxed group shadow-sm hover:shadow-md transition-shadow">
+                    <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 text-sm text-slate-700 leading-relaxed group shadow-sm hover:shadow-md transition-shadow relative">
+                      {/* Action Buttons */}
+                      <div className="absolute top-3 right-3 flex items-center gap-2 z-30">
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            setEditingItem({ ...item });
+                            setEditNoteText(item.type === "MEETING" ? item.notes || "" : item.noteGiven || "");
+                          }}
+                          className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-md border border-transparent hover:border-slate-100 shadow-sm transition-all"
+                        >
+                          <Pencil className="h-3 w-3" />
+                        </button>
+                        <button 
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleDeleteActivity(item.id, item.type);
+                          }}
+                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-white rounded-md border border-transparent hover:border-slate-100 shadow-sm transition-all z-30"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+
                       {item.type === "MEETING" ? (
                         <div className="space-y-3">
-                          <div className="flex items-center gap-2 text-slate-900 font-semibold text-xs"><MapPin className="h-3.5 w-3.5 text-primary" /> {item.address}</div>
+                          <div className="flex items-center gap-2 text-slate-900 font-semibold text-xs"><MapPin className="h-3.5 w-3.5 text-indigo-500" /> {item.address}</div>
                           <div className="flex gap-4 text-[11px] font-medium text-slate-500">
                             <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {format(new Date(item.date), "PPP")}</span>
                             <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {item.time}</span>
@@ -296,8 +360,8 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                           {item.notes && <p className="italic text-slate-600 text-xs border-t border-slate-200 pt-2 leading-relaxed">"{item.notes}"</p>}
                         </div>
                       ) : (
-                        <p className="whitespace-pre-wrap">
-                          {item.content || item.noteGiven || <span className="text-slate-400 italic">No documentation provided.</span>}
+                        <p className="whitespace-pre-wrap pr-12">
+                          {item.noteGiven || <span className="text-slate-400 italic">No documentation provided.</span>}
                         </p>
                       )}
                     </div>
@@ -313,16 +377,6 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Requirement Analysis Module */}
-      <div>
-        <RequirementAnalysis leadId={id} initialData={lead.requirement} />
-      </div>
-
-      {/* Package Selection Module */}
-      <div>
-        <PackageSelection leadId={id} initialPackage={lead.requirementDetails?.includes("Package:") ? lead.requirementDetails.split("Package: ")[1] : "FULL_COMBO"} />
       </div>
 
       {/* ─── MODAL: EDIT LEAD ─── */}
@@ -345,9 +399,29 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
       {/* ─── MODAL: CALL PICKED ─── */}
       {activeModal === "PICKED" && (
         <Modal title="Log Successful Call" icon={<CheckCircle2 className="h-5 w-5" />} color="primary" onClose={closeModal}>
-          <div className="p-8 space-y-6">
-            <Field label="Conversation Summary *">
-              <textarea required rows={4} className={inputCls}
+          <div className="p-8 space-y-6 overflow-y-auto max-h-[75vh]">
+            {/* Conversation Context */}
+            {lead.followUps.length > 0 && (
+              <div className="space-y-3 mb-4">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Previous Conversations</p>
+                <div className="space-y-2 max-h-32 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200">
+                  {lead.followUps.map((f, i) => f.noteGiven && (
+                    <div key={f.id} className="p-3 bg-slate-50 rounded-lg border border-slate-100 border-l-4 border-l-indigo-500">
+                      <p className="text-[11px] text-slate-600 leading-relaxed">
+                        <span className="font-bold text-slate-400 mr-2">#{lead.followUps.length - i}</span>
+                        {f.noteGiven}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <Field label={`Conversation Summary ${lead.followUps.length < 1 ? "*" : "(Optional)"}`}>
+              <textarea 
+                required={lead.followUps.length < 1} 
+                rows={4} 
+                className={inputCls}
                 placeholder="Mention specific requirements or customer mood..."
                 value={noteContent} onChange={e => setNoteContent(e.target.value)}
               />
@@ -355,21 +429,51 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
             <Field label="Pipeline Outcome">
               <div className="grid grid-cols-2 gap-2">
                 {[
-                  { val: "INTERESTED", label: "Interested", color: "emerald" },
-                  { val: "MEETING", label: "Visit Requested", color: "indigo" },
-                  { val: "RESCHEDULE", label: "Wants Recall", color: "amber" },
-                  { val: "CANCELLED", label: "Not Interested", color: "rose" },
-                ].map(opt => (
-                  <button key={opt.val} type="button"
-                    onClick={() => setPickedStatus(opt.val)}
-                    className={cn(
-                      "py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border transition-all",
-                      pickedStatus === opt.val ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-                    )}
-                  >{opt.label}</button>
-                ))}
+                  { val: "INTERESTED", label: "Interested" },
+                  { val: "NEXT_DAY", label: "Next Day" },
+                  { val: "RESCHEDULE", label: "Wants Recall" },
+                  { val: "CANCELLED", label: "Not Interested" },
+                ].map(opt => {
+                  const isInterestedDisabled = opt.val === "INTERESTED" && lead.followUps.length > 0;
+                  return (
+                    <button key={opt.val} type="button"
+                      disabled={isInterestedDisabled}
+                      onClick={() => {
+                        setPickedStatus(opt.val);
+                        if (opt.val === "NEXT_DAY") {
+                           const tomorrow = new Date();
+                           tomorrow.setDate(tomorrow.getDate() + 1);
+                           setFollowUpDate(tomorrow.toISOString().split('T')[0]);
+                        }
+                      }}
+                      className={cn(
+                        "py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border transition-all",
+                        pickedStatus === opt.val ? "bg-slate-900 text-white border-slate-900 shadow-lg scale-[1.02]" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50",
+                        isInterestedDisabled && "opacity-40 cursor-not-allowed grayscale"
+                      )}
+                    >{opt.label}</button>
+                  );
+                })}
               </div>
             </Field>
+
+            {/* Conditional Date Picker */}
+            {pickedStatus && (pickedStatus === "INTERESTED" || pickedStatus === "RESCHEDULE") && (
+              <Field label="Follow-up Date *">
+                <input type="date" required className={inputCls} min={new Date().toISOString().split('T')[0]}
+                  value={followUpDate} onChange={e => setFollowUpDate(e.target.value)}
+                />
+              </Field>
+            )}
+
+            {/* Conditional Time Picker */}
+            {pickedStatus && (pickedStatus === "RESCHEDULE" || pickedStatus === "NEXT_DAY") && (
+              <Field label="Follow-up Time (Optional)">
+                <input type="time" className={inputCls}
+                  value={followUpTime} onChange={e => setFollowUpTime(e.target.value)}
+                />
+              </Field>
+            )}
             {pickedStatus === "CANCELLED" && (
               <Field label="Reason for Drop-off">
                 <select className={inputCls} value={cancelReason} onChange={e => setCancelReason(e.target.value)}>
@@ -378,10 +482,17 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
               </Field>
             )}
             <ModalFooter onClose={closeModal} isSubmitting={isSubmitting} label="Record Activity"
-              disabled={!noteContent}
+              disabled={
+                !pickedStatus ||
+                (lead.followUps.length === 0 && !noteContent) || 
+                ((pickedStatus === "INTERESTED" || pickedStatus === "RESCHEDULE") && !followUpDate)
+              }
               onSubmit={() => post("/api/follow-ups", {
                 leadId: id, outcome: "PICKED", noteGiven: noteContent,
-                pickedStatus, cancelReason: pickedStatus === "CANCELLED" ? cancelReason : undefined
+                pickedStatus, 
+                cancelReason: pickedStatus === "CANCELLED" ? cancelReason : undefined,
+                followUpDate,
+                followUpTime
               })}
             />
           </div>
@@ -486,6 +597,28 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
           </div>
         </Modal>
       )}
+
+      {/* ─── MODAL: EDIT ACTIVITY ─── */}
+      {editingItem && (
+        <Modal title="Edit Activity Note" icon={<Pencil className="h-5 w-5" />} color="primary" onClose={() => setEditingItem(null)}>
+          <div className="p-8 space-y-6">
+            <Field label="Note Content">
+              <textarea 
+                rows={5} 
+                className={inputCls} 
+                value={editNoteText} 
+                onChange={e => setEditNoteText(e.target.value)} 
+              />
+            </Field>
+            <ModalFooter 
+              onClose={() => setEditingItem(null)} 
+              isSubmitting={isSubmitting} 
+              label="Save Changes" 
+              onSubmit={handleUpdateActivity}
+            />
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
@@ -503,7 +636,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function Modal({ title, icon, color, onClose, children }: {
+function Modal({ title, icon, onClose, children }: {
   title: string; icon: React.ReactNode; color: string; onClose: () => void; children: React.ReactNode;
 }) {
   return (
@@ -522,7 +655,7 @@ function Modal({ title, icon, color, onClose, children }: {
   );
 }
 
-function ModalFooter({ onClose, isSubmitting, label, disabled, color = "primary", onSubmit }: {
+function ModalFooter({ onClose, isSubmitting, label, disabled, onSubmit }: {
   onClose: () => void; isSubmitting: boolean; label: string; disabled?: boolean; color?: string; onSubmit?: () => void;
 }) {
   return (
