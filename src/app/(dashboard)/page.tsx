@@ -99,7 +99,7 @@ export default function Dashboard() {
                Last 7 Days
             </div>
           </div>
-          <div className="h-72">
+          <div className="h-72 min-w-0">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />

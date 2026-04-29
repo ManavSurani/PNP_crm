@@ -13,7 +13,13 @@ import {
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
-const PIE_COLORS = ["#4f46e5", "#f59e0b", "#10b981", "#ef4444", "#3b82f6"];
+const STATUS_COLORS: Record<string, string> = {
+  NEW_INQUIRY: "#f59e0b", // Amber
+  FOLLOW_UP: "#10b981", // Green
+  MEETING_SCHEDULED: "#3b82f6", // Blue
+  WON_ORDER: "#4f46e5", // Indigo
+  CANCELLED: "#ef4444", // Red
+};
 
 export default function ReportsPage() {
   const [data, setData] = useState<any>(null);
@@ -31,7 +37,7 @@ export default function ReportsPage() {
       <div className="flex h-[70vh] items-center justify-center flex-col gap-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
         <p className="text-slate-400 font-medium tracking-wide text-xs">Generating Analytics Report...</p>
-</div>
+      </div>
     );
   }
 
@@ -141,7 +147,7 @@ export default function ReportsPage() {
               </div>
             </div>
           </div>
-          <div className="h-72">
+          <div className="h-72 min-w-0">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={charts.revenueChart} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
@@ -167,12 +173,24 @@ export default function ReportsPage() {
               <p className="text-xs text-slate-400 font-medium">Distribution across pipeline</p>
             </div>
           </div>
-          <div className="h-56">
+          <div className="h-56 min-w-0">
             <ResponsiveContainer width="100%" height="100%">
               <RechartsPie>
-                <Pie data={charts.leadsByStatus} dataKey="count" nameKey="status" cx="50%" cy="50%" outerRadius={70} innerRadius={45} stroke="none">
-                  {charts.leadsByStatus.map((_: any, i: number) => (
-                    <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                <Pie 
+                  data={charts.leadsByStatus} 
+                  dataKey="count" 
+                  nameKey="status" 
+                  cx="50%" 
+                  cy="50%" 
+                  outerRadius={70} 
+                  innerRadius={45} 
+                  stroke="none"
+                >
+                  {charts.leadsByStatus.map((entry: any, index: number) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={STATUS_COLORS[entry.status] || "#94a3b8"} 
+                    />
                   ))}
                 </Pie>
                 <Tooltip formatter={(v: any, name: any) => [v, name.replace(/_/g, " ")]}

@@ -47,9 +47,9 @@ export default function Sidebar() {
 
   return (
     <div className="flex h-full w-64 flex-col bg-slate-950 border-r border-white/5 shadow-2xl relative z-[50]">
-      <div className="flex h-20 shrink-0 items-center px-8 border-b border-white/5">
+      <Link href="/leads" className="flex h-20 shrink-0 items-center px-8 border-b border-white/5 hover:bg-white/[0.02] transition-colors group">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20 p-2 overflow-hidden">
+          <div className="h-10 w-10 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20 p-2 overflow-hidden group-hover:scale-105 transition-transform">
             <img 
               src="/logo.png" 
               alt="PNP Logo" 
@@ -58,7 +58,7 @@ export default function Sidebar() {
           </div>
           <span className="text-lg font-bold text-white tracking-tight uppercase">PNP <span className="text-indigo-400">CRM</span></span>
         </div>
-      </div>
+      </Link>
 
       <div className="flex flex-1 flex-col overflow-y-auto pt-6 pb-6 scrollbar-hide">
         <nav className="flex-1 space-y-1 px-4">

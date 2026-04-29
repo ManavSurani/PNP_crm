@@ -1,140 +1,265 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { 
-  Settings as SettingsIcon, User, Lock, Bell, 
-  Shield, Languages, Palette, Save, LogOut, ChevronRight, Zap, Check
+  User, Shield, Smartphone, LogOut, Loader2, Save, 
+  Key, Globe, Clock, Monitor, RefreshCcw, AlertCircle,
+  Zap, Check, Settings as SettingsIcon
 } from "lucide-react";
-import { signOut, useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 export default function SettingsPage() {
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const [activeTab, setActiveTab] = useState("profile");
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState({ type: "", text: "" });
+
+  // Profile States
+  const [profileForm, setProfileForm] = useState({
+    name: "",
+    email: "",
+    currentPassword: "",
+    newPassword: "",
+  });
+
+  // Security States
+  const [sessionTimeout, setSessionTimeout] = useState(2592000);
+  const [activeSessions, setActiveSessions] = useState<any[]>([]);
+
+  // System States (WhatsApp Dispatch)
   const [dispatchNumber, setDispatchNumber] = useState("");
   const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setDispatchNumber(localStorage.getItem('dispatch_number') || "");
+    if (session?.user) {
+      setProfileForm(prev => ({
+        ...prev,
+        name: session.user?.name || "",
+        email: session.user?.email || "",
+      }));
     }
-  }, []);
+    fetchSessions();
+    fetchSettings();
+  }, [session]);
 
-  const handleSave = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('dispatch_number', dispatchNumber);
-      setIsSaved(true);
-      setTimeout(() => setIsSaved(false), 2000);
+  const fetchSessions = async () => {
+    try {
+      const res = await fetch("/api/settings/sessions");
+      const data = await res.json();
+      if (Array.isArray(data)) setActiveSessions(data);
+    } catch (err) { console.error(err); }
+  };
+
+  const fetchSettings = async () => {
+    try {
+      const res = await fetch("/api/settings");
+      const data = await res.json();
+      if (data.sessionMaxAge) setSessionTimeout(data.sessionMaxAge);
+      if (data.whatsappDispatchNumber) setDispatchNumber(data.whatsappDispatchNumber);
+    } catch (err) { console.error(err); }
+  };
+
+  const handleProfileSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setMessage({ type: "", text: "" });
+
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...profileForm, type: "profile" }),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        setMessage({ type: "success", text: "Profile updated successfully!" });
+        update({ name: profileForm.name, email: profileForm.email });
+        setProfileForm(prev => ({ ...prev, currentPassword: "", newPassword: "" }));
+      } else {
+        setMessage({ type: "error", text: data.error || "Update failed" });
+      }
+    } catch (err) {
+      setMessage({ type: "error", text: "Connection error" });
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  const handleSecuritySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "security", sessionMaxAge: sessionTimeout }),
+      });
+      if (res.ok) setMessage({ type: "success", text: "Session settings updated!" });
+    } catch (err) { console.error(err); }
+    finally { setIsLoading(false); }
+  };
+
+  const handleSystemSave = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "system", whatsappDispatchNumber: dispatchNumber }),
+      });
+      if (res.ok) {
+        setIsSaved(true);
+        setTimeout(() => setIsSaved(false), 2000);
+      }
+    } catch (err) { console.error(err); }
+    finally { setIsLoading(false); }
+  };
+
+  const terminateSession = async (id: string) => {
+    try {
+      const res = await fetch(`/api/settings/sessions?id=${id}`, { method: "DELETE" });
+      if (res.ok) fetchSessions();
+    } catch (err) { console.error(err); }
+  };
+
+  const terminateAllOthers = async () => {
+    if (!confirm("Are you sure you want to log out all other devices?")) return;
+    try {
+      const res = await fetch(`/api/settings/sessions?all=true`, { method: "DELETE" });
+      if (res.ok) fetchSessions();
+    } catch (err) { console.error(err); }
+  };
+
   const tabs = [
-    { id: "profile", name: "Profile", icon: User },
-    { id: "security", name: "Security", icon: Lock },
-    { id: "notifications", name: "Notifications", icon: Bell },
-    { id: "system", name: "System Config", icon: SettingsIcon },
+    { id: "profile", label: "Identity Profile", icon: User },
+    { id: "system", label: "System Config", icon: SettingsIcon },
+    { id: "security", label: "Advanced Security", icon: Shield },
   ];
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 pb-10">
+    <div className="max-w-5xl mx-auto space-y-8 pb-20 font-sans">
       {/* Header */}
-      <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-48 h-48 bg-primary rounded-full blur-[100px] opacity-5 -mr-24 -mt-24" />
+      <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary rounded-full blur-[100px] opacity-5 -mr-32 -mt-32" />
         <div className="relative z-10">
-          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">General Settings</h1>
-          <p className="text-slate-500 text-sm mt-1">Configure your personal profile and system preferences.</p>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">System Configuration</h1>
+          <p className="text-slate-500 text-sm mt-1 font-medium">Manage your identity, active sessions, and global security policies.</p>
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-8 items-start">
-        {/* Sidebar Navigation */}
-        <div className="w-full md:w-72 space-y-1.5 shrink-0">
+      <div className="flex flex-col lg:flex-row gap-8">
+        {/* Navigation Sidebar */}
+        <div className="w-full lg:w-64 space-y-2">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "w-full flex items-center justify-between px-5 py-3.5 rounded-xl text-sm font-semibold transition-all group",
+                "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200",
                 activeTab === tab.id 
-                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-100" 
-                  : "text-slate-500 hover:bg-white hover:text-slate-900 hover:shadow-sm ring-1 ring-transparent hover:ring-slate-100"
+                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" 
+                  : "text-slate-500 hover:bg-white hover:text-slate-900 border border-transparent hover:border-slate-100"
               )}
             >
-              <div className="flex items-center gap-3">
-                <tab.icon className={cn("h-4 w-4", activeTab === tab.id ? "text-white" : "text-slate-400 group-hover:text-indigo-600")} />
-                {tab.name}
-              </div>
-              {activeTab === tab.id && <ChevronRight className="h-4 w-4 opacity-50" />}
+              <tab.icon className="h-4 w-4" />
+              {tab.label}
             </button>
           ))}
-          <div className="pt-6 mt-6 border-t border-slate-200">
-            <button 
-              onClick={() => signOut()}
-              className="w-full flex items-center gap-3 px-5 py-3.5 rounded-xl text-sm font-semibold text-rose-600 hover:bg-rose-50 transition-all group"
-            >
-              <LogOut className="h-4 w-4 text-rose-400 group-hover:text-rose-600" /> End Current Session
-            </button>
-          </div>
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden min-h-[540px]">
+        <div className="flex-1 space-y-6">
+          {message.text && (
+            <div className={cn(
+              "p-4 rounded-xl border flex items-center gap-3 animate-in fade-in slide-in-from-top-2",
+              message.type === "success" ? "bg-emerald-50 border-emerald-100 text-emerald-700" : "bg-rose-50 border-rose-100 text-rose-700"
+            )}>
+              <AlertCircle className="h-4 w-4" />
+              <span className="text-xs font-bold uppercase tracking-wider">{message.text}</span>
+            </div>
+          )}
+
           {activeTab === "profile" && (
-            <div className="p-8 space-y-10 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <div className="flex items-center gap-6 pb-2">
-                <div className="h-16 w-16 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center font-bold text-2xl text-indigo-600 shadow-sm">
-                  {session?.user?.name?.[0] || "A"}
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-slate-900">{session?.user?.name || "Corporate Admin"}</h2>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase tracking-wider border border-emerald-100">
-                      <Shield className="h-3 w-3" /> {session?.user?.role || "SUPER ADMIN"}
-                    </span>
-                    <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-widest">• Global Permissions</span>
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2">
+              <div className="p-6 border-b border-slate-100 bg-slate-50/50">
+                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                  <User className="h-4 w-4 text-primary" /> Profile Credentials
+                </h2>
+              </div>
+              <form onSubmit={handleProfileSubmit} className="p-8 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
+                    <input
+                      type="text"
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-4 focus:ring-primary/5 focus:border-primary outline-none transition-all"
+                      value={profileForm.name}
+                      onChange={e => setProfileForm({ ...profileForm, name: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
+                    <input
+                      type="email"
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-4 focus:ring-primary/5 focus:border-primary outline-none transition-all"
+                      value={profileForm.email}
+                      onChange={e => setProfileForm({ ...profileForm, email: e.target.value })}
+                    />
                   </div>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-2">
-                <div className="space-y-2">
-                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Account Identity</label>
-                   <div className="px-4 py-3 bg-slate-50 rounded-lg border border-slate-100 text-sm font-semibold text-slate-700">
-                     {session?.user?.name || "N/A"}
-                   </div>
+                <div className="pt-6 border-t border-slate-100 space-y-6">
+                  <h3 className="text-[11px] font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                    <Key className="h-3.5 w-3.5 text-amber-500" /> Change Password
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Current Password</label>
+                      <input
+                        type="password"
+                        placeholder="••••••••"
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-4 focus:ring-primary/5 focus:border-primary outline-none transition-all"
+                        value={profileForm.currentPassword}
+                        onChange={e => setProfileForm({ ...profileForm, currentPassword: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">New Password</label>
+                      <input
+                        type="password"
+                        placeholder="••••••••"
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-4 focus:ring-primary/5 focus:border-primary outline-none transition-all"
+                        value={profileForm.newPassword}
+                        onChange={e => setProfileForm({ ...profileForm, newPassword: e.target.value })}
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Registered Endpoint</label>
-                   <div className="px-4 py-3 bg-slate-50 rounded-lg border border-slate-100 text-sm font-semibold text-slate-700">
-                     {session?.user?.email || "N/A"}
-                   </div>
-                </div>
-              </div>
 
-              <div className="bg-indigo-50/50 border border-indigo-100/50 p-6 rounded-xl flex gap-5 items-start">
-                <div className="h-10 w-10 rounded-lg bg-white shadow-sm flex items-center justify-center shrink-0">
-                   <ShieldCheckIcon className="h-5 w-5 text-indigo-600" />
+                <div className="pt-4 flex justify-end">
+                  <button
+                    disabled={isLoading}
+                    className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl text-sm font-bold hover:shadow-lg hover:shadow-primary/20 active:scale-95 transition-all disabled:opacity-50"
+                  >
+                    {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    Save Changes
+                  </button>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-bold text-slate-900">Privileged Session Active</p>
-                  <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                    Your current session is cryptographically signed with root-level access. You have universal authority to override system configurations and access sensitive financial data.
-                  </p>
-                </div>
-              </div>
+              </form>
             </div>
           )}
 
           {activeTab === "system" && (
-            <div className="p-8 space-y-10 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <div className="space-y-1">
-                <h2 className="text-xl font-bold text-slate-900">System Configuration</h2>
-                <p className="text-xs text-slate-500 font-medium leading-relaxed italic">
-                  Manage global CRM behaviors and external integrations.
-                </p>
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2">
+              <div className="p-6 border-b border-slate-100 bg-slate-50/50">
+                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-emerald-600" /> System Configuration
+                </h2>
               </div>
-
-              <div className="space-y-6">
+              <div className="p-8 space-y-6">
                 <div className="bg-slate-50/50 border border-slate-100 p-6 rounded-xl space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="h-8 w-8 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center">
@@ -152,14 +277,14 @@ export default function SettingsPage() {
                       <input 
                         type="text"
                         placeholder="e.g. 8799544606"
-                        className="flex-1 px-4 py-3 bg-white rounded-lg border border-slate-200 text-sm font-semibold focus:border-primary outline-none transition-all"
+                        className="flex-1 px-4 py-3 bg-white rounded-xl border border-slate-200 text-sm font-semibold focus:border-primary outline-none transition-all"
                         value={dispatchNumber}
                         onChange={(e) => setDispatchNumber(e.target.value.replace(/\D/g, "").slice(0, 10))}
                       />
                       <button 
-                        onClick={handleSave}
+                        onClick={handleSystemSave}
                         className={cn(
-                          "px-6 py-3 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-sm border",
+                          "px-6 py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-sm border",
                           isSaved 
                             ? "bg-emerald-50 text-emerald-600 border-emerald-200" 
                             : "bg-indigo-600 text-white border-indigo-500 hover:bg-indigo-700 active:scale-95"
@@ -178,42 +303,108 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {(activeTab === "notifications" || activeTab === "security") && (
-            <div className="flex h-[540px] items-center justify-center flex-col gap-6 p-10 text-center animate-in fade-in duration-500">
-              <div className="relative">
-                <div className="absolute inset-0 bg-indigo-600/10 rounded-full blur-2xl" />
-                <div className="relative bg-white p-8 rounded-full shadow-lg border border-slate-100">
-                  <SettingsIcon className="h-12 w-12 text-slate-300 animate-spin-slow" />
+          {activeTab === "security" && (
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2">
+              {/* Session Timeout */}
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                  <h2 className="text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-indigo-600" /> Session Expiration
+                  </h2>
+                </div>
+                <div className="p-8 space-y-6">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div className="max-w-md">
+                      <p className="text-sm font-semibold text-slate-900">Configurable Timeout</p>
+                      <p className="text-xs text-slate-500 mt-1">Define how long a user session remains active before requiring re-authentication.</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <select 
+                        className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold focus:ring-2 focus:ring-primary/10 outline-none"
+                        value={sessionTimeout}
+                        onChange={e => setSessionTimeout(parseInt(e.target.value))}
+                        disabled={session?.user?.role !== "ADMIN"}
+                      >
+                        <option value={300}>5 Minutes</option>
+                        <option value={3600}>1 Hour</option>
+                        <option value={86400}>24 Hours</option>
+                        <option value={604800}>7 Days</option>
+                        <option value={2592000}>30 Days</option>
+                      </select>
+                      {session?.user?.role === "ADMIN" && (
+                         <button 
+                          onClick={handleSecuritySubmit}
+                          className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
+                         >
+                            <Save className="h-4 w-4" />
+                         </button>
+                      )}
+                    </div>
+                  </div>
+                  {session?.user?.role !== "ADMIN" && (
+                    <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg flex items-center gap-2 text-amber-700 text-[10px] font-bold uppercase tracking-wider">
+                      <AlertCircle className="h-3.5 w-3.5" /> Only administrators can modify global timeout policies.
+                    </div>
+                  )}
                 </div>
               </div>
-              <div className="max-w-xs space-y-2">
-                <p className="text-sm font-bold text-slate-900 uppercase tracking-tight">Configuration Locked</p>
-                <p className="text-xs text-slate-400 font-medium leading-relaxed">
-                  Advanced system configuration modules are currently being hardened. Please contact the technical supervisor for manual overrides.
-                </p>
+
+              {/* Active Devices */}
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                  <h2 className="text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                    <Monitor className="h-4 w-4 text-emerald-600" /> Logged Devices
+                  </h2>
+                  <button 
+                    onClick={terminateAllOthers}
+                    className="text-[10px] font-bold text-rose-600 uppercase tracking-widest hover:bg-rose-50 px-3 py-1.5 rounded-lg transition-colors border border-transparent hover:border-rose-100"
+                  >
+                    Logout All Others
+                  </button>
+                </div>
+                <div className="p-4">
+                  <div className="grid grid-cols-1 gap-3">
+                    {activeSessions.map((s) => (
+                      <div key={s.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100 hover:border-indigo-100 transition-all group">
+                        <div className="flex items-center gap-4">
+                          <div className={cn(
+                            "h-10 w-10 rounded-lg flex items-center justify-center border transition-all",
+                            s.sessionToken === session?.sessionToken ? "bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-100" : "bg-white text-slate-400 border-slate-100"
+                          )}>
+                            {s.userAgent?.includes("Mobile") ? <Smartphone className="h-5 w-5" /> : <Monitor className="h-5 w-5" />}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="text-xs font-bold text-slate-900 uppercase tracking-tight">{s.userAgent || "Unknown Device"}</p>
+                              {s.sessionToken === session?.sessionToken && (
+                                <span className="px-1.5 py-0.5 bg-emerald-500 text-white text-[8px] font-bold rounded-md uppercase tracking-widest">Current</span>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-slate-400 font-medium mt-0.5 tracking-wide">
+                              Last active: {format(new Date(s.lastActive), "MMM dd, hh:mm a")} • {s.ipAddress || "Active IP"}
+                            </p>
+                          </div>
+                        </div>
+                        {s.sessionToken !== session?.sessionToken && (
+                          <button 
+                            onClick={() => terminateSession(s.id)}
+                            className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+                          >
+                            <LogOut className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    {activeSessions.length === 0 && (
+                      <div className="py-12 text-center text-slate-400 font-medium text-xs">No session data synchronized.</div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           )}
         </div>
       </div>
     </div>
-  );
-}
-
-function ShieldCheckIcon({ className }: { className?: string }) {
-  return (
-    <svg 
-      className={className} 
-      xmlns="http://www.w3.org/2000/svg" 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
-      strokeLinejoin="round"
-    >
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
-      <path d="m9 12 2 2 4-4" />
-    </svg>
   );
 }

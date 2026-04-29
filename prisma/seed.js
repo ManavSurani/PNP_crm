@@ -1,23 +1,17 @@
-const { PrismaClient } = require("@prisma/client");
-const bcrypt = require("bcryptjs");
-
+const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function main() {
-  const hashedPassword = await bcrypt.hash("pnpadmin123", 10);
-  
-  const admin = await prisma.user.upsert({
-    where: { email: "admin@pnp.com" },
+  await prisma.systemSetting.upsert({
+    where: { id: "global" },
     update: {},
     create: {
-      email: "admin@pnp.com",
-      name: "Super Admin",
-      password: hashedPassword,
-      role: "ADMIN"
+      id: "global",
+      sessionMaxAge: 2592000, // 30 days
+      whatsappDispatchNumber: "8799544606" // Default recovery number from your screenshot
     }
   });
-
-  console.log({ admin });
+  console.log("System settings initialized with default recovery number.");
 }
 
 main()
