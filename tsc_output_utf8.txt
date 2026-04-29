@@ -1,2 +1,0 @@
-﻿.next/types/validator.ts(42,39): error TS2307: Cannot find module '../../src/app/page.js' or its corresponding type declarations.
-src/app/api/suppliers/route.ts(33,9): error TS2353: Object literal may only specify known properties, and 'contactPerson' does not exist in type '(Without<SupplierCreateInput, SupplierUncheckedCreateInput> & SupplierUncheckedCreateInput) | (Without<...> & SupplierCreateInput)'.
