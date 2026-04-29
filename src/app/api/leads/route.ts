@@ -12,10 +12,22 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
 
-    const leads = await prisma.lead.findMany({
+    const leads = await (prisma.lead as any).findMany({
       where: status ? { status: status as any } : {},
       orderBy: { createdAt: "desc" },
-      include: {
+      select: {
+        id: true,
+        customerName: true,
+        contactNumber: true,
+        alternateNumber: true,
+        fullAddress: true,
+        inquirySource: true,
+        serviceType: true,
+        priority: true,
+        status: true,
+        assignedStaffId: true,
+        createdAt: true,
+        updatedAt: true,
         assignedStaff: {
           select: { id: true, name: true }
         },
@@ -48,29 +60,43 @@ export async function POST(request: Request) {
       inquirySource, 
       serviceType, 
       priority,
-      assignedStaffId
+      assignedStaffId,
+      landmark,
+      requirementDetails,
+      siteLocation,
+      preferredVisitTime
     } = body;
 
-    if (!customerName || !contactNumber) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    const cleanContact = contactNumber ? contactNumber.replace(/\D/g, "") : "";
+    if (cleanContact.length !== 10) {
+      return NextResponse.json({ error: "Valid 10-digit phone number is required" }, { status: 400 });
     }
+    const cleanAlt = alternateNumber ? alternateNumber.replace(/\D/g, "") : null;
 
     const lead = await prisma.lead.create({
       data: {
-        customerName,
-        contactNumber,
-        alternateNumber: alternateNumber || null,
+        customerName: customerName || "",
+        contactNumber: cleanContact,
+        alternateNumber: cleanAlt,
         fullAddress: fullAddress || null,
         inquirySource: inquirySource || "OTHER",
         serviceType: serviceType || "OTHER",
         priority: priority || "MEDIUM",
-        assignedStaffId: assignedStaffId || session.user.id,
-        status: "NEW_INQUIRY"
+        assignedStaff: { connect: { id: assignedStaffId || session.user.id } },
+        status: "NEW_INQUIRY",
+        landmark: landmark || null,
+        requirementDetails: requirementDetails || null,
+        siteLocation: siteLocation || null,
+        preferredVisitTime: preferredVisitTime || null,
       }
     });
 
     return NextResponse.json(lead);
   } catch (error) {
-    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+    console.error("[LEADS_POST_ERROR]", error);
+    return NextResponse.json({ 
+      error: "Failed to create lead", 
+      details: error instanceof Error ? error.message : String(error) 
+    }, { status: 500 });
   }
 }

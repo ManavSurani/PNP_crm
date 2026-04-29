@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Loader2, Search, IndianRupee, ArrowRight, Wallet, ArrowDownCircle, ArrowUpCircle, TrendingUp, Plus, Check, X } from "lucide-react";
+import { Loader2, Search, IndianRupee, ArrowRight, Wallet, ArrowDownCircle, ArrowUpCircle, TrendingUp, Plus, Check, X, RotateCcw, Filter } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -9,6 +9,10 @@ export default function PaymentsPage() {
   const [customers, setCustomers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [showFilters, setShowFilters] = useState(false);
+  const [dateRange, setDateRange] = useState({ start: "", end: "" });
+  const [sortBy, setSortBy] = useState("NEWEST");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -63,12 +67,29 @@ export default function PaymentsPage() {
     const projectAmount = c.orders?.reduce((acc: number, o: any) => acc + o.totalAmount, 0) || 0;
     const received = c.transactions?.filter((t: any) => t.type === "RECEIVED").reduce((acc: number, t: any) => acc + t.amount, 0) || 0;
     const pending = projectAmount - received;
+    const rate = projectAmount > 0 ? (received / projectAmount) * 100 : 0;
     
     globalWorkAmount += projectAmount;
     globalReceived += received;
 
-    return { ...c, projectAmount, received, pending };
-  }).filter(c => c.received > 5 || c.projectAmount > 0); // Keep projects with payments or potential payments
+    return { ...c, projectAmount, received, pending, rate };
+  }).filter(c => {
+    if (statusFilter === "PENDING") return c.received === 0 && c.projectAmount > 0;
+    if (statusFilter === "PARTIAL") return c.received > 0 && c.pending > 0;
+    if (statusFilter === "CLEARED") return c.pending <= 0 && c.projectAmount > 0;
+    
+    const cDate = new Date(c.createdAt);
+    const matchesStart = !dateRange.start || cDate >= new Date(dateRange.start);
+    const matchesEnd = !dateRange.end || cDate <= new Date(dateRange.end + "T23:59:59");
+    
+    return (c.received > 5 || c.projectAmount > 0) && matchesStart && matchesEnd;
+  }).sort((a, b) => {
+    if (sortBy === "NEWEST") return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    if (sortBy === "OLDEST") return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    if (sortBy === "A-Z") return a.customerName.localeCompare(b.customerName);
+    if (sortBy === "Z-A") return b.customerName.localeCompare(a.customerName);
+    return 0;
+  });
 
   const globalPending = globalWorkAmount - globalReceived;
   const collectionRate = globalWorkAmount > 0 ? (globalReceived / globalWorkAmount) * 100 : 0;
@@ -118,17 +139,90 @@ export default function PaymentsPage() {
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Collection Ledger</h2>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search customers..."
-              className="pl-10 pr-4 py-2 text-sm border border-slate-200 rounded-lg w-full md:w-64 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+          <div className="flex flex-col md:flex-row items-center gap-4">
+            <div className="flex bg-slate-100 p-1 rounded-lg">
+              {["ALL", "PENDING", "PARTIAL", "CLEARED"].map(s => (
+                <button
+                  key={s}
+                  onClick={() => setStatusFilter(s)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all",
+                    statusFilter === s ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                  )}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search customers..."
+                className="pl-10 pr-4 py-2 text-sm border border-slate-200 rounded-lg w-full md:w-64 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <button 
+              onClick={() => setShowFilters(!showFilters)}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 border rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all shadow-sm",
+                showFilters ? "bg-slate-900 text-white border-slate-900" : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+              )}
+            >
+              <Filter className="h-3.5 w-3.5" /> {showFilters ? "Hide" : "More"}
+            </button>
+            <button 
+              onClick={() => {
+                setSearch("");
+                setStatusFilter("ALL");
+                setDateRange({ start: "", end: "" });
+                setSortBy("NEWEST");
+              }}
+              className="p-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition shadow-sm"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </button>
           </div>
         </div>
+
+        {/* Expanded Filters */}
+        {showFilters && (
+          <div className="p-6 bg-slate-50 border-b border-slate-100 grid grid-cols-1 md:grid-cols-3 gap-6 animate-in slide-in-from-top-2 duration-200">
+             <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Sort Ledger</label>
+                <select 
+                  className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-sm focus:border-indigo-600 outline-none font-medium"
+                  value={sortBy}
+                  onChange={e => setSortBy(e.target.value)}
+                >
+                  <option value="NEWEST">Account: Newest</option>
+                  <option value="OLDEST">Account: Oldest</option>
+                  <option value="A-Z">Customer: A-Z</option>
+                  <option value="Z-A">Customer: Z-A</option>
+                </select>
+             </div>
+             <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Onboarded From</label>
+                <input 
+                  type="date"
+                  className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-sm focus:border-indigo-600 outline-none"
+                  value={dateRange.start}
+                  onChange={e => setDateRange({...dateRange, start: e.target.value})}
+                />
+             </div>
+             <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Onboarded To</label>
+                <input 
+                  type="date"
+                  className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-sm focus:border-indigo-600 outline-none"
+                  value={dateRange.end}
+                  onChange={e => setDateRange({...dateRange, end: e.target.value})}
+                />
+             </div>
+          </div>
+        )}
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
@@ -204,11 +298,7 @@ export default function PaymentsPage() {
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Amount (₹) *</label>
-                  <input required type="number" min="1" className={inputCls} placeholder="0.00" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} />
-                </div>
-                <div>
+                <div className="col-start-2">
                   <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Payment Channel</label>
                   <select className={inputCls} value={form.paymentMode} onChange={e => setForm({ ...form, paymentMode: e.target.value })}>
                     <option value="UPI">UPI / Digital</option>
@@ -216,6 +306,10 @@ export default function PaymentsPage() {
                     <option value="BANK_TRANSFER">Bank Transfer</option>
                     <option value="CHEQUE">Cheque</option>
                   </select>
+                </div>
+                <div className="col-start-1 row-start-1">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Amount (₹) *</label>
+                  <input required type="number" min="1" className={inputCls} placeholder="0.00" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} />
                 </div>
               </div>
               <div>

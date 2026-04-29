@@ -107,3 +107,32 @@ export async function GET(
     return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  try {
+    const session = await auth();
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    await prisma.order.delete({
+      where: { id }
+    });
+
+    // Audit Log
+    const { createAuditLog } = await import("@/lib/audit");
+    await createAuditLog({
+      userId: session.user.id,
+      action: "DELETE",
+      entity: "ORDER",
+      entityId: id
+    });
+
+    return new NextResponse(null, { status: 204 });
+  } catch (error) {
+    console.error("[ORDER_DELETE]", error);
+    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+  }
+}

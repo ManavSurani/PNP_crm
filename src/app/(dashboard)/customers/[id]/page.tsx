@@ -758,7 +758,18 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
           <form onSubmit={handleUpdateCustomer} className="p-8 space-y-6 overflow-y-auto max-h-[65vh]">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Field label="Customer Name *"><input required className={inputCls} value={editForm.customerName || ""} onChange={e => setEditForm({ ...editForm, customerName: e.target.value })} /></Field>
-              <Field label="Phone *"><input required className={inputCls} value={editForm.contactNumber || ""} onChange={e => setEditForm({ ...editForm, contactNumber: e.target.value })} /></Field>
+              <Field label="Phone *">
+                <input 
+                  required 
+                  maxLength={10}
+                  className={inputCls} 
+                  value={editForm.contactNumber || ""} 
+                  onChange={e => {
+                    const val = e.target.value.replace(/\D/g, "");
+                    if (val.length <= 10) setEditForm({ ...editForm, contactNumber: val });
+                  }} 
+                />
+              </Field>
               <Field label="Execution Address"><textarea rows={3} className={inputCls} value={editForm.fullAddress || ""} onChange={e => setEditForm({ ...editForm, fullAddress: e.target.value })} /></Field>
               <Field label="Landmark"><input className={inputCls} value={editForm.landmark || ""} onChange={e => setEditForm({ ...editForm, landmark: e.target.value })} /></Field>
               <Field label="Core Requirement"><textarea rows={3} className={inputCls} value={editForm.requirementDetails || ""} onChange={e => setEditForm({ ...editForm, requirementDetails: e.target.value })} /></Field>

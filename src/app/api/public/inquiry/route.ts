@@ -19,14 +19,15 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { customerName, contactNumber, serviceType, inquirySource } = body;
 
-    if (!customerName || !contactNumber) {
-      return NextResponse.json({ error: "Name and contact required" }, { status: 400, headers: corsHeaders() });
+    const cleanContact = contactNumber.replace(/\D/g, "");
+    if (!customerName || cleanContact.length !== 10) {
+      return NextResponse.json({ error: "Valid 10-digit phone number required" }, { status: 400, headers: corsHeaders() });
     }
 
     const lead = await prisma.lead.create({
       data: {
         customerName,
-        contactNumber,
+        contactNumber: cleanContact,
         serviceType: serviceType || "OTHER",
         inquirySource: inquirySource || "WEBSITE",
         status: "NEW_INQUIRY",

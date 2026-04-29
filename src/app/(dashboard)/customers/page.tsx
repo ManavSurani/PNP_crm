@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { 
   Search, User, Phone, MapPin, Loader2, 
-  ChevronRight, Activity, Zap, ExternalLink
+  ChevronRight, Activity, Zap, ExternalLink, Filter, ArrowUpDown, X, RotateCcw
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +26,14 @@ export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({
+    source: "ALL",
+    service: "ALL",
+    startDate: "",
+    endDate: ""
+  });
+  const [sortBy, setSortBy] = useState("NEWEST");
 
   const fetchCustomers = async () => {
     try {
@@ -44,12 +52,27 @@ export default function CustomersPage() {
     fetchCustomers();
   }, []);
 
-  const filteredCustomers = customers.filter(
-    (customer) => 
+  const filteredCustomers = customers.filter((customer) => {
+    const matchesSearch = 
       customer.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       customer.contactNumber.includes(searchTerm) ||
-      customer.serviceType.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+      customer.serviceType.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesSource = filters.source === "ALL" || customer.inquirySource === filters.source;
+    const matchesService = filters.service === "ALL" || customer.serviceType === filters.service;
+
+    const customerDate = new Date(customer.createdAt);
+    const matchesStartDate = !filters.startDate || customerDate >= new Date(filters.startDate);
+    const matchesEndDate = !filters.endDate || customerDate <= new Date(filters.endDate + "T23:59:59");
+
+    return matchesSearch && matchesSource && matchesService && matchesStartDate && matchesEndDate;
+  }).sort((a, b) => {
+    if (sortBy === "NEWEST") return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    if (sortBy === "OLDEST") return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    if (sortBy === "A-Z") return a.customerName.localeCompare(b.customerName);
+    if (sortBy === "Z-A") return b.customerName.localeCompare(a.customerName);
+    return 0;
+  });
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-10">
@@ -79,7 +102,105 @@ export default function CustomersPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <button 
+            onClick={() => setShowFilters(!showFilters)}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2.5 border rounded-lg text-sm font-medium transition shadow-sm",
+              showFilters ? "bg-emerald-600 text-white border-emerald-600" : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+            )}
+          >
+            <Filter className="h-4 w-4" /> {showFilters ? "Hide Filters" : "Filters"}
+          </button>
+          <button 
+            onClick={() => {
+              setSearchTerm("");
+              setFilters({ source: "ALL", service: "ALL", startDate: "", endDate: "" });
+              setSortBy("NEWEST");
+            }}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition shadow-sm"
+          >
+            <RotateCcw className="h-4 w-4" /> Reset
+          </button>
+        </div>
       </div>
+
+      {/* Filter Options Bar */}
+      {showFilters && (
+        <div className="space-y-4 bg-emerald-50/50 p-6 rounded-xl border border-emerald-100 animate-in slide-in-from-top-2 duration-200">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-2 ml-1">Acquisition Source</label>
+              <select 
+                className="w-full rounded-lg border border-emerald-200 bg-white py-2 px-3 text-sm focus:border-emerald-500 outline-none"
+                value={filters.source}
+                onChange={e => setFilters({...filters, source: e.target.value})}
+              >
+                <option value="ALL">All Sources</option>
+                <option value="WHATSAPP">WhatsApp</option>
+                <option value="FACEBOOK">Facebook</option>
+                <option value="INSTAGRAM">Instagram</option>
+                <option value="WEBSITE">Website</option>
+                <option value="DIRECT_CALL">Direct Call</option>
+                <option value="WALK_IN">Walk In</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-2 ml-1">Service Category</label>
+              <select 
+                className="w-full rounded-lg border border-emerald-200 bg-white py-2 px-3 text-sm focus:border-emerald-500 outline-none"
+                value={filters.service}
+                onChange={e => setFilters({...filters, service: e.target.value})}
+              >
+                <option value="ALL">All Services</option>
+                <option value="INTERIOR_DESIGN">Interior Design</option>
+                <option value="MODULAR_KITCHEN">Modular Kitchen</option>
+                <option value="WARDROBE_PLANNING">Wardrobe Planning</option>
+                <option value="FULL_HOME_INTERIOR">Full Home Interior</option>
+                <option value="TWO_BHK_INTERIOR">2BHK Interior</option>
+                <option value="THREE_BHK_INTERIOR">3BHK Interior</option>
+                <option value="VILLA_INTERIOR">Villa Interior</option>
+                <option value="OFFICE_INTERIOR">Office Interior</option>
+                <option value="FULL_COMBO_PROJECT">Full Combo Project</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-2 ml-1">Sort By</label>
+              <select 
+                className="w-full rounded-lg border border-emerald-200 bg-white py-2 px-3 text-sm focus:border-emerald-500 outline-none"
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value)}
+              >
+                <option value="NEWEST">Date: Newest First</option>
+                <option value="OLDEST">Date: Oldest First</option>
+                <option value="A-Z">Alphabetical: A-Z</option>
+                <option value="Z-A">Alphabetical: Z-A</option>
+              </select>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-emerald-100">
+             <div>
+                <label className="block text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-2 ml-1">Conversion From</label>
+                <input 
+                  type="date"
+                  className="w-full rounded-lg border border-emerald-200 bg-white py-2 px-3 text-sm focus:border-emerald-500 outline-none"
+                  value={filters.startDate}
+                  onChange={e => setFilters({...filters, startDate: e.target.value})}
+                />
+             </div>
+             <div>
+                <label className="block text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-2 ml-1">Conversion To</label>
+                <input 
+                  type="date"
+                  className="w-full rounded-lg border border-emerald-200 bg-white py-2 px-3 text-sm focus:border-emerald-500 outline-none"
+                  value={filters.endDate}
+                  onChange={e => setFilters({...filters, endDate: e.target.value})}
+                />
+             </div>
+          </div>
+        </div>
+      )}
 
       {/* Main List Container */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">

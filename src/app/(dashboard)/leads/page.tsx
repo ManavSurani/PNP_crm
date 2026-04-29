@@ -6,7 +6,7 @@ import { format } from "date-fns";
 import { 
   Plus, Search, MoreHorizontal, User, Phone, MapPin, Loader2, 
   Filter, ArrowUpDown, ChevronRight, Activity, Zap, X, CheckCircle2, Check,
-  Trash2, Pencil, ExternalLink, AlertTriangle
+  Trash2, Pencil, ExternalLink, AlertTriangle, RotateCcw
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +18,6 @@ type Lead = {
   fullAddress: string | null;
   inquirySource: string;
   serviceType: string;
-  priority: string;
   status: string;
   createdAt: string;
   assignedStaff?: { name: string } | null;
@@ -30,6 +29,14 @@ export default function LeadsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({
+    status: "ALL",
+    source: "ALL",
+    startDate: "",
+    endDate: ""
+  });
+  const [sortBy, setSortBy] = useState("NEWEST");
   
   // New States for Actions
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -70,14 +77,27 @@ export default function LeadsPage() {
     }
   };
 
-  const filteredLeads = leads.filter(
-    (lead) => 
-      lead.status !== "WON_ORDER" &&
-      lead.status !== "CANCELLED" &&
-      (lead.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredLeads = leads.filter((lead) => {
+    const matchesSearch = 
+      lead.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.contactNumber.includes(searchTerm) ||
-      lead.serviceType.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+      lead.serviceType.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = filters.status === "ALL" ? (lead.status !== "WON_ORDER" && lead.status !== "CANCELLED") : lead.status === filters.status;
+    const matchesSource = filters.source === "ALL" || lead.inquirySource === filters.source;
+    
+    const leadDate = new Date(lead.createdAt);
+    const matchesStartDate = !filters.startDate || leadDate >= new Date(filters.startDate);
+    const matchesEndDate = !filters.endDate || leadDate <= new Date(filters.endDate + "T23:59:59");
+
+    return matchesSearch && matchesStatus && matchesSource && matchesStartDate && matchesEndDate;
+  }).sort((a, b) => {
+    if (sortBy === "NEWEST") return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    if (sortBy === "OLDEST") return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    if (sortBy === "A-Z") return a.customerName.localeCompare(b.customerName);
+    if (sortBy === "Z-A") return b.customerName.localeCompare(a.customerName);
+    return 0;
+  });
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-10">
@@ -114,14 +134,100 @@ export default function LeadsPage() {
           />
         </div>
         <div className="flex items-center gap-2 w-full md:w-auto">
-          <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition shadow-sm">
-            <Filter className="h-4 w-4" /> Filters
+          <button 
+            onClick={() => setShowFilters(!showFilters)}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2.5 border rounded-lg text-sm font-medium transition shadow-sm",
+              showFilters ? "bg-slate-900 text-white border-slate-900" : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+            )}
+          >
+            <Filter className="h-4 w-4" /> {showFilters ? "Hide Filters" : "Filters"}
           </button>
-          <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition shadow-sm">
-            <ArrowUpDown className="h-4 w-4" /> Sort
+          <button 
+            onClick={() => {
+              setSearchTerm("");
+              setFilters({ status: "ALL", source: "ALL", startDate: "", endDate: "" });
+              setSortBy("NEWEST");
+            }}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition shadow-sm"
+          >
+            <RotateCcw className="h-4 w-4" /> Reset
           </button>
         </div>
       </div>
+
+      {/* Filter Options Bar */}
+      {showFilters && (
+        <div className="space-y-4 bg-slate-50 p-6 rounded-xl border border-slate-200 animate-in slide-in-from-top-2 duration-200">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Pipeline Status</label>
+              <select 
+                className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-sm focus:border-primary outline-none"
+                value={filters.status}
+                onChange={e => setFilters({...filters, status: e.target.value})}
+              >
+                <option value="ALL">Active Only</option>
+                <option value="NEW_INQUIRY">New Inquiry</option>
+                <option value="FOLLOW_UP">Follow Up</option>
+                <option value="MEETING_SCHEDULED">Visit Scheduled</option>
+                <option value="WON_ORDER">Won Order (Archived)</option>
+                <option value="CANCELLED">Cancelled (Archived)</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Inquiry Source</label>
+              <select 
+                className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-sm focus:border-primary outline-none"
+                value={filters.source}
+                onChange={e => setFilters({...filters, source: e.target.value})}
+              >
+                <option value="ALL">All Sources</option>
+                <option value="WHATSAPP">WhatsApp</option>
+                <option value="FACEBOOK">Facebook</option>
+                <option value="INSTAGRAM">Instagram</option>
+                <option value="WEBSITE">Website</option>
+                <option value="DIRECT_CALL">Direct Call</option>
+                <option value="WALK_IN">Walk In</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Sort By</label>
+              <select 
+                className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-sm focus:border-primary outline-none"
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value)}
+              >
+                <option value="NEWEST">Date: Newest First</option>
+                <option value="OLDEST">Date: Oldest First</option>
+                <option value="A-Z">Alphabetical: A-Z</option>
+                <option value="Z-A">Alphabetical: Z-A</option>
+              </select>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-slate-200">
+             <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">From Date</label>
+                <input 
+                  type="date"
+                  className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-sm focus:border-primary outline-none"
+                  value={filters.startDate}
+                  onChange={e => setFilters({...filters, startDate: e.target.value})}
+                />
+             </div>
+             <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">To Date</label>
+                <input 
+                  type="date"
+                  className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-sm focus:border-primary outline-none"
+                  value={filters.endDate}
+                  onChange={e => setFilters({...filters, endDate: e.target.value})}
+                />
+             </div>
+          </div>
+        </div>
+      )}
 
       {/* Main List Container */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
@@ -162,11 +268,11 @@ export default function LeadsPage() {
                       <td onClick={() => router.push(`/leads/${lead.id}`)} className="whitespace-nowrap py-5 pl-8 pr-3">
                         <div className="flex items-center">
                           <div className="h-10 w-10 flex-shrink-0 bg-slate-100 rounded-lg flex items-center justify-center text-slate-600 font-semibold border border-slate-200">
-                            {lead.customerName.charAt(0)}
+                            {lead.customerName ? lead.customerName.charAt(0) : "?"}
                           </div>
                           <div className="ml-4">
                             <div className="text-sm font-semibold text-slate-900 group-hover:text-primary transition-colors flex items-center gap-2">
-                              {lead.customerName}
+                              {lead.customerName || "Unknown Customer"}
                               <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 ring-1 ring-slate-200">
                                 {lead.inquirySource}
                               </span>
@@ -198,14 +304,6 @@ export default function LeadsPage() {
                         )}>
                           {lead.status.replace("_", " ")}
                         </span>
-                        <div className="mt-1.5 text-[10px] font-medium flex items-center gap-1.5">
-                          <div className={cn(
-                            "h-1.5 w-1.5 rounded-full",
-                            lead.priority === "HIGH" ? "bg-rose-500 animate-pulse" :
-                            lead.priority === "MEDIUM" ? "bg-amber-400" : "bg-slate-300"
-                          )} />
-                          <span className="text-slate-400">{lead.priority}</span>
-                        </div>
                       </td>
                       <td onClick={() => router.push(`/leads/${lead.id}`)} className="whitespace-nowrap px-3 py-5">
                         <div className="text-xs font-semibold text-slate-900 flex items-center gap-2">
@@ -297,12 +395,13 @@ export default function LeadsPage() {
 
 function CreateOrEditModal({ isOpen, lead, onClose, onSuccess }: { isOpen: boolean, lead: Lead | null, onClose: () => void, onSuccess: () => void }) {
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     customerName: "",
     contactNumber: "",
+    fullAddress: "",
     serviceType: "INTERIOR_DESIGN",
-    inquirySource: "WHATSAPP",
-    priority: "MEDIUM"
+    inquirySource: "WHATSAPP"
   });
 
   useEffect(() => {
@@ -310,12 +409,19 @@ function CreateOrEditModal({ isOpen, lead, onClose, onSuccess }: { isOpen: boole
       setFormData({
         customerName: lead.customerName,
         contactNumber: lead.contactNumber,
+        fullAddress: lead.fullAddress || "",
         serviceType: lead.serviceType,
-        inquirySource: lead.inquirySource,
-        priority: lead.priority
+        inquirySource: lead.inquirySource
       });
+      setError(null);
     } else {
-      setFormData({ customerName: "", contactNumber: "", serviceType: "INTERIOR_DESIGN", inquirySource: "WHATSAPP", priority: "MEDIUM" });
+      setFormData({ 
+        customerName: "", 
+        contactNumber: "", 
+        fullAddress: "",
+        serviceType: "INTERIOR_DESIGN", 
+        inquirySource: "WHATSAPP"
+      });
     }
   }, [lead, isOpen]);
 
@@ -336,9 +442,13 @@ function CreateOrEditModal({ isOpen, lead, onClose, onSuccess }: { isOpen: boole
       });
       if (res.ok) {
         onSuccess();
+      } else {
+        const err = await res.json();
+        setError(err.details || err.error || "Failed to save lead");
       }
     } catch (e) {
       console.error(e);
+      setError("Network error. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -357,42 +467,17 @@ function CreateOrEditModal({ isOpen, lead, onClose, onSuccess }: { isOpen: boole
             </button>
         </div>
         
+        {error && (
+          <div className="mx-8 mt-6 p-4 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-3 text-rose-700 animate-in fade-in slide-in-from-top-2">
+            <AlertTriangle className="h-5 w-5 shrink-0" />
+            <p className="text-xs font-semibold">{error}</p>
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-5">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-2 ml-1">Customer Name *</label>
-                <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <input 
-                    required
-                    type="text" 
-                    className="block w-full rounded-lg border border-slate-200 py-2.5 pl-11 bg-white text-slate-900 placeholder:text-slate-300 focus:border-primary focus:ring-2 focus:ring-primary/10 text-sm transition-all outline-none"
-                    placeholder="Full name"
-                    value={formData.customerName}
-                    onChange={e => setFormData({...formData, customerName: e.target.value})}
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-2 ml-1">Inquiry Source</label>
-                <select 
-                  className="block w-full rounded-lg border border-slate-200 py-2.5 px-4 bg-white text-slate-900 focus:border-primary focus:ring-2 focus:ring-primary/10 text-sm transition-all appearance-none outline-none"
-                  value={formData.inquirySource}
-                  onChange={e => setFormData({...formData, inquirySource: e.target.value})}
-                >
-                  <option value="WHATSAPP">WhatsApp</option>
-                  <option value="FACEBOOK">Facebook</option>
-                  <option value="INSTAGRAM">Instagram</option>
-                  <option value="WEBSITE">Website</option>
-                  <option value="DIRECT_CALL">Direct Call</option>
-                  <option value="WALK_IN">Walk In</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="space-y-5">
+            {/* Right Column Fields (First in DOM for RTL Tab) */}
+            <div className="space-y-5 md:col-start-2">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-2 ml-1">Contact Phone *</label>
                 <div className="relative">
@@ -400,10 +485,14 @@ function CreateOrEditModal({ isOpen, lead, onClose, onSuccess }: { isOpen: boole
                   <input 
                     required
                     type="text" 
+                    maxLength={10}
                     className="block w-full rounded-lg border border-slate-200 py-2.5 pl-11 bg-white text-slate-900 placeholder:text-slate-300 focus:border-primary focus:ring-2 focus:ring-primary/10 text-sm transition-all outline-none"
                     placeholder="Phone number"
                     value={formData.contactNumber}
-                    onChange={e => setFormData({...formData, contactNumber: e.target.value})}
+                    onChange={e => {
+                      const val = e.target.value.replace(/\D/g, "");
+                      if (val.length <= 10) setFormData({...formData, contactNumber: val});
+                    }}
                   />
                 </div>
               </div>
@@ -430,7 +519,55 @@ function CreateOrEditModal({ isOpen, lead, onClose, onSuccess }: { isOpen: boole
                 </select>
               </div>
             </div>
+
+            {/* Left Column Fields (Second in DOM) */}
+            <div className="space-y-5 md:col-start-1 md:row-start-1">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-2 ml-1">Customer Name</label>
+                <div className="relative">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <input 
+                    type="text" 
+                    className="block w-full rounded-lg border border-slate-200 py-2.5 pl-11 bg-white text-slate-900 placeholder:text-slate-300 focus:border-primary focus:ring-2 focus:ring-primary/10 text-sm transition-all outline-none"
+                    placeholder="Full name"
+                    value={formData.customerName}
+                    onChange={e => setFormData({...formData, customerName: e.target.value})}
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-2 ml-1">Inquiry Source</label>
+                <select 
+                  className="block w-full rounded-lg border border-slate-200 py-2.5 px-4 bg-white text-slate-900 focus:border-primary focus:ring-2 focus:ring-primary/10 text-sm transition-all appearance-none outline-none"
+                  value={formData.inquirySource}
+                  onChange={e => setFormData({...formData, inquirySource: e.target.value})}
+                >
+                  <option value="WHATSAPP">WhatsApp</option>
+                  <option value="FACEBOOK">Facebook</option>
+                  <option value="INSTAGRAM">Instagram</option>
+                  <option value="WEBSITE">Website</option>
+                  <option value="DIRECT_CALL">Direct Call</option>
+                  <option value="WALK_IN">Walk In</option>
+                </select>
+              </div>
+            </div>
           </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-2 ml-1">Site Address</label>
+            <div className="relative">
+              <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <input 
+                type="text" 
+                className="block w-full rounded-lg border border-slate-200 py-2.5 pl-11 bg-white text-slate-900 placeholder:text-slate-300 focus:border-primary focus:ring-2 focus:ring-primary/10 text-sm transition-all outline-none"
+                placeholder="Full site address / location details"
+                value={formData.fullAddress}
+                onChange={e => setFormData({...formData, fullAddress: e.target.value})}
+              />
+            </div>
+          </div>
+
 
           <div className="pt-6 flex items-center justify-end gap-x-4 border-t border-slate-100">
             <button

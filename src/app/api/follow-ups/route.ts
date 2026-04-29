@@ -9,6 +9,14 @@ export async function GET(request: Request) {
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const followUps = await prisma.followUp.findMany({
+      where: {
+        completedDate: null,
+        lead: {
+          status: {
+            notIn: ["WON_ORDER", "CANCELLED"]
+          }
+        }
+      },
       orderBy: { scheduledDate: "asc" },
       include: {
         lead: {
@@ -34,7 +42,14 @@ export async function POST(request: Request) {
 
     const lead = await prisma.lead.findUnique({
       where: { id: leadId },
-      include: { followUps: true }
+      select: {
+        id: true,
+        status: true,
+        reactivatedAt: true,
+        followUps: {
+          orderBy: { createdAt: "desc" }
+        }
+      }
     });
 
     if (!lead) return NextResponse.json({ error: "Lead not found" }, { status: 404 });
@@ -48,13 +63,30 @@ export async function POST(request: Request) {
     let finalCancelReason: string | null = null;
 
     if (outcome === "NOT_PICKED") {
-      if (attemptCount >= 4) {
+      // RULE 4 & 5: If lead was reactivated, it's a one-strike direct move back to Cancel
+      if (lead.reactivatedAt) {
         leadStatusUpdate = "CANCELLED";
         isCancelled = true;
-        finalCancelReason = "No Response - Max 4 Attempts Reached";
+        finalCancelReason = "No Response after Reactivation";
       } else {
-        leadStatusUpdate = "FOLLOW_UP";
-        scheduledCallDate = addDays(new Date(), 1); 
+        // RULE 2: 4-attempt algorithm based on dynamic active count
+        // We count existing NOT_PICKED records. If adding this new one makes it 4, we cancel.
+        const activeMissesCount = await prisma.followUp.count({
+          where: {
+            leadId,
+            outcome: "NOT_PICKED",
+            completedDate: { not: null }
+          }
+        });
+
+        if (activeMissesCount + 1 >= 4) {
+          leadStatusUpdate = "CANCELLED";
+          isCancelled = true;
+          finalCancelReason = "No Response - 4 Attempts Reached";
+        } else {
+          leadStatusUpdate = "FOLLOW_UP";
+          scheduledCallDate = addDays(new Date(), 1); 
+        }
       }
     } else if (outcome === "PICKED") {
       if (pickedStatus === "MEETING") {
@@ -80,20 +112,41 @@ export async function POST(request: Request) {
       finalCancelReason = cancelReason || "Not Specified";
     }
 
-    // 1. Log FollowUp attempt
+    // 1. Log this FollowUp attempt as COMPLETED
     const followUp = await prisma.followUp.create({
       data: {
         leadId,
         attemptNumber: attemptCount,
         outcome: outcome as any,
-        noteGiven: noteGiven || null, 
-        nextCallDate: scheduledCallDate,
-        nextCallTime: scheduledCallTime,
+        noteGiven: noteGiven || null,
+        nextCallDate: scheduledCallDate, // Save what was scheduled
+        nextCallTime: scheduledCallTime, // Save what was scheduled
         completedDate: new Date()
       }
     });
 
-    // 2. Update Lead Status
+    // 2. Delete ANY old pending follow-ups for this lead to avoid duplicates in the queue
+    await prisma.followUp.deleteMany({
+      where: {
+        leadId,
+        completedDate: null
+      }
+    });
+
+    // 3. If a future call was scheduled, create a NEW PENDING follow-up record
+    if (scheduledCallDate) {
+      await prisma.followUp.create({
+        data: {
+          leadId,
+          nextCallDate: scheduledCallDate,
+          nextCallTime: scheduledCallTime,
+          noteGiven: null, // Next call starts with a fresh note
+          completedDate: null
+        }
+      });
+    }
+
+    // 4. Update Lead Status
     await prisma.lead.update({
       where: { id: leadId },
       data: {

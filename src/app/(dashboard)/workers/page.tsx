@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { HardHat, Plus, Loader2, Check, X, Phone, IndianRupee, Wrench, User } from "lucide-react";
+import { HardHat, Plus, Loader2, Check, X, Phone, IndianRupee, Wrench, User, Search, RotateCcw, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ROLES = [
@@ -18,6 +18,10 @@ export default function WorkersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [search, setSearch] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [dateRange, setDateRange] = useState({ start: "", end: "" });
+  const [sortBy, setSortBy] = useState("NEWEST");
 
   const [form, setForm] = useState({ name: "", phone: "", role: "CARPENTER", dailyRate: "" });
 
@@ -31,6 +35,25 @@ export default function WorkersPage() {
   };
 
   useEffect(() => { fetchWorkers(); }, []);
+
+  const filtered = workers.filter(w => {
+    const matchesSearch = 
+      w.name.toLowerCase().includes(search.toLowerCase()) ||
+      w.phone.includes(search) ||
+      w.role.toLowerCase().includes(search.toLowerCase());
+    
+    const wDate = new Date(w.createdAt);
+    const matchesStart = !dateRange.start || wDate >= new Date(dateRange.start);
+    const matchesEnd = !dateRange.end || wDate <= new Date(dateRange.end + "T23:59:59");
+    
+    return matchesSearch && matchesStart && matchesEnd;
+  }).sort((a, b) => {
+    if (sortBy === "NEWEST") return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    if (sortBy === "OLDEST") return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    if (sortBy === "A-Z") return a.name.localeCompare(b.name);
+    if (sortBy === "Z-A") return b.name.localeCompare(a.name);
+    return 0;
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,6 +90,76 @@ export default function WorkersPage() {
           <Plus className="h-4 w-4" /> Add New Staff
         </button>
       </div>
+
+      {/* Search Bar */}
+      <div className="relative max-w-xl">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+        <input 
+          type="text"
+          className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-12 pr-4 text-sm focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all"
+          placeholder="Search staff by name, phone or skill..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+      </div>
+      <div className="flex items-center gap-2">
+        <button 
+          onClick={() => setShowFilters(!showFilters)}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2.5 border rounded-lg text-sm font-medium transition shadow-sm",
+            showFilters ? "bg-slate-900 text-white border-slate-900" : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+          )}
+        >
+          <Filter className="h-4 w-4" /> {showFilters ? "Hide Options" : "More Filters"}
+        </button>
+        <button 
+          onClick={() => {
+            setSearch("");
+            setDateRange({ start: "", end: "" });
+            setSortBy("NEWEST");
+          }}
+          className="p-2.5 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition shadow-sm"
+        >
+          <RotateCcw className="h-4 w-4" />
+        </button>
+      </div>
+
+      {/* Expanded Filters */}
+      {showFilters && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-50 p-6 rounded-xl border border-slate-200 animate-in slide-in-from-top-2 duration-200">
+           <div>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Sort Directory</label>
+              <select 
+                className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-sm focus:border-primary outline-none"
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value)}
+              >
+                <option value="NEWEST">Onboarded: Newest</option>
+                <option value="OLDEST">Onboarded: Oldest</option>
+                <option value="A-Z">Name: A-Z</option>
+                <option value="Z-A">Name: Z-A</option>
+              </select>
+           </div>
+           <div>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Joined From</label>
+              <input 
+                type="date"
+                className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-sm focus:border-primary outline-none"
+                value={dateRange.start}
+                onChange={e => setDateRange({...dateRange, start: e.target.value})}
+              />
+           </div>
+           <div>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Joined To</label>
+              <input 
+                type="date"
+                className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-sm focus:border-primary outline-none"
+                value={dateRange.end}
+                onChange={e => setDateRange({...dateRange, end: e.target.value})}
+              />
+           </div>
+        </div>
+      )}
 
       {/* Summary KPI */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -107,7 +200,7 @@ export default function WorkersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
-                {workers.map(w => {
+                {filtered.map(w => {
                   const role = roleMeta(w.role);
                   return (
                     <tr key={w.id} className="group hover:bg-slate-50 transition-colors">
@@ -142,14 +235,14 @@ export default function WorkersPage() {
                     </tr>
                   );
                 })}
-                {workers.length === 0 && (
+                {filtered.length === 0 && (
                   <tr>
                     <td colSpan={4} className="py-20 text-center">
                       <div className="h-12 w-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3 border border-slate-200 text-slate-300">
-                        <HardHat className="h-6 w-6" />
+                        <User className="h-6 w-6" />
                       </div>
-                      <h3 className="text-sm font-semibold text-slate-900">Catalogue is empty</h3>
-                      <p className="mt-1 text-xs text-slate-500">Add your first worker to the site directory.</p>
+                      <h3 className="text-sm font-semibold text-slate-900">No staff found</h3>
+                      <p className="mt-1 text-xs text-slate-500">Try adjusting your search criteria.</p>
                     </td>
                   </tr>
                 )}
@@ -176,13 +269,23 @@ export default function WorkersPage() {
                 <input required className={inputCls} placeholder="e.g. Rajesh Sharma" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2 ml-1">Phone Number *</label>
-                  <input required className={inputCls} placeholder="9876543210" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
-                </div>
-                <div>
+                <div className="col-start-2">
                   <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2 ml-1">Daily Rate (₹)</label>
                   <input type="number" min="0" className={inputCls} placeholder="750" value={form.dailyRate} onChange={e => setForm({ ...form, dailyRate: e.target.value })} />
+                </div>
+                <div className="col-start-1 row-start-1">
+                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2 ml-1">Phone Number *</label>
+                  <input 
+                    required 
+                    maxLength={10}
+                    className={inputCls} 
+                    placeholder="10 digit number" 
+                    value={form.phone} 
+                    onChange={e => {
+                      const val = e.target.value.replace(/\D/g, "");
+                      if (val.length <= 10) setForm({ ...form, phone: val });
+                    }} 
+                  />
                 </div>
               </div>
               <div>

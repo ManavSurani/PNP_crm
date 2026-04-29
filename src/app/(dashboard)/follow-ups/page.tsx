@@ -4,15 +4,29 @@ import { useState, useEffect } from "react";
 import { format, isPast, isToday } from "date-fns";
 import { 
   PhoneCall, Clock, CheckCircle2, AlertCircle, Loader2, 
-  Search, Filter, ExternalLink, Calendar, ChevronRight
+  Search, Filter, ExternalLink, Calendar, ChevronRight, RotateCcw
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+
+const timeToMinutes = (timeStr?: string | null) => {
+  if (!timeStr) return 0;
+  try {
+    const [time, modifier] = timeStr.split(' ');
+    let [hours, minutes] = time.split(':').map(Number);
+    if (hours === 12) hours = 0;
+    if (modifier === 'PM') hours += 12;
+    return hours * 60 + minutes;
+  } catch { return 0; }
+};
 
 export default function FollowUpsPage() {
   const [followUps, setFollowUps] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [dateRange, setDateRange] = useState({ start: "", end: "" });
+  const [sortBy, setSortBy] = useState("DATE_ASC"); // Default to nearest upcoming
 
   const fetchFollowUps = async () => {
     setIsLoading(true);
@@ -25,10 +39,41 @@ export default function FollowUpsPage() {
 
   useEffect(() => { fetchFollowUps(); }, []);
 
-  const filtered = followUps.filter(f => 
-    f.lead.customerName.toLowerCase().includes(search.toLowerCase()) ||
-    f.noteGiven?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = followUps.filter(f => {
+    const matchesSearch = 
+      f.lead.customerName.toLowerCase().includes(search.toLowerCase()) ||
+      f.noteGiven?.toLowerCase().includes(search.toLowerCase());
+    
+    const fDate = f.nextCallDate ? new Date(f.nextCallDate) : null;
+    const matchesStart = !dateRange.start || (fDate && fDate >= new Date(dateRange.start));
+    const matchesEnd = !dateRange.end || (fDate && fDate <= new Date(dateRange.end + "T23:59:59"));
+
+    return matchesSearch && matchesStart && matchesEnd;
+  }).sort((a, b) => {
+    // Priority: Scheduled items first
+    if (a.nextCallDate && !b.nextCallDate) return -1;
+    if (!a.nextCallDate && b.nextCallDate) return 1;
+
+    if (sortBy.startsWith("DATE")) {
+       if (!a.nextCallDate || !b.nextCallDate) return 0;
+       
+       const dateA = new Date(a.nextCallDate).setHours(0,0,0,0);
+       const dateB = new Date(b.nextCallDate).setHours(0,0,0,0);
+       
+       if (dateA !== dateB) {
+         return sortBy === "DATE_ASC" ? dateA - dateB : dateB - dateA;
+       }
+       
+       // Same day, sort by time
+       const timeA = timeToMinutes(a.nextCallTime);
+       const timeB = timeToMinutes(b.nextCallTime);
+       return sortBy === "DATE_ASC" ? timeA - timeB : timeB - timeA;
+    }
+    
+    if (sortBy === "A-Z") return a.lead.customerName.localeCompare(b.lead.customerName);
+    if (sortBy === "Z-A") return b.lead.customerName.localeCompare(a.lead.customerName);
+    return 0;
+  });
 
   const pending = followUps.filter(f => !f.completedDate);
   const overdue = pending.filter(f => f.nextCallDate && isPast(new Date(f.nextCallDate)) && !isToday(new Date(f.nextCallDate)));
@@ -67,10 +112,65 @@ export default function FollowUpsPage() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <button className="px-5 py-3 bg-white border border-slate-200 rounded-xl font-semibold text-xs text-slate-600 shadow-sm hover:bg-slate-50 transition-all flex items-center gap-2">
-          <Filter className="h-4 w-4" /> Advanced Filter
-        </button>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => setShowFilters(!showFilters)}
+            className={cn(
+              "px-5 py-3 border rounded-xl font-semibold text-xs transition-all flex items-center gap-2 shadow-sm",
+              showFilters ? "bg-slate-900 text-white border-slate-900" : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+            )}
+          >
+            <Filter className="h-4 w-4" /> {showFilters ? "Hide" : "Filters"}
+          </button>
+          <button 
+            onClick={() => {
+              setSearch("");
+              setDateRange({ start: "", end: "" });
+              setSortBy("DATE_ASC");
+            }}
+            className="p-3 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition shadow-sm"
+          >
+            <RotateCcw className="h-4 w-4" />
+          </button>
+        </div>
       </div>
+
+      {/* Expanded Filters */}
+      {showFilters && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-50 p-6 rounded-xl border border-slate-200 animate-in slide-in-from-top-2 duration-200">
+           <div>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Sort Queue</label>
+              <select 
+                className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-sm focus:border-primary outline-none font-medium"
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value)}
+              >
+                <option value="DATE_ASC">Schedule: Nearest First</option>
+                <option value="DATE_DESC">Schedule: Furthest First</option>
+                <option value="A-Z">Customer: A-Z</option>
+                <option value="Z-A">Customer: Z-A</option>
+              </select>
+           </div>
+           <div>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Date From</label>
+              <input 
+                type="date"
+                className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-sm focus:border-primary outline-none"
+                value={dateRange.start}
+                onChange={e => setDateRange({...dateRange, start: e.target.value})}
+              />
+           </div>
+           <div>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Date To</label>
+              <input 
+                type="date"
+                className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-sm focus:border-primary outline-none"
+                value={dateRange.end}
+                onChange={e => setDateRange({...dateRange, end: e.target.value})}
+              />
+           </div>
+        </div>
+      )}
 
       {/* Main List */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
@@ -119,6 +219,9 @@ export default function FollowUpsPage() {
                               <Calendar className={cn("h-3.5 w-3.5", isScheduledPast ? "text-rose-400" : "text-slate-400")} />
                               <span className={cn("text-xs font-bold", isScheduledPast ? "text-rose-600" : "text-slate-700")}>
                                 {format(new Date(followUp.nextCallDate), "dd MMM, yyyy")}
+                                {followUp.nextCallTime && (
+                                  <span className="ml-1 text-primary/80">@ {followUp.nextCallTime}</span>
+                                )}
                               </span>
                             </div>
                             {isScheduledPast && (

@@ -4,21 +4,34 @@ import { useState, useEffect, use } from "react";
 import { format } from "date-fns";
 import {
   Phone, MapPin, FileText, Clock, Zap, Loader2, Pencil, X, CheckCircle2,
-  PhoneMissed, Calendar, Check, RotateCcw, Ban, AlertTriangle, ListTodo, Activity, Trash2
+  PhoneMissed, Calendar, Check, RotateCcw, Ban, AlertTriangle, ListTodo, Activity, Trash2,
+  Banknote, MessageSquare
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type FollowUp = { id: string; attemptNumber: number; outcome: string; noteGiven: string | null; createdAt: string };
+type FollowUp = { 
+  id: string; 
+  attemptNumber: number; 
+  outcome: string; 
+  noteGiven: string | null; 
+  createdAt: string; 
+  completedDate?: string | null;
+  nextCallDate?: string | null;
+  nextCallTime?: string | null;
+};
 type Meeting = { id: string; address: string; date: string; time: string; notes: string | null; status: string; createdAt: string };
+type LeadNote = { id: string; content: string; createdAt: string };
+type LeadTransaction = { id: string; type: "RECEIVED" | "EXPENSE"; amount: number; date: string; createdAt: string; category: string; paidTo: string };
 
 type LeadDetails = {
   id: string; customerName: string; contactNumber: string; alternateNumber: string | null;
-  fullAddress: string | null; inquirySource: string; serviceType: string; priority: string;
+  fullAddress: string | null; inquirySource: string; serviceType: string;
   status: string; isCancelled: boolean; cancelReason: string | null;
   createdAt: string; budgetRange: string | null; requirementDetails: string | null;
   siteLocation: string | null; landmark: string | null; preferredVisitTime: string | null;
   assignedStaff?: { id: string; name: string } | null;
   followUps: FollowUp[]; meetings: Meeting[];
+  leadNotes: LeadNote[]; transactions: LeadTransaction[];
 };
 
 type ModalType = 
@@ -33,6 +46,7 @@ const CANCEL_REASONS = [
   "Wrong Number",
   "Project Postponed",
 ];
+
 
 export default function LeadDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -50,8 +64,10 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
   const [reactivationNote, setReactivationNote] = useState("");
   const [meetingForm, setMeetingForm] = useState({ address: "", date: "", time: "", notes: "" });
   const [editForm, setEditForm] = useState<Partial<LeadDetails>>({});
-  const [editingItem, setEditingItem] = useState<{ id: string; type: "FOLLOW_UP" | "MEETING"; noteGiven?: string | null; notes?: string | null; address?: string; date?: string; time?: string } | null>(null);
+  const [editingItem, setEditingItem] = useState<{ id: string; type: "FOLLOW_UP" | "MEETING" | "NOTE" | "TRANSACTION"; noteGiven?: string | null; notes?: string | null; address?: string; date?: string; time?: string; content?: string } | null>(null);
   const [editNoteText, setEditNoteText] = useState("");
+  const [editError, setEditError] = useState<string | null>(null);
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
 
   const fetchLead = async () => {
     try {
@@ -78,6 +94,8 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
     setCancelReason(CANCEL_REASONS[0]);
     setReactivationNote("");
     setMeetingForm({ address: "", date: "", time: "", notes: "" });
+    setEditError(null);
+    setIsEditingAddress(false);
   };
 
   const post = async (url: string, body: object) => {
@@ -93,20 +111,24 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
     finally { setIsSubmitting(false); }
   };
 
-  const handleDeleteActivity = async (targetId: string, itemType: "FOLLOW_UP" | "MEETING") => {
-    alert(`Attempting to delete ${itemType} with ID: ${targetId}`);
+  const handleDeleteActivity = async (targetId: string, itemType: "FOLLOW_UP" | "MEETING" | "NOTE" | "TRANSACTION") => {
     if (!window.confirm("Are you sure you want to delete this activity?")) return;
     setIsSubmitting(true);
     try {
-      const apiUrl = itemType === "FOLLOW_UP" ? `/api/follow-ups/${targetId}` : `/api/meetings/${targetId}`;
+      let apiUrl = "";
+      switch (itemType) {
+        case "FOLLOW_UP": apiUrl = `/api/follow-ups/${targetId}`; break;
+        case "MEETING": apiUrl = `/api/meetings/${targetId}`; break;
+        case "NOTE": apiUrl = `/api/notes/${targetId}`; break;
+        case "TRANSACTION": apiUrl = `/api/transactions/${targetId}`; break;
+      }
+      
       const res = await fetch(apiUrl, { method: "DELETE" });
       if (res.ok) {
-        alert("Deleted successfully");
         fetchLead();
       } else {
         const err = await res.json();
         alert(`API Error: ${err.error || "Unknown"}`);
-        fetchLead();
       }
     } catch (e) {
       alert(`Network Error: ${String(e)}`);
@@ -119,8 +141,25 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
     if (!editingItem) return;
     setIsSubmitting(true);
     try {
-      const url = editingItem.type === "FOLLOW_UP" ? `/api/follow-ups/${editingItem.id}` : `/api/meetings/${editingItem.id}`;
-      const body = editingItem.type === "FOLLOW_UP" ? { noteGiven: editNoteText } : { notes: editNoteText };
+      let url = "";
+      let body = {};
+      
+      switch (editingItem.type) {
+        case "FOLLOW_UP":
+          url = `/api/follow-ups/${editingItem.id}`;
+          body = { noteGiven: editNoteText };
+          break;
+        case "MEETING":
+          url = `/api/meetings/${editingItem.id}`;
+          body = { notes: editNoteText };
+          break;
+        case "NOTE":
+          url = `/api/notes/${editingItem.id}`;
+          body = { content: editNoteText };
+          break;
+        default: return; // Transactions not editable from here
+      }
+
       const res = await fetch(url, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -134,14 +173,24 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
   const handleUpdateLead = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setEditError(null);
     try {
       const res = await fetch(`/api/leads/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editForm),
       });
-      if (res.ok) { closeModal(); fetchLead(); }
-    } catch (e) { console.error(e); }
+      if (res.ok) { 
+        closeModal(); 
+        fetchLead(); 
+      } else {
+        const err = await res.json();
+        setEditError(err.details || err.error || "Failed to update lead");
+      }
+    } catch (e) { 
+      console.error(e); 
+      setEditError("Network error. Please try again.");
+    }
     finally { setIsSubmitting(false); }
   };
 
@@ -163,12 +212,21 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
   if (isLoading) return <div className="flex h-[60vh] items-center justify-center"><Loader2 className="h-10 w-10 animate-spin text-indigo-500" /></div>;
   if (!lead) return <div className="p-10 text-center text-slate-500 font-bold">Lead not found.</div>;
 
+  const isLocked = lead.status === "CANCELLED" || lead.status === "WON_ORDER";
+
   const timeline = [
-    ...(lead.followUps || []).map(f => ({ ...f, type: "FOLLOW_UP" as const })),
+    ...(lead.followUps || []).filter(f => f.completedDate).map(f => ({ ...f, type: "FOLLOW_UP" as const })),
     ...(lead.meetings || []).map(m => ({ ...m, type: "MEETING" as const })),
+    ...(lead.leadNotes || []).map(n => ({ ...n, type: "NOTE" as const })),
+    ...(lead.transactions || []).map(t => ({ ...t, type: "TRANSACTION" as const })),
   ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-  const isCancelled = lead.status === "CANCELLED";
+  // Dynamic Sequential Numbering for NOT_PICKED follow-ups
+  const notPickedItems = [...timeline].filter(item => item.type === "FOLLOW_UP" && (item as any).outcome === "NOT_PICKED").reverse(); // Oldest first
+  const getAttemptNumber = (id: string) => {
+    const idx = notPickedItems.findIndex(item => item.id === id);
+    return idx !== -1 ? idx + 1 : null;
+  };
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-24">
@@ -177,10 +235,10 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
         <div className="absolute top-0 right-0 w-48 h-48 bg-primary rounded-full blur-[100px] opacity-5 -mr-24 -mt-24" />
         <div className="flex items-center gap-6 relative z-10">
           <div className="h-16 w-16 bg-slate-100 rounded-xl flex shrink-0 items-center justify-center border border-slate-200">
-            <span className="text-2xl font-bold text-slate-800 uppercase">{lead.customerName.charAt(0)}</span>
+            <span className="text-2xl font-bold text-slate-800 uppercase">{lead.customerName ? lead.customerName.charAt(0) : "?"}</span>
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-slate-900 tracking-tight">{lead.customerName}</h1>
+            <h1 className="text-xl font-semibold text-slate-900 tracking-tight">{lead.customerName || "Unnamed Lead"}</h1>
             <div className="mt-1.5 flex flex-wrap gap-3 text-xs">
               <span className="flex items-center gap-1.5 text-slate-600 font-medium bg-slate-50 px-3 py-1 rounded-md border border-slate-200"><Phone className="h-3.5 w-3.5 text-indigo-600" /> {lead.contactNumber}</span>
               <span className="flex items-center gap-1.5 text-slate-600 font-medium bg-slate-50 px-3 py-1 rounded-md border border-slate-200 uppercase"><FileText className="h-3.5 w-3.5 text-slate-400" /> {lead.serviceType.replace(/_/g, " ")}</span>
@@ -188,25 +246,36 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
           </div>
         </div>
         <div className="flex flex-col gap-2 md:items-end relative z-10">
-          <span className={cn(
-            "inline-flex items-center rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wider border",
-            lead.status === "NEW_INQUIRY" ? "bg-amber-50 text-amber-700 border-amber-200" :
-            lead.status === "WON_ORDER" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
-            lead.status === "CANCELLED" ? "bg-rose-50 text-rose-700 border-rose-200" :
-            lead.status === "MEETING_SCHEDULED" ? "bg-indigo-50 text-indigo-700 border-indigo-200" :
-            "bg-sky-50 text-sky-700 border-sky-200"
-          )}>
-            {lead.status === "NEW_INQUIRY" ? "New Lead" :
-             lead.status === "WON_ORDER" ? "Project Started" :
-             lead.status === "MEETING_SCHEDULED" ? "Visit Booked" :
-             lead.status === "FOLLOW_UP" ? "In Pipeline" :
-             lead.status.replace(/_/g, " ")}
-          </span>
-          <div className="flex items-center gap-2">
-             <div className={cn("h-1.5 w-1.5 rounded-full", lead.priority === "HIGH" ? "bg-rose-500 animate-pulse" : "bg-amber-400")} />
-             <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">
-               {lead.priority} Priority
-             </span>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                window.open(`https://wa.me/${lead.contactNumber.replace(/\D/g, "")}`, "_blank");
+              }}
+              className="h-9 w-9 bg-[#25D366] hover:bg-[#20ba5a] text-white rounded-xl flex items-center justify-center transition-all active:scale-90 shadow-md shadow-emerald-100 border border-emerald-200 group"
+              title="WhatsApp Message"
+            >
+              <svg 
+                className="h-5 w-5 fill-current" 
+                viewBox="0 0 24 24" 
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .018 5.393 0 12.03c0 2.122.541 4.195 1.57 6.04L0 24l6.104-1.602a11.83 11.83 0 005.937 1.57h.005c6.632 0 12.029-5.392 12.033-12.031a11.82 11.82 0 00-3.376-8.411z" />
+              </svg>
+            </button>
+            <span className={cn(
+              "inline-flex items-center rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wider border",
+              lead.status === "NEW_INQUIRY" ? "bg-amber-50 text-amber-700 border-amber-200" :
+              lead.status === "WON_ORDER" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+              lead.status === "CANCELLED" ? "bg-rose-50 text-rose-700 border-rose-200" :
+              lead.status === "MEETING_SCHEDULED" ? "bg-indigo-50 text-indigo-700 border-indigo-200" :
+              "bg-sky-50 text-sky-700 border-sky-200"
+            )}>
+              {lead.status === "NEW_INQUIRY" ? "New Lead" :
+               lead.status === "WON_ORDER" ? "Project Started" :
+               lead.status === "MEETING_SCHEDULED" ? "Visit Booked" :
+               lead.status === "FOLLOW_UP" ? "In Pipeline" :
+               lead.status.replace(/_/g, " ")}
+            </span>
           </div>
           {lead.cancelReason && <p className="text-[10px] text-rose-500 font-medium italic">Reason: {lead.cancelReason}</p>}
         </div>
@@ -220,7 +289,7 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
             <h3 className="text-sm font-semibold mb-6 flex items-center gap-2 uppercase tracking-wider">
               <Zap className="h-4 w-4 text-amber-500" /> Action Center
             </h3>
-            {isCancelled ? (
+            {isLocked ? (
               <div className="space-y-4">
                 <div className="bg-rose-500/10 border border-rose-500/20 rounded-lg p-4 text-center">
                   <Ban className="h-6 w-6 text-rose-400 mx-auto mb-2" />
@@ -236,14 +305,20 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
             ) : (
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
-                  <button onClick={() => setActiveModal("PICKED")} className="bg-emerald-600 hover:bg-emerald-700 py-3 rounded-lg text-xs font-semibold flex flex-col items-center justify-center gap-2 transition-all active:scale-95">
+                  <button onClick={() => setActiveModal("PICKED")} className="bg-emerald-600 hover:bg-emerald-700 py-3 rounded-lg text-xs font-semibold flex flex-col items-center justify-center gap-2 transition-all active:scale-95 shadow-sm">
                     <CheckCircle2 className="h-5 w-5" /> Picked
                   </button>
-                  <button onClick={() => setActiveModal("NOT_PICKED")} className="bg-rose-600 hover:bg-rose-700 py-3 rounded-lg text-xs font-semibold flex flex-col items-center justify-center gap-2 transition-all active:scale-95">
+                  <button onClick={() => setActiveModal("NOT_PICKED")} className="bg-rose-600 hover:bg-rose-700 py-3 rounded-lg text-xs font-semibold flex flex-col items-center justify-center gap-2 transition-all active:scale-95 shadow-sm">
                     <PhoneMissed className="h-5 w-5" /> No Answer
                   </button>
                 </div>
-                <button onClick={() => setActiveModal("MEETING")} className="w-full bg-white text-slate-900 hover:bg-slate-100 py-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all border border-slate-200 shadow-sm mt-3">
+                <button 
+                  onClick={() => { 
+                    setMeetingForm(prev => ({ ...prev, address: lead.fullAddress || "" })); 
+                    setActiveModal("MEETING"); 
+                  }} 
+                  className="w-full bg-white text-slate-900 hover:bg-slate-100 py-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all border border-slate-200 shadow-sm mt-3"
+                >
                   <Calendar className="h-4 w-4 text-indigo-600" /> Schedule Site Visit
                 </button>
                 <button onClick={() => setActiveModal("CONVERT")} className="w-full bg-indigo-50 text-indigo-700 hover:bg-indigo-100 py-3 rounded-lg text-[11px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all border border-indigo-200 mt-2 shadow-sm relative overflow-hidden group">
@@ -268,8 +343,9 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
             <div className="space-y-4">
               <div className="space-y-1">
                 <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><MapPin className="h-3 w-3" /> Address</p>
-                <p className="text-sm text-slate-800 font-medium">{lead.fullAddress || "Not specified"}</p>
-                {lead.landmark && <p className="text-[11px] text-slate-500 mt-0.5">Near: {lead.landmark}</p>}
+                <div className="flex items-start justify-between gap-4">
+                  <p className="text-sm text-slate-800 font-medium leading-relaxed">{lead.fullAddress || "Not specified"}</p>
+                </div>
               </div>
               <div className="space-y-1">
                 <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><Zap className="h-3 w-3" /> Requirement</p>
@@ -277,8 +353,8 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
               </div>
               <div className="grid grid-cols-2 gap-3 pt-2">
                 <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                  <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-tight">Budget</p>
-                  <p className="text-xs font-bold text-slate-900">{lead.budgetRange || "Flexible"}</p>
+                  <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-tight">Area / City</p>
+                  <p className="text-xs font-bold text-slate-900 truncate">Surat</p>
                 </div>
                 <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
                   <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-tight">Source</p>
@@ -302,10 +378,14 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                     <div className={cn(
                       "absolute -left-[2.5rem] top-0 h-8 w-8 rounded-full border-4 border-white shadow-sm flex items-center justify-center",
                       item.type === "MEETING" ? "bg-indigo-600" :
-                      item.outcome === "PICKED" ? "bg-emerald-500" :
-                      item.outcome === "NOT_PICKED" ? "bg-rose-500" : "bg-slate-800"
+                      item.type === "NOTE" ? "bg-amber-500" :
+                      item.type === "TRANSACTION" ? ((item as any).type === "RECEIVED" ? "bg-emerald-600" : "bg-rose-600") :
+                      item.type === "FOLLOW_UP" && (item as any).outcome === "PICKED" ? "bg-emerald-500" :
+                      item.type === "FOLLOW_UP" && (item as any).outcome === "NOT_PICKED" ? "bg-rose-500" : "bg-slate-800"
                     )}>
                       {item.type === "MEETING" ? <Calendar className="h-3 w-3 text-white" /> :
+                       item.type === "NOTE" ? <MessageSquare className="h-3 w-3 text-white" /> :
+                       item.type === "TRANSACTION" ? <Banknote className="h-3 w-3 text-white" /> :
                        <Phone className="h-3 w-3 text-white" />}
                     </div>
                   <div className="space-y-2.5">
@@ -316,39 +396,49 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                       </span>
                       <span className={cn("text-[10px] font-bold uppercase tracking-wider",
                         item.type === "MEETING" ? "text-indigo-600" :
-                        item.outcome === "PICKED" ? "text-emerald-600" :
-                        item.outcome === "NOT_PICKED" ? "text-rose-600" : "text-slate-600"
+                        item.type === "NOTE" ? "text-amber-600" :
+                        item.type === "TRANSACTION" ? ((item as any).type === "RECEIVED" ? "text-emerald-600" : "text-rose-600") :
+                        item.type === "FOLLOW_UP" && (item as any).outcome === "PICKED" ? "text-emerald-600" :
+                        item.type === "FOLLOW_UP" && (item as any).outcome === "NOT_PICKED" ? "text-rose-600" : "text-slate-600"
                       )}>
                         {item.type === "MEETING" ? "Site Update" :
-                         item.outcome ? `Call: ${item.outcome.replace(/_/g, " ")}` : "Manual Log"}
-                        {item.outcome === "NOT_PICKED" && ` (#${item.attemptNumber})`}
+                         item.type === "NOTE" ? "Internal Note" :
+                         item.type === "TRANSACTION" ? `${(item as any).type === "RECEIVED" ? "Payment Received" : "Expense Logged"}` :
+                         (item.type === "FOLLOW_UP" && (item as any).outcome ? `Call: ${(item as any).outcome.replace(/_/g, " ")}` : "Manual Log")}
+                        {item.type === "FOLLOW_UP" && (item as any).outcome === "NOT_PICKED" && ` (#${getAttemptNumber(item.id)})`}
                       </span>
                     </div>
                     <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 text-sm text-slate-700 leading-relaxed group shadow-sm hover:shadow-md transition-shadow relative">
-                      {/* Action Buttons */}
-                      <div className="absolute top-3 right-3 flex items-center gap-2 z-30">
-                        <button 
-                          type="button"
-                          onClick={() => {
-                            setEditingItem({ ...item });
-                            setEditNoteText(item.type === "MEETING" ? item.notes || "" : item.noteGiven || "");
-                          }}
-                          className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-md border border-transparent hover:border-slate-100 shadow-sm transition-all"
-                        >
-                          <Pencil className="h-3 w-3" />
-                        </button>
-                        <button 
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleDeleteActivity(item.id, item.type);
-                          }}
-                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-white rounded-md border border-transparent hover:border-slate-100 shadow-sm transition-all z-30"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
+                      {/* Action Buttons - Locked if Cancelled/Won */}
+                      {!isLocked && (
+                        <div className="absolute top-3 right-3 flex items-center gap-2 z-30">
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              setEditingItem({ ...item });
+                              let initialText = "";
+                              if (item.type === "MEETING") initialText = item.notes || "";
+                              else if (item.type === "NOTE") initialText = item.content || "";
+                              else if (item.type === "FOLLOW_UP") initialText = item.noteGiven || "";
+                              setEditNoteText(initialText);
+                            }}
+                            className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-md border border-transparent hover:border-slate-100 shadow-sm transition-all"
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </button>
+                          <button 
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleDeleteActivity(item.id, item.type);
+                            }}
+                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-white rounded-md border border-transparent hover:border-slate-100 shadow-sm transition-all z-30"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      )}
 
                       {item.type === "MEETING" ? (
                         <div className="space-y-3">
@@ -359,10 +449,34 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                           </div>
                           {item.notes && <p className="italic text-slate-600 text-xs border-t border-slate-200 pt-2 leading-relaxed">"{item.notes}"</p>}
                         </div>
-                      ) : (
-                        <p className="whitespace-pre-wrap pr-12">
-                          {item.noteGiven || <span className="text-slate-400 italic">No documentation provided.</span>}
+                      ) : item.type === "TRANSACTION" ? (
+                        <div className="space-y-2">
+                           <div className="flex items-center justify-between">
+                              <span className="text-xs font-bold text-slate-900">₹{item.amount.toLocaleString()}</span>
+                              <span className="text-[9px] font-bold bg-slate-100 px-2 py-0.5 rounded uppercase">{item.category}</span>
+                           </div>
+                           <p className="text-[11px] text-slate-500">Paid to: <span className="font-semibold text-slate-700">{item.paidTo}</span> via {item.paymentMode}</p>
+                           {item.description && <p className="text-xs text-slate-600 border-t border-slate-100 pt-1.5 italic">"{item.description}"</p>}
+                        </div>
+                      ) : item.type === "NOTE" ? (
+                        <p className="whitespace-pre-wrap pr-12 text-slate-700">
+                          {item.content}
                         </p>
+                      ) : (
+                        <div className="space-y-3">
+                          {item.nextCallDate && (
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 border border-indigo-100 rounded-lg w-fit shadow-sm">
+                               <Calendar className="h-3 w-3 text-indigo-500" />
+                               <span className="text-[10px] font-bold text-indigo-700 uppercase tracking-widest">
+                                 Scheduled for: {format(new Date(item.nextCallDate), "dd MMM, yyyy")}
+                                 {item.nextCallTime && ` @ ${item.nextCallTime}`}
+                               </span>
+                            </div>
+                          )}
+                          <p className="whitespace-pre-wrap pr-12 text-slate-700 leading-relaxed">
+                            {item.noteGiven || <span className="text-slate-400 italic font-medium">No documentation provided.</span>}
+                          </p>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -383,14 +497,40 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
       {activeModal === "EDIT" && (
         <Modal title="Edit Lead" icon={<Pencil className="h-5 w-5" />} color="primary" onClose={closeModal}>
           <form onSubmit={handleUpdateLead} className="p-8 space-y-6 overflow-y-auto max-h-[65vh]">
+            {editError && (
+              <div className="p-4 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-3 text-rose-700 mb-6">
+                <AlertTriangle className="h-5 w-5 shrink-0" />
+                <p className="text-xs font-semibold">{editError}</p>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Field label="Customer Name *"><input required className={inputCls} value={editForm.customerName || ""} onChange={e => setEditForm({ ...editForm, customerName: e.target.value })} /></Field>
-              <Field label="Phone *"><input required className={inputCls} value={editForm.contactNumber || ""} onChange={e => setEditForm({ ...editForm, contactNumber: e.target.value })} /></Field>
-              <Field label="Full Address"><textarea rows={3} className={inputCls} value={editForm.fullAddress || ""} onChange={e => setEditForm({ ...editForm, fullAddress: e.target.value })} /></Field>
-              <Field label="Landmark"><input className={inputCls} value={editForm.landmark || ""} onChange={e => setEditForm({ ...editForm, landmark: e.target.value })} /></Field>
+              {/* Right Column (Focus 1st) */}
+              <div className="md:col-start-2">
+                <Field label="Phone *">
+                  <input 
+                    required 
+                    maxLength={10}
+                    className={inputCls} 
+                    value={editForm.contactNumber || ""} 
+                    onChange={e => {
+                      const val = e.target.value.replace(/\D/g, "");
+                      if (val.length <= 10) setEditForm({ ...editForm, contactNumber: val });
+                    }} 
+                  />
+                </Field>
+              </div>
+
+              {/* Left Column (Focus 2nd) */}
+              <div className="md:col-start-1 md:row-start-1">
+                <Field label="Customer Name"><input className={inputCls} value={editForm.customerName || ""} onChange={e => setEditForm({ ...editForm, customerName: e.target.value })} /></Field>
+              </div>
+
+              <Field label="Address"><input className={inputCls} value={editForm.fullAddress || ""} onChange={e => setEditForm({ ...editForm, fullAddress: e.target.value })} /></Field>
               <Field label="Requirement Details"><textarea rows={3} className={inputCls} value={editForm.requirementDetails || ""} onChange={e => setEditForm({ ...editForm, requirementDetails: e.target.value })} /></Field>
-              <Field label="Budget Range"><input className={inputCls} placeholder="e.g. 5 - 10 Lakhs" value={editForm.budgetRange || ""} onChange={e => setEditForm({ ...editForm, budgetRange: e.target.value })} /></Field>
             </div>
+            
+
             <ModalFooter onClose={closeModal} isSubmitting={isSubmitting} label="Update Profile" />
           </form>
         </Modal>
@@ -399,27 +539,54 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
       {/* ─── MODAL: CALL PICKED ─── */}
       {activeModal === "PICKED" && (
         <Modal title="Log Successful Call" icon={<CheckCircle2 className="h-5 w-5" />} color="primary" onClose={closeModal}>
-          <div className="p-8 space-y-6 overflow-y-auto max-h-[75vh]">
-            {/* Conversation Context */}
-            {lead.followUps.length > 0 && (
-              <div className="space-y-3 mb-4">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Previous Conversations</p>
-                <div className="space-y-2 max-h-32 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200">
-                  {lead.followUps.map((f, i) => f.noteGiven && (
-                    <div key={f.id} className="p-3 bg-slate-50 rounded-lg border border-slate-100 border-l-4 border-l-indigo-500">
-                      <p className="text-[11px] text-slate-600 leading-relaxed">
-                        <span className="font-bold text-slate-400 mr-2">#{lead.followUps.length - i}</span>
-                        {f.noteGiven}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault();
+              post("/api/follow-ups", {
+                leadId: id, outcome: "PICKED", noteGiven: noteContent,
+                pickedStatus, 
+                cancelReason: pickedStatus === "CANCELLED" ? cancelReason : undefined,
+                followUpDate,
+                followUpTime
+              });
+            }}
+            className="flex flex-col h-full"
+          >
+            <div className="p-8 space-y-6 overflow-y-auto max-h-[75vh] flex-1">
 
-            <Field label={`Conversation Summary ${lead.followUps.length < 1 ? "*" : "(Optional)"}`}>
+            {/* Consolidated Historical Context */}
+            {(() => {
+              const allNotes = [
+                ...(lead.followUps || []).map(f => ({ id: f.id, content: f.noteGiven, date: f.completedDate || f.createdAt })),
+                ...(lead.leadNotes || []).map(n => ({ id: n.id, content: n.content, date: n.createdAt }))
+              ]
+              .filter(n => n.content)
+              .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+              return allNotes.length > 0 && (
+                <div className="space-y-3 mb-6">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Previous Conversations & Notes</p>
+                  <hr className="border-slate-200" />
+                  <div className="space-y-2 max-h-40 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200">
+                    {allNotes.map((note, index) => (
+                      <div key={note.id} className="space-y-3">
+                        <div className="flex gap-3">
+                          <span className="text-[10px] font-bold text-slate-400 mt-0.5">#{allNotes.length - index}</span>
+                          <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
+                            {note.content}
+                          </p>
+                        </div>
+                        {index < allNotes.length - 1 && <hr className="border-slate-100" />}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
+            <Field label={`Conversation Summary ${lead.followUps.filter(f => f.completedDate).length === 0 ? "*" : "(Optional)"}`}>
               <textarea 
-                required={lead.followUps.length < 1} 
+                required={lead.followUps.filter(f => f.completedDate).length === 0} 
                 rows={4} 
                 className={inputCls}
                 placeholder="Mention specific requirements or customer mood..."
@@ -434,7 +601,9 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                   { val: "RESCHEDULE", label: "Wants Recall" },
                   { val: "CANCELLED", label: "Not Interested" },
                 ].map(opt => {
-                  const isInterestedDisabled = opt.val === "INTERESTED" && lead.followUps.length > 0;
+                  const hasSuccessfulCall = lead.followUps.some(f => f.outcome === "PICKED" && f.completedDate);
+                  const isInterestedDisabled = opt.val === "INTERESTED" && hasSuccessfulCall;
+                  
                   return (
                     <button key={opt.val} type="button"
                       disabled={isInterestedDisabled}
@@ -481,127 +650,201 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                 </select>
               </Field>
             )}
+            </div>
             <ModalFooter onClose={closeModal} isSubmitting={isSubmitting} label="Record Activity"
               disabled={
                 !pickedStatus ||
-                (lead.followUps.length === 0 && !noteContent) || 
+                (lead.followUps.filter(f => f.completedDate).length === 0 && !noteContent) || 
                 ((pickedStatus === "INTERESTED" || pickedStatus === "RESCHEDULE") && !followUpDate)
               }
-              onSubmit={() => post("/api/follow-ups", {
-                leadId: id, outcome: "PICKED", noteGiven: noteContent,
-                pickedStatus, 
-                cancelReason: pickedStatus === "CANCELLED" ? cancelReason : undefined,
-                followUpDate,
-                followUpTime
-              })}
             />
-          </div>
+          </form>
         </Modal>
       )}
 
       {/* ─── MODAL: NOT PICKED ─── */}
       {activeModal === "NOT_PICKED" && (
         <Modal title="Log Unanswered Call" icon={<PhoneMissed className="h-5 w-5" />} color="primary" onClose={closeModal}>
-          <div className="p-8 space-y-6">
-            <div className="bg-amber-50 border border-amber-100 rounded-lg p-3.5 flex items-start gap-3">
-              <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-              <p className="text-[11px] text-amber-700 font-medium leading-relaxed">
-                <span className="font-bold">System Note:</span> Lead will be auto-scheduled for a recall tomorrow. Frequent misses lead to auto-archival.
-              </p>
-            </div>
-            <Field label="Brief Observation (Optional)">
-              <textarea rows={4} className={inputCls}
-                placeholder="Ringing but no answer, switched off..."
-                value={noteContent} onChange={e => setNoteContent(e.target.value)}
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            post("/api/follow-ups", { leadId: id, outcome: "NOT_PICKED", noteGiven: noteContent || null });
+          }}>
+            <div className="p-8 space-y-6">
+              <div className="bg-amber-50 border border-amber-100 rounded-lg p-3.5 flex items-start gap-3">
+                <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                <p className="text-[11px] text-amber-700 font-medium leading-relaxed">
+                  <span className="font-bold">System Note:</span> Lead will be auto-scheduled for a recall tomorrow. Frequent misses lead to auto-archival.
+                </p>
+              </div>
+              <Field label="Brief Observation *">
+                <textarea rows={4} className={inputCls}
+                  placeholder="Ringing but no answer, switched off..."
+                  value={noteContent} onChange={e => setNoteContent(e.target.value)}
+                />
+              </Field>
+              <ModalFooter onClose={closeModal} isSubmitting={isSubmitting} label="Log Attempt"
+                disabled={!noteContent}
               />
-            </Field>
-            <ModalFooter onClose={closeModal} isSubmitting={isSubmitting} label="Log Attempt"
-              onSubmit={() => post("/api/follow-ups", { leadId: id, outcome: "NOT_PICKED", noteGiven: noteContent || null })}
-            />
-          </div>
+            </div>
+          </form>
         </Modal>
       )}
 
       {/* ─── MODAL: CANCEL LEAD ─── */}
       {activeModal === "CANCEL" && (
         <Modal title="Cancel Lead" icon={<Ban className="h-5 w-5" />} color="primary" onClose={closeModal}>
-          <div className="p-8 space-y-6">
-            <div className="bg-rose-50 border border-rose-100 rounded-lg p-3.5 flex items-start gap-3">
-              <AlertTriangle className="h-4 w-4 text-rose-500 shrink-0 mt-0.5" />
-              <p className="text-[11px] text-rose-700 font-medium">Inquiry will be moved to the 'Cancelled' tab. You can reactivate this profile anytime.</p>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            post("/api/follow-ups", { leadId: id, outcome: "CANCELLED", cancelReason, noteGiven: noteContent || null });
+          }}>
+            <div className="p-8 space-y-6">
+              <div className="bg-rose-50 border border-rose-100 rounded-lg p-3.5 flex items-start gap-3">
+                <AlertTriangle className="h-4 w-4 text-rose-500 shrink-0 mt-0.5" />
+                <p className="text-[11px] text-rose-700 font-medium">Inquiry will be moved to the 'Cancelled' tab. You can reactivate this profile anytime.</p>
+              </div>
+              <Field label="Resolution Reason *">
+                <select className={inputCls} value={cancelReason} onChange={e => setCancelReason(e.target.value)}>
+                  {CANCEL_REASONS.map(r => <option key={r}>{r}</option>)}
+                </select>
+              </Field>
+              <Field label="Final Comment (Optional)">
+                <textarea rows={3} className={inputCls} placeholder="Specify if there was any conflict or preference..."
+                  value={noteContent} onChange={e => setNoteContent(e.target.value)} />
+              </Field>
+              <ModalFooter onClose={closeModal} isSubmitting={isSubmitting} label="Cancel Lead" />
             </div>
-            <Field label="Resolution Reason *">
-              <select className={inputCls} value={cancelReason} onChange={e => setCancelReason(e.target.value)}>
-                {CANCEL_REASONS.map(r => <option key={r}>{r}</option>)}
-              </select>
-            </Field>
-            <Field label="Final Comment (Optional)">
-              <textarea rows={3} className={inputCls} placeholder="Specify if there was any conflict or preference..."
-                value={noteContent} onChange={e => setNoteContent(e.target.value)} />
-            </Field>
-            <ModalFooter onClose={closeModal} isSubmitting={isSubmitting} label="Cancel Lead"
-              onSubmit={() => post("/api/follow-ups", { leadId: id, outcome: "CANCELLED", cancelReason, noteGiven: noteContent || null })}
-            />
-          </div>
+          </form>
         </Modal>
       )}
 
       {/* ─── MODAL: REACTIVATE LEAD ─── */}
       {activeModal === "REACTIVATE" && (
         <Modal title="Restore Opportunity" icon={<RotateCcw className="h-5 w-5" />} color="primary" onClose={closeModal}>
-          <div className="p-8 space-y-6">
-            <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-3.5">
-              <p className="text-[11px] text-indigo-700 font-medium">Resetting status to <span className="font-bold underline">FOLLOW UP</span>. This will appear as a fresh activity on your timeline.</p>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            post(`/api/leads/${id}/reactivate`, { reactivationNote });
+          }}>
+            <div className="p-8 space-y-6">
+              <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-3.5">
+                <p className="text-[11px] text-indigo-700 font-medium">Resetting status to <span className="font-bold underline">FOLLOW UP</span>. This will appear as a fresh activity on your timeline.</p>
+              </div>
+              <Field label="Reactivation Insight">
+                <textarea rows={3} className={inputCls} placeholder="Why is this client back in the pipeline?"
+                  value={reactivationNote} onChange={e => setReactivationNote(e.target.value)} />
+              </Field>
+              <ModalFooter onClose={closeModal} isSubmitting={isSubmitting} label="Restore Lead" />
             </div>
-            <Field label="Reactivation Insight">
-              <textarea rows={3} className={inputCls} placeholder="Why is this client back in the pipeline?"
-                value={reactivationNote} onChange={e => setReactivationNote(e.target.value)} />
-            </Field>
-            <ModalFooter onClose={closeModal} isSubmitting={isSubmitting} label="Restore Lead"
-              onSubmit={() => post(`/api/leads/${id}/reactivate`, { reactivationNote })}
-            />
-          </div>
+          </form>
         </Modal>
       )}
 
       {/* ─── MODAL: CONVERT ─── */}
       {activeModal === "CONVERT" && (
         <Modal title="Convert to Customer" icon={<Zap className="h-5 w-5 text-emerald-500" />} color="primary" onClose={closeModal}>
-          <div className="p-8 space-y-6">
-            <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-4 text-center">
-              <CheckCircle2 className="h-8 w-8 text-emerald-500 mx-auto mb-2" />
-              <p className="text-sm font-semibold text-emerald-800">Ready to formalize this relationship?</p>
-              <p className="text-xs text-emerald-600 mt-1">This will move the lead out of your active pipeline and into the Customer Directory.</p>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            handleConvertToCustomer();
+          }}>
+            <div className="p-8 space-y-6">
+              <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-4 text-center">
+                <CheckCircle2 className="h-8 w-8 text-emerald-500 mx-auto mb-2" />
+                <p className="text-sm font-semibold text-emerald-800">Ready to formalize this relationship?</p>
+                <p className="text-xs text-emerald-600 mt-1">This will move the lead out of your active pipeline and into the Customer Directory.</p>
+              </div>
+              <ModalFooter onClose={closeModal} isSubmitting={isSubmitting} label="Confirm Conversion" />
             </div>
-            <ModalFooter onClose={closeModal} isSubmitting={isSubmitting} label="Confirm Conversion"
-              onSubmit={handleConvertToCustomer}
-            />
-          </div>
+          </form>
         </Modal>
       )}
 
       {/* ─── MODAL: MEETING ─── */}
       {activeModal === "MEETING" && (
         <Modal title="Schedule Site Inspection" icon={<Calendar className="h-5 w-5" />} color="primary" onClose={closeModal}>
-          <div className="p-8 space-y-6">
-            <Field label="Inspection Address *"><input required className={inputCls} value={meetingForm.address} onChange={e => setMeetingForm({ ...meetingForm, address: e.target.value })} placeholder="Apartment / Office address" /></Field>
-            <div className="grid grid-cols-2 gap-4">
-              <Field label="Proposed Date *"><input type="date" required className={inputCls} value={meetingForm.date} onChange={e => setMeetingForm({ ...meetingForm, date: e.target.value })} /></Field>
-              <Field label="Proposed Time *"><input type="time" required className={inputCls} value={meetingForm.time} onChange={e => setMeetingForm({ ...meetingForm, time: e.target.value })} /></Field>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            post("/api/meetings", { leadId: id, ...meetingForm });
+          }}>
+            <div className="p-8 space-y-6 overflow-y-auto max-h-[75vh]">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-start-2">
+                  <Field label="Proposed Time (Optional)">
+                    <input type="time" className={inputCls} value={meetingForm.time} onChange={e => setMeetingForm({ ...meetingForm, time: e.target.value })} />
+                  </Field>
+                </div>
+                <div className="col-start-1 row-start-1">
+                  <Field label="Proposed Date *">
+                    <input type="date" required className={inputCls} value={meetingForm.date} onChange={e => setMeetingForm({ ...meetingForm, date: e.target.value })} />
+                  </Field>
+                </div>
+              </div>
+
+              <Field label={lead.fullAddress && !isEditingAddress ? "Site Address (Reference)" : "Site Address *"}>
+                {lead.fullAddress && !isEditingAddress ? (
+                  <div className="p-3.5 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-between gap-3 group">
+                    <div className="flex items-start gap-3">
+                      <MapPin className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
+                      <p className="text-[11px] text-slate-600 font-medium leading-relaxed">
+                        {lead.fullAddress}
+                      </p>
+                    </div>
+                    <button 
+                      type="button"
+                      onClick={() => setIsEditingAddress(true)}
+                      className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-md transition-all border border-transparent hover:border-slate-100"
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                      <input 
+                        required
+                        className="block w-full rounded-lg border border-slate-200 py-2.5 pl-11 bg-white text-slate-900 placeholder:text-slate-300 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5 text-sm transition-all outline-none"
+                        placeholder="Enter full site address..."
+                        value={meetingForm.address}
+                        onChange={e => setMeetingForm({ ...meetingForm, address: e.target.value })}
+                      />
+                    </div>
+                    {isEditingAddress && (
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          if (meetingForm.address.trim()) {
+                            setLead(prev => prev ? { ...prev, fullAddress: meetingForm.address } : null);
+                            setIsEditingAddress(false);
+                          }
+                        }}
+                        className="px-4 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 transition-all shadow-sm"
+                      >
+                        Save
+                      </button>
+                    )}
+                  </div>
+                )}
+              </Field>
+
+              <Field label="Preparation Notes (Optional)">
+                <textarea rows={3} className={inputCls} value={meetingForm.notes} onChange={e => setMeetingForm({ ...meetingForm, notes: e.target.value })} placeholder="Tools to bring, specific measurements to check..." />
+              </Field>
+
+              <ModalFooter onClose={closeModal} isSubmitting={isSubmitting} label="Confirm Booking"
+                disabled={!meetingForm.date || !meetingForm.address}
+              />
             </div>
-            <Field label="Preparation Notes (Optional)"><textarea rows={3} className={inputCls} value={meetingForm.notes} onChange={e => setMeetingForm({ ...meetingForm, notes: e.target.value })} placeholder="Tools to bring, specific measurements to check..." /></Field>
-            <ModalFooter onClose={closeModal} isSubmitting={isSubmitting} label="Confirm Booking"
-              disabled={!meetingForm.address || !meetingForm.date || !meetingForm.time}
-              onSubmit={() => post("/api/meetings", { leadId: id, ...meetingForm })}
-            />
-          </div>
+          </form>
         </Modal>
       )}
 
       {/* ─── MODAL: EDIT ACTIVITY ─── */}
       {editingItem && (
         <Modal title="Edit Activity Note" icon={<Pencil className="h-5 w-5" />} color="primary" onClose={() => setEditingItem(null)}>
-          <div className="p-8 space-y-6">
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            handleUpdateActivity();
+          }}>
+            <div className="p-8 space-y-6">
             <Field label="Note Content">
               <textarea 
                 rows={5} 
@@ -614,10 +857,10 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
               onClose={() => setEditingItem(null)} 
               isSubmitting={isSubmitting} 
               label="Save Changes" 
-              onSubmit={handleUpdateActivity}
             />
           </div>
-        </Modal>
+        </form>
+      </Modal>
       )}
     </div>
   );
@@ -660,11 +903,10 @@ function ModalFooter({ onClose, isSubmitting, label, disabled, onSubmit }: {
 }) {
   return (
     <div className="flex items-center justify-end gap-3 p-8 bg-slate-50/50 border-t border-slate-100">
-      <button type={onSubmit ? "button" : "submit"} onClick={onClose} className="text-slate-500 font-semibold text-sm hover:text-slate-900 transition-colors px-4">Cancel</button>
+      <button type="button" onClick={onClose} className="text-slate-500 font-semibold text-sm hover:text-slate-900 transition-colors px-4">Cancel</button>
       <button
-        type={onSubmit ? "button" : "submit"}
+        type="submit"
         disabled={disabled || isSubmitting}
-        onClick={onSubmit}
         className={cn(
           "px-8 py-2.5 rounded-lg text-white font-semibold shadow-md transition-all active:scale-95 disabled:opacity-40 text-sm flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 border border-indigo-500/20"
         )}

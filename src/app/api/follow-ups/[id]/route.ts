@@ -39,9 +39,39 @@ export async function DELETE(
 
     const { id } = await params;
 
+    // 1. Get the leadId before deletion
+    const followUp = await prisma.followUp.findUnique({
+      where: { id },
+      select: { leadId: true }
+    });
+
+    if (!followUp) return NextResponse.json({ error: "Not Found" }, { status: 404 });
+
+    // 2. Perform deletion
     await prisma.followUp.delete({
       where: { id }
     });
+
+    // 3. Recalculate lead status to maintain synchronization
+    const leadId = followUp.leadId;
+    
+    // Count remaining successful contacts
+    const successfulCalls = await prisma.followUp.count({
+      where: { leadId, outcome: "PICKED", completedDate: { not: null } }
+    });
+
+    // Count remaining meetings
+    const activeMeetings = await prisma.meeting.count({
+      where: { leadId }
+    });
+
+    // If no successful contact or meeting exists, revert status
+    if (successfulCalls === 0 && activeMeetings === 0) {
+      await prisma.lead.update({
+        where: { id: leadId },
+        data: { status: "NEW_INQUIRY" }
+      });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

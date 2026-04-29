@@ -42,9 +42,34 @@ export async function DELETE(
 
     const { id } = await params;
 
+    // 1. Get leadId before deletion
+    const meeting = await prisma.meeting.findUnique({
+      where: { id },
+      select: { leadId: true }
+    });
+
+    if (!meeting) return NextResponse.json({ error: "Not Found" }, { status: 404 });
+
+    // 2. Delete the meeting
     await prisma.meeting.delete({
       where: { id }
     });
+
+    // 3. Recalculate status
+    const leadId = meeting.leadId;
+    
+    const remainingMeetings = await prisma.meeting.count({ where: { leadId } });
+    const successfulCalls = await prisma.followUp.count({
+      where: { leadId, outcome: "PICKED", completedDate: { not: null } }
+    });
+
+    if (remainingMeetings === 0) {
+      if (successfulCalls > 0) {
+        await prisma.lead.update({ where: { id: leadId }, data: { status: "FOLLOW_UP" } });
+      } else {
+        await prisma.lead.update({ where: { id: leadId }, data: { status: "NEW_INQUIRY" } });
+      }
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

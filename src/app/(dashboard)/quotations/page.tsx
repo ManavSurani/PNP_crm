@@ -5,7 +5,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 import {
   FileText, Plus, Printer, Loader2, IndianRupee, CheckCircle2,
-  Clock, MessageCircle, ChevronRight
+  Clock, MessageCircle, ChevronRight, Search, Filter, ArrowUpDown, RotateCcw
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +30,11 @@ const STATUS_COLORS: Record<string, string> = {
 export default function QuotationsPage() {
   const [quotations, setQuotations] = useState<Quotation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [showFilters, setShowFilters] = useState(false);
+  const [dateRange, setDateRange] = useState({ start: "", end: "" });
+  const [sortBy, setSortBy] = useState("NEWEST");
 
   useEffect(() => {
     fetch("/api/quotations")
@@ -37,9 +42,30 @@ export default function QuotationsPage() {
       .then(data => { setQuotations(data); setIsLoading(false); });
   }, []);
 
-  const totalValue = quotations.reduce((s, q) => s + q.finalTotal, 0);
-  const accepted = quotations.filter(q => q.status === "ACCEPTED").length;
-  const pending = quotations.filter(q => q.status === "SENT").length;
+  const filteredQuotations = quotations.filter(q => {
+    const matchesSearch = 
+      q.quotationNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      q.lead.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      q.lead.serviceType.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === "ALL" || q.status === statusFilter;
+    
+    const qDate = new Date(q.createdAt);
+    const matchesStart = !dateRange.start || qDate >= new Date(dateRange.start);
+    const matchesEnd = !dateRange.end || qDate <= new Date(dateRange.end + "T23:59:59");
+    
+    return matchesSearch && matchesStatus && matchesStart && matchesEnd;
+  }).sort((a, b) => {
+    if (sortBy === "NEWEST") return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    if (sortBy === "OLDEST") return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    if (sortBy === "A-Z") return a.lead.customerName.localeCompare(b.lead.customerName);
+    if (sortBy === "Z-A") return b.lead.customerName.localeCompare(a.lead.customerName);
+    return 0;
+  });
+
+  const totalValue = filteredQuotations.reduce((s, q) => s + q.finalTotal, 0);
+  const accepted = filteredQuotations.filter(q => q.status === "ACCEPTED").length;
+  const pending = filteredQuotations.filter(q => q.status === "SENT").length;
 
   const sendWhatsApp = (q: Quotation) => {
     const msg = encodeURIComponent(
@@ -69,6 +95,96 @@ export default function QuotationsPage() {
           <Plus className="h-4 w-4" /> Create New Quotation
         </Link>
       </div>
+
+      {/* Search and Filters Bar */}
+      <div className="flex flex-col md:flex-row items-center gap-4">
+        <div className="relative flex-grow w-full md:max-w-xl group">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+            <Search className="h-4 w-4 text-slate-400" />
+          </div>
+          <input
+            type="text"
+            className="block w-full rounded-lg border border-slate-200 py-2.5 pl-11 pr-4 text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm bg-white transition-all outline-none"
+            placeholder="Search by quote no or customer..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <div className="flex bg-white border border-slate-200 rounded-lg p-1 shadow-sm">
+            {["ALL", "DRAFT", "SENT", "ACCEPTED", "REJECTED"].map((s) => (
+              <button
+                key={s}
+                onClick={() => setStatusFilter(s)}
+                className={cn(
+                  "px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all",
+                  statusFilter === s ? "bg-slate-900 text-white shadow-sm" : "text-slate-500 hover:text-slate-900"
+                )}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+          <button 
+            onClick={() => setShowFilters(!showFilters)}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 border rounded-lg text-xs font-bold uppercase tracking-wider transition-all shadow-sm",
+              showFilters ? "bg-slate-900 text-white border-slate-900" : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+            )}
+          >
+            <Filter className="h-3.5 w-3.5" /> {showFilters ? "Hide Options" : "More Filters"}
+          </button>
+          <button 
+            onClick={() => {
+              setSearchTerm("");
+              setStatusFilter("ALL");
+              setDateRange({ start: "", end: "" });
+              setSortBy("NEWEST");
+            }}
+            className="p-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition shadow-sm"
+            title="Reset All"
+          >
+            <RotateCcw className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Expanded Filters */}
+      {showFilters && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-50 p-6 rounded-xl border border-slate-200 animate-in slide-in-from-top-2 duration-200">
+           <div>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Sort Order</label>
+              <select 
+                className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-sm focus:border-primary outline-none font-medium"
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value)}
+              >
+                <option value="NEWEST">Date: Newest First</option>
+                <option value="OLDEST">Date: Oldest First</option>
+                <option value="A-Z">Customer: A-Z</option>
+                <option value="Z-A">Customer: Z-A</option>
+              </select>
+           </div>
+           <div>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">From Date</label>
+              <input 
+                type="date"
+                className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-sm focus:border-primary outline-none"
+                value={dateRange.start}
+                onChange={e => setDateRange({...dateRange, start: e.target.value})}
+              />
+           </div>
+           <div>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">To Date</label>
+              <input 
+                type="date"
+                className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-sm focus:border-primary outline-none"
+                value={dateRange.end}
+                onChange={e => setDateRange({...dateRange, end: e.target.value})}
+              />
+           </div>
+        </div>
+      )}
 
       {/* Summary Chips */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -109,7 +225,7 @@ export default function QuotationsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
-                {quotations.map(q => (
+                {filteredQuotations.map(q => (
                   <tr key={q.id} className="group hover:bg-slate-50 transition-colors">
                     <td className="py-5 pl-8 pr-3">
                       <p className="text-xs font-bold text-primary tracking-wide">{q.quotationNo}</p>
@@ -154,12 +270,12 @@ export default function QuotationsPage() {
                     </td>
                   </tr>
                 ))}
-                {quotations.length === 0 && (
+                {filteredQuotations.length === 0 && (
                   <tr>
                     <td colSpan={5} className="py-20 text-center">
                        <FileText className="h-10 w-10 text-slate-200 mx-auto mb-3" />
                        <h3 className="text-sm font-semibold text-slate-900">No quotations found</h3>
-                       <p className="text-xs text-slate-500 mt-1">Generate your first estimate from the Lead pipeline.</p>
+                       <p className="text-xs text-slate-500 mt-1">Try adjusting your search or filters.</p>
                     </td>
                   </tr>
                 )}

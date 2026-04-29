@@ -40,6 +40,18 @@ export async function POST(
       },
     });
 
+    // Create a pending follow-up for tomorrow by default
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    await prisma.followUp.create({
+      data: {
+        leadId: id,
+        nextCallDate: tomorrow,
+        completedDate: null
+      }
+    });
+
     return NextResponse.json(lead);
   } catch (error) {
     console.error("[LEAD_REACTIVATE]", error);

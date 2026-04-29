@@ -9,9 +9,10 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const { leadId, address, date, time, notes } = body;
+    const finalTime = time || "Not Specified";
 
-    if (!leadId || !address || !date || !time) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    if (!leadId || !address || !date) {
+      return NextResponse.json({ error: "Missing required fields (leadId, address, date)" }, { status: 400 });
     }
 
     const meeting = await prisma.meeting.create({
@@ -19,16 +20,19 @@ export async function POST(request: Request) {
         leadId,
         address,
         date: new Date(date),
-        time,
+        time: finalTime,
         notes: notes || null,
         status: "SCHEDULED"
       }
     });
 
-    // Update lead status to MEETING_SCHEDULED automatically
+    // Update lead status and sync address
     await prisma.lead.update({
       where: { id: leadId },
-      data: { status: "MEETING_SCHEDULED" }
+      data: { 
+        status: "MEETING_SCHEDULED",
+        fullAddress: address 
+      }
     });
 
     // Log this action to the Notes Timeline too
@@ -47,7 +51,13 @@ export async function GET(request: Request) {
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const meetings = await prisma.meeting.findMany({
-      orderBy: { date: "asc" },
+      where: {
+        status: "SCHEDULED",
+        lead: {
+          status: { not: "CANCELLED" }
+        }
+      },
+      orderBy: { createdAt: "desc" }, // Most recently created first
       include: {
         lead: {
           select: { customerName: true, contactNumber: true, serviceType: true, status: true, priority: true }
@@ -55,7 +65,18 @@ export async function GET(request: Request) {
       }
     });
 
-    return NextResponse.json(meetings);
+    // De-duplicate: Keep only the LATEST scheduled visit for each lead in the queue
+    const uniqueMeetings = meetings.reduce((acc: any[], current) => {
+      if (!acc.find(m => m.leadId === current.leadId)) {
+        acc.push(current);
+      }
+      return acc;
+    }, []);
+
+    // Sort by appointment date for the queue view
+    uniqueMeetings.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    return NextResponse.json(uniqueMeetings);
   } catch (error) {
     console.error("[MEETINGS_GET]", error);
     return NextResponse.json({ error: "Internal Error" }, { status: 500 });

@@ -38,3 +38,32 @@ export async function GET() {
     return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }
+export async function DELETE(request: Request) {
+  try {
+    const session = await auth();
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const { searchParams } = new URL(request.url);
+    const type = searchParams.get("type"); // "leads" or "orders"
+
+    if (type === "leads") {
+      await prisma.lead.deleteMany({
+        where: {
+          OR: [
+            { status: "CANCELLED" },
+            { isCancelled: true }
+          ]
+        }
+      });
+    } else if (type === "orders") {
+      await prisma.order.deleteMany({
+        where: { status: "CANCELLED" }
+      });
+    }
+
+    return new NextResponse(null, { status: 204 });
+  } catch (error) {
+    console.error("[CANCELED_DELETE]", error);
+    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+  }
+}

@@ -29,3 +29,31 @@ Q: check full project and solve the backend full errors
 A: Conducted a comprehensive audit of all 24 API routes. Hardened over 20 endpoints with standardized JSON error responses to prevent frontend crashes. Synchronized legacy relations in the Orders API and verified 100% architectural type safety with `tsc --noEmit`. The backend is now fully stabilized and production-ready.
 Q: solve this error (Hydration Mismatch)
 A: Resolved the Next.js hydration mismatch by adding `suppressHydrationWarning` to the root `<html>` tag. This prevents client-side attributes from browser extensions (like Grammarly) from triggering React reconciliation errors on the `<body>` tag.
+
+Q: today you have to do is that in my live activity in lead details page i put delete option for each activity but this is not working so check again and mack it work so i can delete any specific activity from this 
+A: Fixed the "Delete Activity" functionality by refactoring the `handleDeleteActivity` handler to use correct API endpoints for all activity types. Expanded the "Live Activity" timeline to include Lead Notes and Transactions, ensuring they are also deletable and editable. Verified API consistency across Follow-ups, Meetings, Notes, and Transactions.
+
+Q: can you mack filter for each page in which filter are shown 
+A: Implemented a robust filtering and search system across the entire CRM. Added dynamic filters for Leads (Status, Priority, Source), Customers (Source, Service), Quotations (Status), Orders (Stage), and Payments (Collection Status). Also integrated real-time search functionality into Suppliers and Workers directories.
+
+Q: mack all filter according to date and time for each page and in some page add a as alphbatic wise so i can do that to
+A: Enhanced the global CRM filtering system with advanced **Date Range** (Start/End) and **Alphabetical Sorting** (A-Z, Z-A) capabilities. Applied these updates to Leads, Customers, Quotations, Orders, Expenses, Payments, Suppliers, and Workers pages, including a unified "Reset" functionality and refined search logic for better data management.
+
+Q: put filter in follow up page to in which put data,time and a to z formate
+A: Implemented advanced filtering for the Follow-Up Queue. Users can now filter follow-ups by **Date Range** (Start/End) and sort the queue by **Schedule Date** (Nearest/Furthest) or **Alphabetically** (A-Z, Z-A). Added a unified "Reset" button and a toggleable filter panel for a cleaner interface.
+
+Q: if i put time in a follow up then give priority timeing to first like sort data according a time if time is not there then give this a rendom like you did before undeerstand this
+A: Refined the Follow-Up Queue sorting logic to prioritize scheduled callbacks. All follow-ups with a set time/date now automatically float to the top of the list, while unscheduled items are grouped at the bottom, ensuring important upcoming engagements are never missed.
+
+Q: also can you mack it like that if my lead convert to customer then remove data from follow up but not from activity so i can see all the activity and also in follow up page if only time i put like not an date so sort data according to this to like if i put a today 10 pm time then shift follow up for this do that
+A: Automated the removal of converted (Won) or cancelled leads from the active Follow-Up Queue to maintain a clean workspace, while preserving all historical follow-up logs in the lead/customer activity timeline. Additionally, implemented precise time-based sorting that accounts for specific callback times (e.g., "10:00 PM") and displays these schedules clearly in the queue.
+
+Q: now look into a no answer button into lead deatils page like when i click maximum 4 time then only then your data goes to cancel in this there some error and misteks are accure so check this and also if any lead goes to cancel arcive then their whole follow up data and all are remove from follow up page and also if i reactive data then this follow up show me again do this
+A: Refined the "No Answer" logic to ensure leads are only cancelled after 4 *consecutive* missed calls since the last successful contact or reactivation. Standardized the system to automatically generate pending follow-up tasks upon lead creation or reactivation, ensuring they reappear correctly in the queue, while maintaining clean archives by hiding inactive leads from the active follow-up list.
+
+Q: this no answer button is not working right like if i click one time then comes 2 not answer in activity side and if i delete any no answer activity from activity thene delete this from no ans to so do it like this and also if any customer is revoke from cancel archive then you only need an one no ans call then goes back to cancel so do it like this first create an plane then execute this plan
+A: Finalized the comprehensive "No Answer" (NOT_PICKED) workflow:
+1. **Dynamic Numbering**: Implemented real-time sequential numbering (#1, #2, #3) that automatically re-orders if an entry is deleted before cancellation.
+2. **Auto-Cancel Algorithm**: Automated lead cancellation upon the 4th *active* consecutive miss, with dynamic recalculation if previous attempts are removed.
+3. **Reactivation Protocol**: After a lead is reactivated, the numbering continues from the last locked count, but a "one-strike" rule applies—any further missed call immediately returns the lead to the archive.
+4. **Historical Locking**: Permanently locked all timeline activities (no edits/deletes) once a lead is Cancelled or Converted to ensure data integrity.

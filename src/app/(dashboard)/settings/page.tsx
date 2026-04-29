@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Settings as SettingsIcon, User, Lock, Bell, 
-  Shield, Languages, Palette, Save, LogOut, ChevronRight
+  Shield, Languages, Palette, Save, LogOut, ChevronRight, Zap, Check
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
@@ -11,6 +11,22 @@ import { cn } from "@/lib/utils";
 export default function SettingsPage() {
   const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState("profile");
+  const [dispatchNumber, setDispatchNumber] = useState("");
+  const [isSaved, setIsSaved] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setDispatchNumber(localStorage.getItem('dispatch_number') || "");
+    }
+  }, []);
+
+  const handleSave = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('dispatch_number', dispatchNumber);
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 2000);
+    }
+  };
 
   const tabs = [
     { id: "profile", name: "Profile", icon: User },
@@ -109,7 +125,60 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {activeTab !== "profile" && ( activeTab === "notifications" || activeTab === "system" || activeTab === "security" ) && (
+          {activeTab === "system" && (
+            <div className="p-8 space-y-10 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="space-y-1">
+                <h2 className="text-xl font-bold text-slate-900">System Configuration</h2>
+                <p className="text-xs text-slate-500 font-medium leading-relaxed italic">
+                  Manage global CRM behaviors and external integrations.
+                </p>
+              </div>
+
+              <div className="space-y-6">
+                <div className="bg-slate-50/50 border border-slate-100 p-6 rounded-xl space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+                       <Zap className="h-4 w-4 text-emerald-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-900">WhatsApp Lead Dispatch</p>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Communication Gateway</p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2 pt-2">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Dispatch Target Number</label>
+                    <div className="flex gap-2">
+                      <input 
+                        type="text"
+                        placeholder="e.g. 8799544606"
+                        className="flex-1 px-4 py-3 bg-white rounded-lg border border-slate-200 text-sm font-semibold focus:border-primary outline-none transition-all"
+                        value={dispatchNumber}
+                        onChange={(e) => setDispatchNumber(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                      />
+                      <button 
+                        onClick={handleSave}
+                        className={cn(
+                          "px-6 py-3 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-sm border",
+                          isSaved 
+                            ? "bg-emerald-50 text-emerald-600 border-emerald-200" 
+                            : "bg-indigo-600 text-white border-indigo-500 hover:bg-indigo-700 active:scale-95"
+                        )}
+                      >
+                        {isSaved ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
+                        {isSaved ? "Saved" : "Save Changes"}
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-slate-400 italic mt-2 leading-relaxed">
+                      If set, clicking the WhatsApp button on a Lead page will forward the lead's contact info directly to this number instead of the customer.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {(activeTab === "notifications" || activeTab === "security") && (
             <div className="flex h-[540px] items-center justify-center flex-col gap-6 p-10 text-center animate-in fade-in duration-500">
               <div className="relative">
                 <div className="absolute inset-0 bg-indigo-600/10 rounded-full blur-2xl" />

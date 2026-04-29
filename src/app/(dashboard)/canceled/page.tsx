@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { 
   Trash2, Search, ArrowRight, RotateCcw, 
   Trash, Loader2, User, ShoppingCart, 
-  ChevronRight, Calendar, AlertCircle
+  ChevronRight, Calendar, AlertCircle,
+  MoreHorizontal, Eye
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -58,13 +59,41 @@ export default function CanceledArchivePage() {
     } catch (e) { console.error(e); }
   };
 
+  const handleDeleteAll = async () => {
+    const label = activeTab === "leads" ? "Canceled Leads" : "Aborted Orders";
+    if (!window.confirm(`⚠️ CRITICAL: Are you sure you want to PERMANENTLY WIPE ALL ${label}? This cannot be undone.`)) return;
+    
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/canceled?type=${activeTab}`, { method: "DELETE" });
+      if (res.ok) fetchData();
+    } catch (e) { console.error(e); }
+    finally { setIsLoading(false); }
+  };
+
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+
+  const handleDeleteItem = async (id: string) => {
+    if (!window.confirm("🚨 Permanent Deletion: Are you sure you want to completely erase this record? This action is irreversible.")) return;
+    try {
+      const res = await fetch(`/api/${activeTab}/${id}`, { method: "DELETE" });
+      if (res.ok) fetchData();
+    } catch (e) { console.error(e); }
+  };
+
+  useEffect(() => {
+    const handleClickOutside = () => setMenuOpenId(null);
+    window.addEventListener("click", handleClickOutside);
+    return () => window.removeEventListener("click", handleClickOutside);
+  }, []);
+
   const currentList = activeTab === "leads" ? data?.leads || [] : data?.orders || [];
   const filteredList = currentList.filter(item => {
     const term = search.toLowerCase();
     if (activeTab === "leads") {
       return item.customerName.toLowerCase().includes(term) || item.contactNumber.includes(term);
     } else {
-      return item.orderNo.toLowerCase().includes(term) || item.lead?.customerName.toLowerCase().includes(term);
+      return item.orderNo.toLowerCase().includes(term) || (item.lead?.customerName || "").toLowerCase().includes(term);
     }
   });
 
@@ -78,6 +107,15 @@ export default function CanceledArchivePage() {
             <Trash2 className="h-6 w-6 text-rose-500" /> Canceled Archive
           </h1>
           <p className="text-slate-500 text-sm mt-1">Review and reactivate lost opportunities or canceled deployments.</p>
+        </div>
+        <div className="relative z-10">
+          <button 
+            onClick={handleDeleteAll}
+            disabled={filteredList.length === 0 || isLoading}
+            className="flex items-center gap-2 px-6 py-2.5 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-rose-200 active:scale-95"
+          >
+            <Trash className="h-4 w-4" /> Delete All {activeTab === "leads" ? "Leads" : "Orders"}
+          </button>
         </div>
       </div>
 
@@ -124,7 +162,7 @@ export default function CanceledArchivePage() {
             <p className="text-sm font-medium">Indexing Archive...</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto pb-32">
              <table className="min-w-full divide-y divide-slate-200">
                <thead className="bg-slate-50/50">
                  <tr>
@@ -132,12 +170,13 @@ export default function CanceledArchivePage() {
                     <th scope="col" className="px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Cancellation Intel</th>
                     <th scope="col" className="px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Date Logged</th>
                     <th scope="col" className="py-4 pr-8 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Restore</th>
+                    <th scope="col" className="relative py-4 pl-3 pr-8"><span className="sr-only">Actions</span></th>
                  </tr>
                </thead>
                <tbody className="divide-y divide-slate-50 bg-white">
                  {filteredList.length === 0 ? (
                    <tr>
-                     <td colSpan={4} className="py-24 text-center">
+                     <td colSpan={5} className="py-24 text-center">
                         <div className="h-12 w-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-200 text-slate-300">
                            <AlertCircle className="h-6 w-6" />
                         </div>
@@ -149,18 +188,18 @@ export default function CanceledArchivePage() {
                    <tr key={item.id} className="group hover:bg-slate-50/50 transition-colors">
                       <td className="py-5 pl-8 pr-3">
                          <div className="flex items-center gap-4">
-                            <div className="h-10 w-10 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400 font-bold text-xs ring-1 ring-slate-200 group-hover:bg-rose-50 group-hover:text-rose-500 group-hover:ring-rose-200 transition-all">
-                               {activeTab === "leads" ? item.customerName.charAt(0) : item.orderNo.charAt(0)}
+                             <div className="h-10 w-10 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400 font-bold text-xs ring-1 ring-slate-200 group-hover:bg-rose-50 group-hover:text-rose-500 group-hover:ring-rose-200 transition-all uppercase">
+                               {activeTab === "leads" ? (item.customerName?.charAt(0) || "?") : (item.orderNo?.charAt(0) || "#")}
                             </div>
                             <div className="flex flex-col">
                                <span className="text-sm font-bold text-slate-900 uppercase tracking-tight group-hover:text-indigo-600 transition-colors">
-                                  {activeTab === "leads" ? item.customerName : item.orderNo}
+                                  {(activeTab === "leads" ? item.customerName : item.orderNo) || "Unnamed Record"}
                                </span>
                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1 flex items-center gap-1.5">
                                   {activeTab === "leads" ? (
-                                    <>Type: {item.serviceType.replace("_", " ")}</>
+                                    <>Type: {item.serviceType?.replace("_", " ") || "Not Specified"}</>
                                   ) : (
-                                    <>Customer: {item.lead.customerName}</>
+                                    <>Customer: {item.lead?.customerName || "Missing Identity"}</>
                                   )}
                                </span>
                             </div>
@@ -187,23 +226,56 @@ export default function CanceledArchivePage() {
                             <span className="text-[10px] text-slate-400 font-medium">Logged at {format(new Date(item.updatedAt), "HH:mm")}</span>
                          </div>
                       </td>
-                      <td className="py-5 pr-8 text-right">
-                         <div className="flex items-center justify-end gap-2">
+                      <td className="py-5 pr-4 text-right">
+                         <div className="flex items-center justify-end">
                             {activeTab === "leads" && (
                               <button 
                                 onClick={() => handleReactivateLead(item.id)}
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all border border-emerald-100 active:scale-95"
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all border border-emerald-100 active:scale-95 whitespace-nowrap"
                               >
                                  <RotateCcw className="h-3 w-3" /> Reactivate
                               </button>
                             )}
-                            <Link 
-                              href={activeTab === "leads" ? `/leads/${item.id}` : `/orders/${item.id}`}
-                              className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-900 transition-all border border-transparent hover:border-slate-200"
-                            >
-                               <ChevronRight className="h-4 w-4" />
-                            </Link>
+                            {activeTab === "orders" && (
+                              <button 
+                                onClick={() => handleReactivateOrder(item.id)}
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all border border-emerald-100 active:scale-95 whitespace-nowrap"
+                              >
+                                 <RotateCcw className="h-3 w-3" /> Reactivate
+                              </button>
+                            )}
                          </div>
+                      </td>
+                      <td className="px-3 py-5 pr-8 text-right relative">
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setMenuOpenId(menuOpenId === item.id ? null : item.id);
+                            }}
+                            className={cn(
+                              "p-2 rounded-lg text-slate-400 hover:text-slate-900 transition-all border outline-none focus:ring-0",
+                              menuOpenId === item.id ? "bg-slate-100 border-slate-200 text-slate-900" : "hover:bg-slate-50 border-transparent hover:border-slate-200"
+                            )}
+                          >
+                             <MoreHorizontal className="h-4 w-4" />
+                          </button>
+
+                         {menuOpenId === item.id && (
+                           <div className="absolute right-8 top-12 w-44 bg-white rounded-xl shadow-xl border border-slate-200 z-[100] py-1.5 animate-in fade-in zoom-in-95 duration-100">
+                             <Link 
+                               href={activeTab === "leads" ? `/leads/${item.id}` : `/orders/${item.id}`}
+                               className="w-full px-4 py-2 text-left text-xs font-semibold text-slate-600 hover:bg-slate-50 flex items-center gap-2 transition-colors"
+                             >
+                               <Eye className="h-3.5 w-3.5 text-indigo-500" /> Visit Profile
+                             </Link>
+                             <button 
+                               onClick={() => handleDeleteItem(item.id)}
+                               className="w-full px-4 py-2 text-left text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors"
+                             >
+                               <Trash className="h-3.5 w-3.5" /> Delete Data
+                             </button>
+                           </div>
+                         )}
                       </td>
                    </tr>
                  ))}

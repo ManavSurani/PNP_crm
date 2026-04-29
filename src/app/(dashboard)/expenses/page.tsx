@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
-import { Plus, Wallet, Loader2, Check, X, TrendingDown, PieChart, Package, Wrench, IndianRupee } from "lucide-react";
+import { Plus, Wallet, Loader2, Check, X, TrendingDown, PieChart, Package, Wrench, IndianRupee, Filter, RotateCcw, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const CATEGORIES = [
@@ -20,6 +20,10 @@ export default function ExpensesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [filterCat, setFilterCat] = useState("ALL");
+  const [showFilters, setShowFilters] = useState(false);
+  const [dateRange, setDateRange] = useState({ start: "", end: "" });
+  const [sortBy, setSortBy] = useState("NEWEST");
+  const [search, setSearch] = useState("");
 
   const [form, setForm] = useState({
     category: "MATERIAL",
@@ -36,6 +40,8 @@ export default function ExpensesPage() {
     } catch (e) { console.error(e); }
     finally { setIsLoading(false); }
   };
+
+  const totalExpenses = expenses.reduce((s, e) => s + (Number(e.amount) || 0), 0);
 
   useEffect(() => { fetchExpenses(); }, []);
 
@@ -59,8 +65,22 @@ export default function ExpensesPage() {
     finally { setIsSaving(false); }
   };
 
-  const totalExpenses = expenses.reduce((s, e) => s + (Number(e.amount) || 0), 0);
-  const filtered = filterCat === "ALL" ? expenses : expenses.filter(e => e.category === filterCat);
+  const filtered = expenses.filter(e => {
+    const matchesCat = filterCat === "ALL" || e.category === filterCat;
+    const matchesSearch = !search || e.description?.toLowerCase().includes(search.toLowerCase());
+    
+    const eDate = new Date(e.date);
+    const matchesStart = !dateRange.start || eDate >= new Date(dateRange.start);
+    const matchesEnd = !dateRange.end || eDate <= new Date(dateRange.end + "T23:59:59");
+
+    return matchesCat && matchesSearch && matchesStart && matchesEnd;
+  }).sort((a, b) => {
+    if (sortBy === "NEWEST") return new Date(b.date).getTime() - new Date(a.date).getTime();
+    if (sortBy === "OLDEST") return new Date(a.date).getTime() - new Date(b.date).getTime();
+    if (sortBy === "AMT_HIGH") return b.amount - a.amount;
+    if (sortBy === "AMT_LOW") return a.amount - b.amount;
+    return 0;
+  });
 
   const breakdown = CATEGORIES.map(cat => ({
     ...cat,
@@ -117,6 +137,78 @@ export default function ExpensesPage() {
           </button>
         ))}
       </div>
+
+      {/* Search and Filters */}
+      <div className="flex flex-col md:flex-row items-center gap-4">
+        <div className="relative flex-grow w-full md:max-w-xl group">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <input 
+            type="text"
+            className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-12 pr-4 text-sm focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all shadow-sm"
+            placeholder="Search in descriptions..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+        </div>
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <button 
+            onClick={() => setShowFilters(!showFilters)}
+            className={cn(
+              "flex items-center gap-2 px-5 py-2.5 border rounded-xl text-sm font-semibold transition shadow-sm",
+              showFilters ? "bg-slate-900 text-white border-slate-900" : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+            )}
+          >
+            <Filter className="h-4 w-4" /> {showFilters ? "Hide" : "Filters"}
+          </button>
+          <button 
+            onClick={() => {
+              setSearch("");
+              setFilterCat("ALL");
+              setDateRange({ start: "", end: "" });
+              setSortBy("NEWEST");
+            }}
+            className="p-2.5 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition shadow-sm"
+          >
+            <RotateCcw className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      {showFilters && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-50 p-6 rounded-xl border border-slate-200 animate-in slide-in-from-top-2 duration-200">
+           <div>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Sort By</label>
+              <select 
+                className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-sm focus:border-primary outline-none"
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value)}
+              >
+                <option value="NEWEST">Date: Newest First</option>
+                <option value="OLDEST">Date: Oldest First</option>
+                <option value="AMT_HIGH">Amount: High to Low</option>
+                <option value="AMT_LOW">Amount: Low to High</option>
+              </select>
+           </div>
+           <div>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">From Date</label>
+              <input 
+                type="date"
+                className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-sm focus:border-primary outline-none"
+                value={dateRange.start}
+                onChange={e => setDateRange({...dateRange, start: e.target.value})}
+              />
+           </div>
+           <div>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">To Date</label>
+              <input 
+                type="date"
+                className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-sm focus:border-primary outline-none"
+                value={dateRange.end}
+                onChange={e => setDateRange({...dateRange, end: e.target.value})}
+              />
+           </div>
+        </div>
+      )}
 
       {/* Main List Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
@@ -196,13 +288,13 @@ export default function ExpensesPage() {
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2 ml-1">Amount (₹) *</label>
-                  <input required type="number" min="1" className={inputCls} placeholder="e.g. 5000" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} />
-                </div>
-                <div>
+                <div className="col-start-2">
                   <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2 ml-1">Transaction Date *</label>
                   <input required type="date" className={inputCls} value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} />
+                </div>
+                <div className="col-start-1 row-start-1">
+                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2 ml-1">Amount (₹) *</label>
+                  <input required type="number" min="1" className={inputCls} placeholder="e.g. 5000" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} />
                 </div>
               </div>
               <div>

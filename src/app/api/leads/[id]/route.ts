@@ -13,21 +13,31 @@ export async function GET(
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const lead = await prisma.lead.findUnique({
+    const lead = await (prisma.lead as any).findUnique({
       where: { id },
-      include: {
-        assignedStaff: { select: { name: true } },
+      select: {
+        id: true,
+        customerName: true,
+        contactNumber: true,
+        alternateNumber: true,
+        fullAddress: true,
+        inquirySource: true,
+        serviceType: true,
+        priority: true,
+        status: true,
+        assignedStaffId: true,
+        createdAt: true,
+        updatedAt: true,
+        landmark: true,
+        requirementDetails: true,
+        budgetRange: true,
+        siteLocation: true,
+        preferredVisitTime: true,
+        assignedStaff: { select: { id: true, name: true } },
         followUps: { orderBy: { createdAt: "desc" } },
         meetings: { orderBy: { createdAt: "desc" } },
-        requirement: true,
-        quotations: true,
-        orders: true,
-        transactions: {
-          orderBy: { date: "desc" },
-        },
-        leadNotes: {
-          orderBy: { createdAt: "desc" },
-        },
+        transactions: { orderBy: { date: "desc" } },
+        leadNotes: { orderBy: { createdAt: "desc" } },
       }
     });
 
@@ -51,12 +61,43 @@ export async function PUT(
 
     const body = await request.json();
     
+    // Sanitize body to only include actual Lead fields
+    const { 
+      customerName, contactNumber, alternateNumber, fullAddress, 
+      landmark, requirementDetails, inquirySource, serviceType, 
+      status, priority, assignedStaffId, budgetRange,
+      siteLocation, preferredVisitTime
+    } = body;
+
+    const updateData: any = {};
+    if (customerName !== undefined) updateData.customerName = customerName;
+    if (contactNumber !== undefined) updateData.contactNumber = contactNumber;
+    if (alternateNumber !== undefined) updateData.alternateNumber = alternateNumber;
+    if (fullAddress !== undefined) updateData.fullAddress = fullAddress;
+    if (landmark !== undefined) updateData.landmark = landmark;
+    if (requirementDetails !== undefined) updateData.requirementDetails = requirementDetails;
+    if (inquirySource !== undefined) updateData.inquirySource = inquirySource;
+    if (serviceType !== undefined) updateData.serviceType = serviceType;
+    if (status !== undefined) updateData.status = status;
+    if (priority !== undefined) updateData.priority = priority;
+    if (siteLocation !== undefined) updateData.siteLocation = siteLocation;
+    if (preferredVisitTime !== undefined) updateData.preferredVisitTime = preferredVisitTime;
+    
+    if (assignedStaffId !== undefined) {
+      if (assignedStaffId) {
+        updateData.assignedStaff = { connect: { id: assignedStaffId } };
+      } else {
+        updateData.assignedStaff = { disconnect: true };
+      }
+    }
+    if (budgetRange !== undefined) updateData.budgetRange = budgetRange;
+
     // Get old value for audit
     const oldLead = await prisma.lead.findUnique({ where: { id } });
 
     const updatedLead = await prisma.lead.update({
       where: { id },
-      data: { ...body }
+      data: updateData
     });
 
     // Audit Log

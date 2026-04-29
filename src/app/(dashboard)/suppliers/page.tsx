@@ -1,13 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Truck, Plus, Loader2, Check, X, Phone, MapPin, Building2, User, UserCheck, ShieldCheck } from "lucide-react";
+import { Truck, Plus, Loader2, Check, X, Phone, MapPin, Building2, User, UserCheck, ShieldCheck, Search, RotateCcw, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function SuppliersPage() {
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [dateRange, setDateRange] = useState({ start: "", end: "" });
+  const [sortBy, setSortBy] = useState("NEWEST");
   const [isSaving, setIsSaving] = useState(false);
 
   const [form, setForm] = useState({
@@ -24,6 +28,25 @@ export default function SuppliersPage() {
   };
 
   useEffect(() => { fetchSuppliers(); }, []);
+  
+  const filtered = suppliers.filter(s => {
+    const matchesSearch = 
+      s.name.toLowerCase().includes(search.toLowerCase()) ||
+      s.contactPerson?.toLowerCase().includes(search.toLowerCase()) ||
+      s.phone.includes(search);
+    
+    const sDate = new Date(s.createdAt);
+    const matchesStart = !dateRange.start || sDate >= new Date(dateRange.start);
+    const matchesEnd = !dateRange.end || sDate <= new Date(dateRange.end + "T23:59:59");
+    
+    return matchesSearch && matchesStart && matchesEnd;
+  }).sort((a, b) => {
+    if (sortBy === "NEWEST") return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    if (sortBy === "OLDEST") return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    if (sortBy === "A-Z") return a.name.localeCompare(b.name);
+    if (sortBy === "Z-A") return b.name.localeCompare(a.name);
+    return 0;
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,6 +83,76 @@ export default function SuppliersPage() {
         </div>
       </div>
 
+      {/* Search Bar */}
+      <div className="relative max-w-xl">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+        <input 
+          type="text"
+          className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-12 pr-4 text-sm focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all"
+          placeholder="Search vendors by name, contact or phone..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+      </div>
+      <div className="flex items-center gap-2">
+        <button 
+          onClick={() => setShowFilters(!showFilters)}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2.5 border rounded-lg text-sm font-medium transition shadow-sm",
+            showFilters ? "bg-slate-900 text-white border-slate-900" : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+          )}
+        >
+          <Filter className="h-4 w-4" /> {showFilters ? "Hide Options" : "More Filters"}
+        </button>
+        <button 
+          onClick={() => {
+            setSearch("");
+            setDateRange({ start: "", end: "" });
+            setSortBy("NEWEST");
+          }}
+          className="p-2.5 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition shadow-sm"
+        >
+          <RotateCcw className="h-4 w-4" />
+        </button>
+      </div>
+
+      {/* Expanded Filters */}
+      {showFilters && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-50 p-6 rounded-xl border border-slate-200 animate-in slide-in-from-top-2 duration-200">
+           <div>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Sort Directory</label>
+              <select 
+                className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-sm focus:border-primary outline-none"
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value)}
+              >
+                <option value="NEWEST">Joined: Newest</option>
+                <option value="OLDEST">Joined: Oldest</option>
+                <option value="A-Z">Name: A-Z</option>
+                <option value="Z-A">Name: Z-A</option>
+              </select>
+           </div>
+           <div>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Registration From</label>
+              <input 
+                type="date"
+                className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-sm focus:border-primary outline-none"
+                value={dateRange.start}
+                onChange={e => setDateRange({...dateRange, start: e.target.value})}
+              />
+           </div>
+           <div>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Registration To</label>
+              <input 
+                type="date"
+                className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-sm focus:border-primary outline-none"
+                value={dateRange.end}
+                onChange={e => setDateRange({...dateRange, end: e.target.value})}
+              />
+           </div>
+        </div>
+      )}
+
       {/* Analytics Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[
@@ -87,7 +180,7 @@ export default function SuppliersPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {suppliers.map(s => (
+          {filtered.map(s => (
             <div key={s.id} className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all group overflow-hidden">
               <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center gap-4">
                 <div className="h-12 w-12 bg-white rounded-lg border border-slate-200 flex items-center justify-center font-bold text-slate-400 text-lg group-hover:text-primary group-hover:border-primary/20 transition-all">
@@ -135,11 +228,11 @@ export default function SuppliersPage() {
               </div>
             </div>
           ))}
-          {suppliers.length === 0 && (
+          {filtered.length === 0 && (
             <div className="col-span-1 md:col-span-2 xl:col-span-3 py-20 text-center border-2 border-dashed border-slate-200 rounded-xl">
                <Truck className="h-10 w-10 text-slate-200 mx-auto mb-4" />
-               <h3 className="text-sm font-semibold text-slate-900">No vendors registered</h3>
-               <p className="text-xs text-slate-500 mt-1">Register your first supply partner to manage material logistics.</p>
+               <h3 className="text-sm font-semibold text-slate-900">No vendors found</h3>
+               <p className="text-xs text-slate-500 mt-1">Try adjusting your search criteria.</p>
             </div>
           )}
         </div>
@@ -162,13 +255,23 @@ export default function SuppliersPage() {
                 <input required className={inputCls} placeholder="Legal company name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div>
+                <div className="col-start-2">
+                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2 ml-1">Phone Number *</label>
+                  <input 
+                    required 
+                    maxLength={10}
+                    className={inputCls} 
+                    placeholder="10 digit number" 
+                    value={form.phone} 
+                    onChange={e => {
+                      const val = e.target.value.replace(/\D/g, "");
+                      if (val.length <= 10) setForm({ ...form, phone: val });
+                    }} 
+                  />
+                </div>
+                <div className="col-start-1 row-start-1">
                   <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2 ml-1">Key Contact Person</label>
                   <input className={inputCls} placeholder="Full Name" value={form.contactPerson} onChange={e => setForm({ ...form, contactPerson: e.target.value })} />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2 ml-1">Phone Number *</label>
-                  <input required className={inputCls} placeholder="000 000 0000" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
                 </div>
               </div>
               <div>
