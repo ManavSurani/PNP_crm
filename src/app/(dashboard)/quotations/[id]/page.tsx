@@ -4,7 +4,7 @@ import { useState, useEffect, use } from "react";
 import { format } from "date-fns";
 import { Printer, MessageCircle, ArrowLeft, Loader2, Check, Layout, Box, Star, Zap, Info } from "lucide-react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
+import BrandLogo from "@/components/layout/BrandLogo";
 
 export default function QuotationPDFPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -71,9 +71,7 @@ export default function QuotationPDFPage({ params }: { params: Promise<{ id: str
             </div>
           </div>
           <div className="text-right flex flex-col items-end">
-             <div className="h-16 w-16 bg-slate-900 mb-4 rounded-2xl flex items-center justify-center">
-                <span className="text-white text-3xl font-bold">P</span>
-             </div>
+             <BrandLogo className="h-16 w-16 mb-4" />
              <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">PNP Interior Consultant</p>
              <p className="text-slate-500 font-bold text-xs mt-1 italic">Generated: {format(new Date(quotation.createdAt), "MMMM dd, yyyy")}</p>
           </div>

@@ -8,6 +8,7 @@ import {
   ChevronRight, Phone, ArrowLeft, CheckCircle2, ShieldQuestion 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import BrandLogo from "@/components/layout/BrandLogo";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -104,9 +105,7 @@ export default function LoginForm() {
         <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-[100px] -mr-32 -mt-32" />
         <div className="w-full max-w-sm space-y-8 relative z-10">
           <div className="flex flex-col items-center">
-            <div className="h-16 w-16 flex items-center justify-center mb-4 overflow-hidden">
-              <img src="/logo.png" alt="PNP Logo" className="w-full h-full object-contain scale-125" />
-            </div>
+            <BrandLogo className="h-16 w-16 mb-4" />
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">Security Recovery</h1>
             <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em] mt-1">Identity Verification Flow</p>
           </div>
@@ -234,9 +233,7 @@ export default function LoginForm() {
         {/* Brand/Identity */}
         <div className="absolute top-0 left-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl -ml-16 -mt-16" />
         <div className="relative z-10 flex flex-col items-center">
-          <div className="h-16 w-16 flex items-center justify-center mb-4 overflow-hidden transition-transform hover:scale-105">
-            <img src="/logo.png" alt="PNP Logo" className="w-full h-full object-contain scale-125" />
-          </div>
+          <BrandLogo className="h-16 w-16 mb-4 hover:scale-105" />
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">PNP CRM</h1>
           <p className="text-slate-400 text-xs mt-1 font-semibold uppercase tracking-widest">Premium CRM Dashboard</p>
         </div>

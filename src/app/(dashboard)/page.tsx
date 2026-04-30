@@ -38,6 +38,18 @@ export default function Dashboard() {
     );
   }
 
+  if (!stats || stats.error) {
+    return (
+      <div className="flex h-[70vh] items-center justify-center flex-col gap-4 text-center p-8">
+        <AlertTriangle className="h-10 w-10 text-rose-500 mb-2" />
+        <p className="text-slate-900 font-bold uppercase tracking-widest text-xs">Intelligence Outage</p>
+        <p className="text-slate-400 text-[10px] font-medium max-w-xs leading-relaxed uppercase tracking-widest mt-1">
+          Unable to synchronize real-time metrics. Please verify backend connectivity.
+        </p>
+      </div>
+    );
+  }
+
   const { metrics, chartData } = stats;
 
   const profitMargin = metrics.totalRevenue > 0
@@ -86,7 +98,7 @@ export default function Dashboard() {
       {/* Charts & Analytics Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Bar Chart: Lead Generation */}
-        <div className="lg:col-span-2 bg-white p-8 rounded-2xl border border-slate-200">
+        <div className="lg:col-span-2 bg-white p-8 rounded-2xl border border-slate-200 min-w-0">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <div className="bg-primary/10 p-2 rounded-lg"><BarChart3 className="h-5 w-5 text-primary" /></div>
@@ -99,8 +111,8 @@ export default function Dashboard() {
                Last 7 Days
             </div>
           </div>
-          <div className="h-72 min-w-0">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height={300}>
               <BarChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                 <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />

@@ -60,3 +60,12 @@ A: Finalized the comprehensive "No Answer" (NOT_PICKED) workflow:
 
 Q: first remove all unessary file in this project and mack it clean only project_code.txt don't remove this and update this file
 A: Cleaned the project by removing unnecessary legacy files, build logs, and temporary artifacts. Updated `project_code.txt` with the complete current source code (78 files), ensuring a clean and documented workspace.
+
+Q: Please use the sidebar logo consistently across all locations where a logo is needed.
+A: Standardized the PNP brand identity by creating a unified `BrandLogo` component. Synchronized the logo across the Sidebar, Login page, and Quotation proposals, ensuring a premium and consistent visual experience. Also updated the application metadata to use the brand logo as the browser favicon.
+
+Q: ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead.
+A: Migrated the deprecated `middleware.ts` to the new `proxy.ts` convention as required by the latest Next.js version in this project. Updated `project_code.txt` to reflect the file renaming.
+
+Q: you see here what is error in login side
+A: Fixed the broken logo image on the login page by updating the `proxy.ts` (middleware) to exclude `logo.png` from authentication checks. This allows the logo to load for unauthenticated users on the login screen. Also upgraded `BrandLogo` to use static imports for guaranteed path resolution.

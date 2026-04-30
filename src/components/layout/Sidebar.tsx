@@ -21,6 +21,7 @@ import {
   Wallet,
   Trash2
 } from "lucide-react";
+import BrandLogo from "./BrandLogo";
 import { cn } from "@/lib/utils";
 
 const navigation = [
@@ -49,13 +50,7 @@ export default function Sidebar() {
     <div className="flex h-full w-64 flex-col bg-slate-950 border-r border-white/5 shadow-2xl relative z-[50]">
       <Link href="/leads" className="flex h-20 shrink-0 items-center px-8 border-b border-white/5 hover:bg-white/[0.02] transition-colors group">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20 p-2 overflow-hidden group-hover:scale-105 transition-transform">
-            <img 
-              src="/logo.png" 
-              alt="PNP Logo" 
-              className="h-full w-full object-contain brightness-0 invert scale-[1.35] [filter:brightness(0)_invert(1)_drop-shadow(0_0_0.2px_white)_drop-shadow(0_0_0.2px_white)]" 
-            />
-          </div>
+          <BrandLogo className="h-10 w-10 group-hover:scale-105" />
           <span className="text-lg font-bold text-white tracking-tight uppercase">PNP <span className="text-indigo-400">CRM</span></span>
         </div>
       </Link>
