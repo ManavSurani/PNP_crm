@@ -38,7 +38,11 @@ export async function POST(request: Request) {
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await request.json();
-    const { leadId, outcome, noteGiven, pickedStatus, cancelReason, followUpDate, followUpTime } = body;
+    const { 
+      leadId, outcome, noteGiven, pickedStatus, cancelReason, 
+      followUpDate, followUpTime,
+      meetingAddress, meetingDate, meetingTime, meetingNotes
+    } = body;
 
     const lead = await prisma.lead.findUnique({
       where: { id: leadId },
@@ -146,15 +150,30 @@ export async function POST(request: Request) {
       });
     }
 
-    // 4. Update Lead Status
+    // 4. Update Lead Status and Address if meeting scheduled
     await prisma.lead.update({
       where: { id: leadId },
       data: {
         status: leadStatusUpdate as any,
         isCancelled,
-        cancelReason: finalCancelReason
+        cancelReason: finalCancelReason,
+        fullAddress: (pickedStatus === "MEETING" && meetingAddress) ? meetingAddress : undefined
       }
     });
+    
+    // 5. If it's a meeting, create the actual Meeting record
+    if (pickedStatus === "MEETING" && meetingAddress && meetingDate) {
+      await prisma.meeting.create({
+        data: {
+          leadId,
+          address: meetingAddress,
+          date: new Date(meetingDate),
+          time: meetingTime || "Not Specified",
+          notes: meetingNotes || null,
+          status: "SCHEDULED"
+        }
+      });
+    }
 
     return NextResponse.json(followUp);
   } catch (error) {

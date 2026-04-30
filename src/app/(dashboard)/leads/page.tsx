@@ -96,6 +96,19 @@ export default function LeadsPage() {
     if (sortBy === "OLDEST") return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
     if (sortBy === "A-Z") return a.customerName.localeCompare(b.customerName);
     if (sortBy === "Z-A") return b.customerName.localeCompare(a.customerName);
+    if (sortBy === "STATUS") {
+      const priority: Record<string, number> = {
+        "NEW_INQUIRY": 1,
+        "FOLLOW_UP": 2,
+        "MEETING_SCHEDULED": 3,
+        "WON_ORDER": 4,
+        "CANCELLED": 5
+      };
+      const prioA = priority[a.status] || 99;
+      const prioB = priority[b.status] || 99;
+      if (prioA !== prioB) return prioA - prioB;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    }
     return 0;
   });
 
@@ -200,6 +213,7 @@ export default function LeadsPage() {
               >
                 <option value="NEWEST">Date: Newest First</option>
                 <option value="OLDEST">Date: Oldest First</option>
+                <option value="STATUS">Pipeline: Status Sequence</option>
                 <option value="A-Z">Alphabetical: A-Z</option>
                 <option value="Z-A">Alphabetical: Z-A</option>
               </select>
@@ -243,7 +257,16 @@ export default function LeadsPage() {
                 <tr>
                   <th scope="col" className="py-4 pl-8 pr-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Customer</th>
                   <th scope="col" className="px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Service Context</th>
-                  <th scope="col" className="px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                  <th 
+                    scope="col" 
+                    className="px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-900 group transition-colors"
+                    onClick={() => setSortBy(sortBy === "STATUS" ? "NEWEST" : "STATUS")}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      STATUS
+                      <ArrowUpDown className={cn("h-3 w-3 transition-opacity", sortBy === "STATUS" ? "text-indigo-600 opacity-100" : "opacity-0 group-hover:opacity-100")} />
+                    </div>
+                  </th>
                   <th scope="col" className="px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Assignment</th>
                   <th scope="col" className="relative py-4 pl-3 pr-8"><span className="sr-only">Actions</span></th>
                 </tr>
@@ -394,6 +417,7 @@ export default function LeadsPage() {
 }
 
 function CreateOrEditModal({ isOpen, lead, onClose, onSuccess }: { isOpen: boolean, lead: Lead | null, onClose: () => void, onSuccess: () => void }) {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -427,7 +451,7 @@ function CreateOrEditModal({ isOpen, lead, onClose, onSuccess }: { isOpen: boole
 
   if (!isOpen) return null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, forceRedirect = false) => {
     e.preventDefault();
     setIsLoading(true);
     
@@ -441,6 +465,10 @@ function CreateOrEditModal({ isOpen, lead, onClose, onSuccess }: { isOpen: boole
         body: JSON.stringify(formData)
       });
       if (res.ok) {
+        if (forceRedirect || lead) {
+           const data = await res.json();
+           router.push(`/leads/${data.id || lead?.id}`);
+        }
         onSuccess();
       } else {
         const err = await res.json();
@@ -569,14 +597,24 @@ function CreateOrEditModal({ isOpen, lead, onClose, onSuccess }: { isOpen: boole
           </div>
 
 
-          <div className="pt-6 flex items-center justify-end gap-x-4 border-t border-slate-100">
+          <div className="pt-6 flex items-center justify-end gap-x-3 border-t border-slate-100">
             <button
               type="button"
               onClick={onClose}
-              className="text-sm font-semibold text-slate-500 hover:text-slate-900 transition-colors"
+              className="text-sm font-semibold text-slate-500 hover:text-rose-600 transition-colors px-4"
             >
               Cancel
             </button>
+            
+            <button
+              type="button"
+              disabled={isLoading}
+              onClick={(e) => handleSubmit(e as any, true)}
+              className="rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition-all active:scale-95 flex items-center gap-2 disabled:opacity-50 border border-emerald-500/20"
+            >
+              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><ExternalLink className="h-4 w-4" /> Quick Visit</>}
+            </button>
+
             <button
               type="submit"
               disabled={isLoading}

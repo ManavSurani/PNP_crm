@@ -47,6 +47,25 @@ const CANCEL_REASONS = [
   "Project Postponed",
 ];
 
+const SERVICE_TYPES = [
+  "INTERIOR_DESIGN",
+  "MODULAR_KITCHEN",
+  "WARDROBE_PLANNING",
+  "FULL_HOME_INTERIOR",
+  "TWO_BHK_INTERIOR",
+  "THREE_BHK_INTERIOR",
+  "VILLA_INTERIOR",
+  "OFFICE_INTERIOR",
+  "CUSTOM_FURNITURE_DESIGN",
+  "MATERIAL_SUPPLY",
+  "LABOUR_ONLY",
+  "FULL_COMBO_PROJECT",
+  "SOFA_WORK",
+  "CHAIR_WORK",
+  "REPAIRING_WORK",
+  "OTHER",
+];
+
 
 export default function LeadDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -68,6 +87,31 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
   const [editNoteText, setEditNoteText] = useState("");
   const [editError, setEditError] = useState<string | null>(null);
   const [isEditingAddress, setIsEditingAddress] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [newName, setNewName] = useState("");
+
+  const handleSaveName = async () => {
+    if (!newName.trim() || newName === lead?.customerName) {
+      setIsEditingName(false);
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`/api/leads/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customerName: newName }),
+      });
+      if (res.ok) {
+        setIsEditingName(false);
+        fetchLead();
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const fetchLead = async () => {
     try {
@@ -238,7 +282,43 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
             <span className="text-2xl font-bold text-slate-800 uppercase">{lead.customerName ? lead.customerName.charAt(0) : "?"}</span>
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-slate-900 tracking-tight">{lead.customerName || "Unnamed Lead"}</h1>
+            {isEditingName ? (
+              <div className="flex items-center gap-2">
+                <input
+                  autoFocus
+                  className="text-xl font-semibold text-slate-900 tracking-tight border-b-2 border-indigo-500 outline-none bg-transparent py-0.5"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSaveName();
+                    if (e.key === "Escape") setIsEditingName(false);
+                  }}
+                  onBlur={handleSaveName}
+                />
+                <button onClick={handleSaveName} className="p-1 text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors">
+                  <Check className="h-4 w-4" />
+                </button>
+                <button onClick={() => setIsEditingName(false)} className="p-1 text-slate-400 hover:bg-slate-50 rounded-md transition-colors">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 group/name">
+                <h1 className="text-xl font-semibold text-slate-900 tracking-tight">{lead.customerName || "Unnamed Lead"}</h1>
+                {!isLocked && (
+                  <button 
+                    onClick={() => {
+                      setNewName(lead.customerName || "");
+                      setIsEditingName(true);
+                    }}
+                    className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-md transition-all opacity-0 group-hover/name:opacity-100"
+                    title="Edit Name"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            )}
             <div className="mt-1.5 flex flex-wrap gap-3 text-xs">
               <span className="flex items-center gap-1.5 text-slate-600 font-medium bg-slate-50 px-3 py-1 rounded-md border border-slate-200"><Phone className="h-3.5 w-3.5 text-indigo-600" /> {lead.contactNumber}</span>
               <span className="flex items-center gap-1.5 text-slate-600 font-medium bg-slate-50 px-3 py-1 rounded-md border border-slate-200 uppercase"><FileText className="h-3.5 w-3.5 text-slate-400" /> {lead.serviceType.replace(/_/g, " ")}</span>
@@ -359,6 +439,10 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                 <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
                   <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-tight">Source</p>
                   <p className="text-xs font-bold text-slate-900 uppercase">{lead.inquirySource}</p>
+                </div>
+                <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 col-span-2">
+                  <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-tight">Interested Service</p>
+                  <p className="text-xs font-bold text-slate-900 uppercase font-bold">{lead.serviceType.replace(/_/g, " ")}</p>
                 </div>
               </div>
             </div>
@@ -527,7 +611,18 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
               </div>
 
               <Field label="Address"><input className={inputCls} value={editForm.fullAddress || ""} onChange={e => setEditForm({ ...editForm, fullAddress: e.target.value })} /></Field>
-              <Field label="Requirement Details"><textarea rows={3} className={inputCls} value={editForm.requirementDetails || ""} onChange={e => setEditForm({ ...editForm, requirementDetails: e.target.value })} /></Field>
+              <Field label="Interested Service">
+                <select 
+                  className={inputCls} 
+                  value={editForm.serviceType || "OTHER"} 
+                  onChange={e => setEditForm({ ...editForm, serviceType: e.target.value as any })}
+                >
+                  {SERVICE_TYPES.map(s => (
+                    <option key={s} value={s}>{s.replace(/_/g, " ")}</option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Requirement Details" className="md:col-span-2"><textarea rows={3} className={inputCls} value={editForm.requirementDetails || ""} onChange={e => setEditForm({ ...editForm, requirementDetails: e.target.value })} /></Field>
             </div>
             
 
@@ -547,7 +642,11 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                 pickedStatus, 
                 cancelReason: pickedStatus === "CANCELLED" ? cancelReason : undefined,
                 followUpDate,
-                followUpTime
+                followUpTime,
+                meetingAddress: pickedStatus === "MEETING" ? meetingForm.address : undefined,
+                meetingDate: pickedStatus === "MEETING" ? meetingForm.date : undefined,
+                meetingTime: pickedStatus === "MEETING" ? meetingForm.time : undefined,
+                meetingNotes: pickedStatus === "MEETING" ? noteContent : undefined
               });
             }}
             className="flex flex-col h-full"
@@ -594,9 +693,10 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
               />
             </Field>
             <Field label="Pipeline Outcome">
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {[
                   { val: "INTERESTED", label: "Interested" },
+                  { val: "MEETING", label: "Book Site Visit" },
                   { val: "NEXT_DAY", label: "Next Day" },
                   { val: "RESCHEDULE", label: "Wants Recall" },
                   { val: "CANCELLED", label: "Not Interested" },
@@ -613,6 +713,9 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                            const tomorrow = new Date();
                            tomorrow.setDate(tomorrow.getDate() + 1);
                            setFollowUpDate(tomorrow.toISOString().split('T')[0]);
+                        }
+                        if (opt.val === "MEETING") {
+                           setMeetingForm(prev => ({ ...prev, address: lead.fullAddress || "" }));
                         }
                       }}
                       className={cn(
@@ -635,6 +738,42 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
               </Field>
             )}
 
+            {/* Conditional Meeting Form */}
+            {pickedStatus === "MEETING" && (
+              <div className="space-y-4 p-5 bg-indigo-50/50 rounded-xl border border-indigo-100 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="h-7 w-7 bg-indigo-600 rounded-lg flex items-center justify-center shadow-md shadow-indigo-100">
+                    <Calendar className="h-4 w-4 text-white" />
+                  </div>
+                  <p className="text-xs font-bold text-indigo-900 uppercase tracking-tight">Schedule Site Visit</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label="Visit Date *">
+                    <input type="date" required className={inputCls} min={new Date().toISOString().split('T')[0]}
+                      value={meetingForm.date} onChange={e => setMeetingForm({ ...meetingForm, date: e.target.value })}
+                    />
+                  </Field>
+                  <Field label="Visit Time">
+                    <input type="time" className={inputCls}
+                      value={meetingForm.time} onChange={e => setMeetingForm({ ...meetingForm, time: e.target.value })}
+                    />
+                  </Field>
+                </div>
+                <Field label="Site Address *">
+                  <div className="relative">
+                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <input 
+                      required
+                      className="block w-full rounded-lg border border-slate-200 py-2.5 pl-11 bg-white text-slate-900 placeholder:text-slate-300 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5 text-sm transition-all outline-none"
+                      placeholder="Confirm site address..."
+                      value={meetingForm.address}
+                      onChange={e => setMeetingForm({ ...meetingForm, address: e.target.value })}
+                    />
+                  </div>
+                </Field>
+              </div>
+            )}
+
             {/* Conditional Time Picker */}
             {pickedStatus && (pickedStatus === "RESCHEDULE" || pickedStatus === "NEXT_DAY") && (
               <Field label="Follow-up Time (Optional)">
@@ -655,7 +794,8 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
               disabled={
                 !pickedStatus ||
                 (lead.followUps.filter(f => f.completedDate).length === 0 && !noteContent) || 
-                ((pickedStatus === "INTERESTED" || pickedStatus === "RESCHEDULE") && !followUpDate)
+                ((pickedStatus === "INTERESTED" || pickedStatus === "RESCHEDULE") && !followUpDate) ||
+                (pickedStatus === "MEETING" && (!meetingForm.date || !meetingForm.address))
               }
             />
           </form>
@@ -870,9 +1010,9 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
 
 const inputCls = "w-full rounded-lg border border-slate-200 bg-white py-2.5 px-4 text-slate-900 font-medium placeholder:text-slate-300 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5 transition-all outline-none text-sm";
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (
-    <div>
+    <div className={className}>
       <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2 ml-1">{label}</label>
       {children}
     </div>

@@ -77,3 +77,33 @@ A: Resolved production server crashes by:
 3. Hardening the local `.env` with `pgbouncer=true` for pooled connection compatibility.
 4. Identifying the missing `AUTH_SECRET` in Vercel as the primary cause of "Server Configuration" errors.
 5. Providing a diagnostic guide for Vercel function logs to monitor real-time backend stability.
+
+Q: in lead details page i want small edit button near lead name so i can diractly edit my lead name to there
+A: Implemented inline lead name editing in the Lead Details header. Users can now click a small pencil icon next to the lead name to trigger a quick-edit input field, allowing for instant name updates with keyboard shortcuts (Enter to save, Esc to cancel) and auto-save on blur.
+
+Q: here in this profile information add an option to update an services
+A: Integrated the Service Type management into the Profile Information card. Users can now view the currently interested service and update it via a new dropdown in the Lead Edit modal, with all changes reflected instantly in the UI.
+
+Q: solve this error (TypeScript Property 'className' does not exist on type 'Field')
+A: Fixed the TypeScript error in the `Field` helper component by extending its interface to support an optional `className` prop. This allows for flexible layout control (like `md:col-span-2`) within lead management forms.
+
+Q: i want this full button functionality with in picked button so do that and polish a design to so look good after this change
+A: Unified the "Schedule Site Visit" and "Log Successful Call" workflows. Users can now select "Book Site Visit" directly as a pipeline outcome within the Picked modal, which dynamically reveals meeting scheduling fields (Date, Time, Address, Notes) and automatically synchronizes data across both Follow-up and Meeting modules.
+
+Q: did you see in when i click on book site then there two notes are appear here remove internal note and for note you can use note Conversation Summary (Optional) as your site note you understand
+A: Simplified the "Book Site Visit" flow by removing the redundant "Internal Preparation Notes" field. The system now automatically uses the "Conversation Summary" as the primary note for both the follow-up log and the scheduled site visit, ensuring a cleaner interface and less repetitive data entry.
+
+Q: here in lead pipline page can you mack it like this that when i click on this status then short a data and give me new query then follow up then metting scheduled in sequence
+A: Implemented status-based sorting for the Lead Pipeline. Clicking the "STATUS" table header now sorts leads in the specific sequence: New Inquiry -> Follow Up -> Visit Scheduled, allowing users to prioritize leads based on their position in the sales pipeline.
+
+Q: in this form can you put a button name quick visit like if i click on that i diractly transfer to this lead detail page
+A: Added a "Quick Visit" button to both the Capture New Lead and Lead Edit modals. This allows users to instantly save the lead information and jump to the full lead details page in one click.
+
+Q: can you crete a button same as create lead and put this side by side with create lead button but give this button green color
+A: Redesigned the "Quick Visit" button as a premium green action button placed side-by-side with the primary "Create/Save" button. This provides a clear, high-visibility option to save and immediately view the lead profile.
+
+Q: can you give this a red color when my mouse teep goes ther
+A: Updated the "Cancel" button styling to turn red (`rose-600`) upon hover, providing a more intuitive and responsive visual cue for destructive/cancel actions.
+
+Q: solve this error (Cannot find name 'router')
+A: Fixed the TypeScript error in `CreateOrEditModal` by importing and initializing the `useRouter` hook. This enables the "Quick Visit" button to correctly perform navigation to the lead details page.
