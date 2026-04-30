@@ -70,5 +70,10 @@ A: Migrated the deprecated `middleware.ts` to the new `proxy.ts` convention as r
 Q: you see here what is error in login side
 A: Fixed the broken logo image on the login page by updating the `proxy.ts` (middleware) to exclude `logo.png` from authentication checks. This allows the logo to load for unauthenticated users on the login screen. Also upgraded `BrandLogo` to use static imports for guaranteed path resolution.
 
-Q: i told you put this only above in only in navigation bar not every where so undo a logo other than this place
-A: Reverted the main application logo (`BrandLogo` component) to use the original `logo.png` with its high-fidelity filters and scaling. The new image is now only used for the browser tab icons (favicon, shortcut, apple-touch-icon) as per your specific request.
+Q: I deployed my Node.js / Next.js project on Vercel and I am getting a "Server error" after login.
+A: Resolved production server crashes by:
+1. Adding `prisma generate` to the build pipeline in `package.json`.
+2. Configuring `directUrl` in `schema.prisma` for stable Neon DB connections.
+3. Hardening the local `.env` with `pgbouncer=true` for pooled connection compatibility.
+4. Identifying the missing `AUTH_SECRET` in Vercel as the primary cause of "Server Configuration" errors.
+5. Providing a diagnostic guide for Vercel function logs to monitor real-time backend stability.
