@@ -169,14 +169,14 @@ export default function LeadsPage() {
         </div>
       </div>
 
-      {/* Filter Options Bar */}
+      {/* Compact Filter Options */}
       {showFilters && (
-        <div className="space-y-4 bg-slate-50 p-6 rounded-xl border border-slate-200 animate-in slide-in-from-top-2 duration-200">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Pipeline Status</label>
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm animate-in slide-in-from-top-2 duration-200">
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="min-w-[140px] flex-1">
+              <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-tight mb-1 ml-1">Status</label>
               <select 
-                className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-sm focus:border-primary outline-none"
+                className="w-full rounded-lg border border-slate-100 bg-slate-50/50 py-1.5 px-3 text-xs focus:bg-white focus:border-primary outline-none transition-all cursor-pointer"
                 value={filters.status}
                 onChange={e => setFilters({...filters, status: e.target.value})}
               >
@@ -184,14 +184,14 @@ export default function LeadsPage() {
                 <option value="NEW_INQUIRY">New Inquiry</option>
                 <option value="FOLLOW_UP">Follow Up</option>
                 <option value="MEETING_SCHEDULED">Visit Scheduled</option>
-                <option value="WON_ORDER">Won Order (Archived)</option>
-                <option value="CANCELLED">Cancelled (Archived)</option>
+                <option value="WON_ORDER">Won Order</option>
+                <option value="CANCELLED">Cancelled</option>
               </select>
             </div>
-            <div>
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Inquiry Source</label>
+            <div className="min-w-[140px] flex-1">
+              <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-tight mb-1 ml-1">Source</label>
               <select 
-                className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-sm focus:border-primary outline-none"
+                className="w-full rounded-lg border border-slate-100 bg-slate-50/50 py-1.5 px-3 text-xs focus:bg-white focus:border-primary outline-none transition-all cursor-pointer"
                 value={filters.source}
                 onChange={e => setFilters({...filters, source: e.target.value})}
               >
@@ -204,41 +204,40 @@ export default function LeadsPage() {
                 <option value="WALK_IN">Walk In</option>
               </select>
             </div>
-            <div>
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Sort By</label>
+            <div className="min-w-[140px] flex-1">
+              <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-tight mb-1 ml-1">Sort</label>
               <select 
-                className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-sm focus:border-primary outline-none"
+                className="w-full rounded-lg border border-slate-100 bg-slate-50/50 py-1.5 px-3 text-xs focus:bg-white focus:border-primary outline-none transition-all cursor-pointer"
                 value={sortBy}
                 onChange={e => setSortBy(e.target.value)}
               >
-                <option value="NEWEST">Date: Newest First</option>
-                <option value="OLDEST">Date: Oldest First</option>
-                <option value="STATUS">Pipeline: Status Sequence</option>
-                <option value="A-Z">Alphabetical: A-Z</option>
-                <option value="Z-A">Alphabetical: Z-A</option>
+                <option value="NEWEST">Newest First</option>
+                <option value="OLDEST">Oldest First</option>
+                <option value="STATUS">Pipeline Order</option>
+                <option value="A-Z">Name: A-Z</option>
+                <option value="Z-A">Name: Z-A</option>
               </select>
             </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-slate-200">
-             <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">From Date</label>
+            <div className="flex-[1.5] flex items-center gap-2">
+              <div className="flex-1">
+                <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-tight mb-1 ml-1">From</label>
                 <input 
                   type="date"
-                  className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-sm focus:border-primary outline-none"
+                  className="w-full rounded-lg border border-slate-100 bg-slate-50/50 py-1.5 px-3 text-xs focus:bg-white focus:border-primary outline-none transition-all"
                   value={filters.startDate}
                   onChange={e => setFilters({...filters, startDate: e.target.value})}
                 />
-             </div>
-             <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">To Date</label>
+              </div>
+              <div className="flex-1">
+                <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-tight mb-1 ml-1">To</label>
                 <input 
                   type="date"
-                  className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-sm focus:border-primary outline-none"
+                  className="w-full rounded-lg border border-slate-100 bg-slate-50/50 py-1.5 px-3 text-xs focus:bg-white focus:border-primary outline-none transition-all"
                   value={filters.endDate}
                   onChange={e => setFilters({...filters, endDate: e.target.value})}
                 />
-             </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
