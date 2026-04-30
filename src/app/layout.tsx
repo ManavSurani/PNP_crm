@@ -16,7 +16,11 @@ export const metadata: Metadata = {
   title: "PNP CRM",
   description: "Furniture Business Management System",
   icons: {
-    icon: "/logo.png",
+    icon: [
+      { url: "/Gemini_Generated_Image_5m69l15m69l15m69.png" },
+    ],
+    shortcut: "/Gemini_Generated_Image_5m69l15m69l15m69.png",
+    apple: "/Gemini_Generated_Image_5m69l15m69l15m69.png",
   },
 };
 
