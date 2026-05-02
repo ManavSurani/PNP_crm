@@ -61,7 +61,7 @@ export async function GET() {
       }),
       // Package Popularity
       prisma.order.groupBy({
-        by: ['packageType'] as any,
+        by: ['packageType'],
         _count: { id: true }
       })
     ]);
@@ -95,25 +95,31 @@ export async function GET() {
     const totalOrderValue = (stats[9] as any)._sum.totalAmount || 0;
     const totalPending = Math.max(0, totalOrderValue - totalRevenue);
 
-    // Last 7 Days Chart Data
+    // Optimized Chart Data (Last 7 Days) - Fetch and aggregate in JS for SQLite stability
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    sevenDaysAgo.setHours(0, 0, 0, 0);
+
+    const chartRaw = await prisma.lead.findMany({
+      where: { createdAt: { gte: sevenDaysAgo } },
+      select: { createdAt: true }
+    });
+
     const last7Days = Array.from({ length: 7 }, (_, i) => {
       const d = new Date();
       d.setDate(d.getDate() - (6 - i));
       return d.toISOString().split("T")[0];
     });
 
-    const recentLeadsActivity = await prisma.lead.findMany({
-      where: {
-        createdAt: { gte: new Date(new Date().setDate(new Date().getDate() - 7)) },
-      },
-      select: { createdAt: true },
-    });
-
     const chartData = last7Days.map(dateStr => {
-      const count = recentLeadsActivity.filter(
-        (l: any) => l.createdAt.toISOString().split("T")[0] === dateStr
+      const count = chartRaw.filter(r => 
+        r.createdAt.toISOString().split("T")[0] === dateStr
       ).length;
-      return { date: new Date(dateStr).toLocaleDateString("en-US", { weekday: "short" }), leads: count };
+      
+      return { 
+        date: new Date(dateStr).toLocaleDateString("en-US", { weekday: "short" }), 
+        leads: count 
+      };
     });
 
     return NextResponse.json({
@@ -138,6 +144,7 @@ export async function GET() {
       chartData,
     });
   } catch (error) {
+    console.error("[STATS_ERROR]", error);
     return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }

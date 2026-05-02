@@ -166,11 +166,11 @@ export default function CanceledArchivePage() {
              <table className="min-w-full divide-y divide-slate-200">
                <thead className="bg-slate-50/50">
                  <tr>
-                    <th scope="col" className="py-4 pl-8 pr-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Identity</th>
-                    <th scope="col" className="px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Cancellation Intel</th>
-                    <th scope="col" className="px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Date Logged</th>
-                    <th scope="col" className="py-4 pr-8 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Restore</th>
-                    <th scope="col" className="relative py-4 pl-3 pr-8"><span className="sr-only">Actions</span></th>
+                    <th scope="col" className="w-[40%] py-4 pl-8 pr-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Identity</th>
+                    <th scope="col" className="w-[30%] px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Cancellation Intel</th>
+                    <th scope="col" className="w-[15%] px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Date Logged</th>
+                    <th scope="col" className="w-[10%] py-4 pr-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Restore</th>
+                    <th scope="col" className="w-[5%] relative py-4 pl-3 pr-8"><span className="sr-only">Actions</span></th>
                  </tr>
                </thead>
                <tbody className="divide-y divide-slate-50 bg-white">
@@ -185,14 +185,16 @@ export default function CanceledArchivePage() {
                      </td>
                    </tr>
                  ) : filteredList.map((item) => (
-                   <tr key={item.id} className="group hover:bg-slate-50/50 transition-colors">
-                      <td className="py-5 pl-8 pr-3">
-                         <div className="flex items-center gap-4">
-                             <div className="h-10 w-10 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400 font-bold text-xs ring-1 ring-slate-200 group-hover:bg-rose-50 group-hover:text-rose-500 group-hover:ring-rose-200 transition-all uppercase">
+                   <tr key={item.id} className="group hover:bg-slate-50/80 transition-colors cursor-default">
+                      <td className="py-5 pl-0 pr-3">
+                         <div className="flex items-center h-full">
+                           <div className="w-1 self-stretch shrink-0 bg-rose-500" />
+                           <div className="flex items-center gap-4 pl-7">
+                              <div className="h-10 w-10 bg-white rounded-lg flex items-center justify-center text-slate-400 font-bold text-xs border border-slate-200 shadow-sm group-hover:bg-rose-50 group-hover:text-rose-500 group-hover:border-rose-100 transition-all uppercase">
                                {activeTab === "leads" ? (item.customerName?.charAt(0) || "?") : (item.orderNo?.charAt(0) || "#")}
                             </div>
                             <div className="flex flex-col">
-                               <span className="text-sm font-bold text-slate-900 uppercase tracking-tight group-hover:text-indigo-600 transition-colors">
+                               <span className="text-sm font-bold text-slate-900 uppercase tracking-tight group-hover:text-rose-600 transition-colors">
                                   {(activeTab === "leads" ? item.customerName : item.orderNo) || "Unnamed Record"}
                                </span>
                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1 flex items-center gap-1.5">
@@ -204,6 +206,7 @@ export default function CanceledArchivePage() {
                                </span>
                             </div>
                          </div>
+                       </div>
                       </td>
                       <td className="px-3 py-5">
                          <div className="max-w-xs">

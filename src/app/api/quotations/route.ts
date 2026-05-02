@@ -21,7 +21,7 @@ export async function GET(request: Request) {
     return NextResponse.json(quotations);
   } catch (error) {
     console.error("[QUOTATIONS_GET]", error);
-    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to fetch quotations" }, { status: 500 });
   }
 }
 
@@ -50,82 +50,87 @@ export async function POST(request: Request) {
     } = body;
 
     if (!leadId || !items || !Array.isArray(items)) {
-      return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+      return NextResponse.json({ error: "Missing required fields (leadId, items)" }, { status: 400 });
     }
 
-    // Auto calculate totals
-    const itemsTotal = items.reduce((acc: number, item: any) => acc + (item.quantity * item.unitPrice), 0);
-    const subtotal = (
-      designCost + 
-      materialCost + 
-      labourCost + 
-      transportCost + 
-      supervisionCharges + 
-      siteVisitCharges + 
-      itemsTotal
-    );
-    
-    const amountAfterDiscount = subtotal - discount;
-    const gstAmount = (amountAfterDiscount * gstPercentage) / 100;
-    const finalTotal = amountAfterDiscount + gstAmount;
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Auto calculate totals
+      const itemsTotal = items.reduce((acc: number, item: any) => acc + (item.quantity * item.unitPrice), 0);
+      const subtotal = (
+        parseFloat(designCost) + 
+        parseFloat(materialCost) + 
+        parseFloat(labourCost) + 
+        parseFloat(transportCost) + 
+        parseFloat(supervisionCharges) + 
+        parseFloat(siteVisitCharges) + 
+        itemsTotal
+      );
+      
+      const amountAfterDiscount = subtotal - parseFloat(discount);
+      const gstAmount = (amountAfterDiscount * parseFloat(gstPercentage)) / 100;
+      const finalTotal = amountAfterDiscount + gstAmount;
 
-    // Generate unique Quotation Number
-    const count = await prisma.quotation.count();
-    const quotationNo = `QT-${new Date().getFullYear()}-${String(count + 1).padStart(4, '0')}`;
+      // 2. Generate unique Quotation Number
+      const count = await tx.quotation.count();
+      const quotationNo = `QT-${new Date().getFullYear()}-${String(count + 1).padStart(4, '0')}`;
 
-    const quotation = await prisma.quotation.create({
-      data: {
-        leadId,
-        quotationNo,
-        packageType,
-        designCost,
-        materialCost,
-        labourCost,
-        transportCost,
-        supervisionCharges,
-        siteVisitCharges,
-        discount,
-        gstPercentage,
-        gstAmount,
-        finalTotal,
-        status: "SENT",
-        workScope,
-        milestoneTerms,
-        projectTimeline,
-        version: 1,
-        items: {
-          create: items.map((item: any) => ({
-            section: item.section || "GENERAL",
-            description: item.description,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            totalPrice: item.quantity * item.unitPrice
-          }))
-        },
-        milestones: {
-          create: milestones.map((m: any) => ({
-            description: m.description,
-            percentage: m.percentage,
-            amount: m.amount,
-            status: "PENDING",
-            dueDate: m.dueDate ? new Date(m.dueDate) : null
-          }))
+      // 3. Create Quotation with Items and Milestones
+      const quotation = await tx.quotation.create({
+        data: {
+          leadId,
+          quotationNo,
+          packageType,
+          designCost: parseFloat(designCost),
+          materialCost: parseFloat(materialCost),
+          labourCost: parseFloat(labourCost),
+          transportCost: parseFloat(transportCost),
+          supervisionCharges: parseFloat(supervisionCharges),
+          siteVisitCharges: parseFloat(siteVisitCharges),
+          discount: parseFloat(discount),
+          gstPercentage: parseFloat(gstPercentage),
+          gstAmount,
+          finalTotal,
+          status: "SENT",
+          workScope,
+          milestoneTerms,
+          projectTimeline,
+          version: 1,
+          items: {
+            create: items.map((item: any) => ({
+              section: item.section || "GENERAL",
+              description: item.description,
+              quantity: parseFloat(item.quantity),
+              unitPrice: parseFloat(item.unitPrice),
+              totalPrice: parseFloat(item.quantity) * parseFloat(item.unitPrice)
+            }))
+          },
+          milestones: {
+            create: milestones.map((m: any) => ({
+              description: m.description,
+              percentage: parseFloat(m.percentage),
+              amount: parseFloat(m.amount),
+              status: "PENDING",
+              dueDate: m.dueDate ? new Date(m.dueDate) : null
+            }))
+          }
+        } as any,
+        include: { items: true, milestones: true, lead: true } as any
+      });
+
+      // 4. Log this action to the Notes Timeline
+      await tx.leadNote.create({
+        data: {
+          leadId,
+          content: `📄 Quotation ${quotationNo} generated for ₹${finalTotal.toLocaleString()}`
         }
-      } as any,
-      include: { items: true, milestones: true, lead: true } as any
+      });
+
+      return quotation;
     });
 
-    // Log this action to the Notes Timeline
-    await prisma.leadNote.create({
-      data: {
-        leadId,
-        content: `Quotation ${quotationNo} generated for ₹${finalTotal.toFixed(2)}`
-      }
-    });
-
-    return NextResponse.json(quotation);
+    return NextResponse.json(result);
   } catch (error) {
     console.error("[QUOTATIONS_POST]", error);
-    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to create quotation" }, { status: 500 });
   }
 }

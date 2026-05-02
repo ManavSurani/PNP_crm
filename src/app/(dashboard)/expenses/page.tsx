@@ -36,8 +36,17 @@ export default function ExpensesPage() {
     setIsLoading(true);
     try {
       const res = await fetch("/api/transactions?type=EXPENSE");
-      setExpenses(await res.json());
-    } catch (e) { console.error(e); }
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setExpenses(data);
+      } else {
+        console.error("Expenses API returned non-array data:", data);
+        setExpenses([]);
+      }
+    } catch (e) { 
+      console.error("Failed to fetch expenses:", e);
+      setExpenses([]);
+    }
     finally { setIsLoading(false); }
   };
 

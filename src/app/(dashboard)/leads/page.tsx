@@ -49,9 +49,15 @@ export default function LeadsPage() {
       const res = await fetch("/api/leads");
       if (!res.ok) throw new Error("Failed to fetch leads");
       const data = await res.json();
-      setLeads(data);
+      if (Array.isArray(data)) {
+        setLeads(data);
+      } else {
+        console.error("Leads API returned non-array data:", data);
+        setLeads([]);
+      }
     } catch (error) {
-      console.error(error);
+      console.error("Failed to fetch leads:", error);
+      setLeads([]);
     } finally {
       setIsLoading(false);
     }
@@ -60,6 +66,26 @@ export default function LeadsPage() {
   useEffect(() => {
     fetchLeads();
   }, []);
+
+  // Remove global scrollbar for this page
+  useEffect(() => {
+    const main = document.querySelector('main');
+    if (main) main.style.overflow = 'hidden';
+    return () => {
+      if (main) main.style.overflow = 'auto';
+    };
+  }, []);
+
+  const getStatusBorder = (status: string) => {
+    switch (status) {
+      case "NEW_INQUIRY": return "border-l-amber-500";
+      case "FOLLOW_UP": return "border-l-sky-500";
+      case "MEETING_SCHEDULED": return "border-l-indigo-500";
+      case "WON_ORDER": return "border-l-emerald-500";
+      case "CANCELLED": return "border-l-rose-500";
+      default: return "border-l-slate-300";
+    }
+  };
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -113,9 +139,9 @@ export default function LeadsPage() {
   });
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 pb-10">
+    <div className="flex flex-col h-[calc(100vh-140px)] space-y-4 overflow-hidden">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-8 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden shrink-0">
         <div className="absolute top-0 right-0 w-48 h-48 bg-primary rounded-full blur-[100px] opacity-5 -mr-24 -mt-24" />
         <div className="relative z-10">
           <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Lead Pipeline</h1>
@@ -133,7 +159,7 @@ export default function LeadsPage() {
       </div>
 
       {/* Search and Filters Bar */}
-      <div className="flex flex-col md:flex-row items-center gap-4">
+      <div className="flex flex-col md:flex-row items-center gap-4 shrink-0">
         <div className="relative flex-grow w-full md:max-w-xl group">
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
             <Search className="h-4 w-4 text-slate-400" />
@@ -171,7 +197,7 @@ export default function LeadsPage() {
 
       {/* Compact Filter Options */}
       {showFilters && (
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm animate-in slide-in-from-top-2 duration-200">
+        <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm animate-in slide-in-from-top-2 duration-200 shrink-0">
           <div className="flex flex-wrap items-end gap-3">
             <div className="min-w-[140px] flex-1">
               <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-tight mb-1 ml-1">Status</label>
@@ -243,22 +269,22 @@ export default function LeadsPage() {
       )}
 
       {/* Main List Container */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col">
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center h-96 text-slate-400">
+          <div className="flex flex-col items-center justify-center flex-1 text-slate-400">
             <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
             <span className="text-sm font-medium">Loading Pipeline...</span>
           </div>
         ) : (
-          <div className="overflow-x-auto min-h-[400px]">
-            <table className="min-w-full divide-y divide-slate-200">
-              <thead className="bg-slate-50/50">
+          <div className="overflow-auto flex-1 scrollbar-thin scrollbar-thumb-slate-200" style={{ maxHeight: 'calc(100vh - 320px)' }}>
+            <table className="min-w-full divide-y divide-slate-200 table-fixed" style={{ minWidth: '800px' }}>
+              <thead className="bg-slate-50/50 sticky top-0 z-20 backdrop-blur-sm">
                 <tr>
-                  <th scope="col" className="py-4 pl-8 pr-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Customer</th>
-                  <th scope="col" className="px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Service Context</th>
+                  <th scope="col" className="w-[35%] py-4 pl-8 pr-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Customer</th>
+                  <th scope="col" className="w-[30%] px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Service Context</th>
                   <th 
                     scope="col" 
-                    className="px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-900 group transition-colors"
+                    className="w-[15%] px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-900 group transition-colors"
                     onClick={() => setSortBy(sortBy === "STATUS" ? "NEWEST" : "STATUS")}
                   >
                     <div className="flex items-center gap-1.5">
@@ -266,8 +292,8 @@ export default function LeadsPage() {
                       <ArrowUpDown className={cn("h-3 w-3 transition-opacity", sortBy === "STATUS" ? "text-indigo-600 opacity-100" : "opacity-0 group-hover:opacity-100")} />
                     </div>
                   </th>
-                  <th scope="col" className="px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Assignment</th>
-                  <th scope="col" className="relative py-4 pl-3 pr-8"><span className="sr-only">Actions</span></th>
+                  <th scope="col" className="w-[15%] px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Assignment</th>
+                  <th scope="col" className="w-[5%] relative py-4 pl-3 pr-8"><span className="sr-only">Actions</span></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
@@ -285,11 +311,16 @@ export default function LeadsPage() {
                   filteredLeads.map((lead) => (
                     <tr 
                       key={lead.id} 
-                      className="group hover:bg-slate-50 transition-colors cursor-pointer relative"
+                      className="group hover:bg-slate-50 transition-colors cursor-pointer"
                     >
-                      <td onClick={() => router.push(`/leads/${lead.id}`)} className="whitespace-nowrap py-5 pl-8 pr-3">
-                        <div className="flex items-center">
-                          <div className="h-10 w-10 flex-shrink-0 bg-slate-100 rounded-lg flex items-center justify-center text-slate-600 font-semibold border border-slate-200">
+                      <td 
+                        onClick={() => router.push(`/leads/${lead.id}`)} 
+                        className="whitespace-nowrap py-4 pl-0 pr-3"
+                      >
+                        <div className="flex items-center h-full">
+                          <div className={cn("w-1 self-stretch shrink-0", getStatusBorder(lead.status).replace('border-l-', 'bg-'))} />
+                          <div className="flex items-center pl-7">
+                            <div className="h-10 w-10 flex-shrink-0 bg-slate-100 rounded-lg flex items-center justify-center text-slate-600 font-semibold border border-slate-200">
                             {lead.customerName ? lead.customerName.charAt(0) : "?"}
                           </div>
                           <div className="ml-4">
@@ -305,8 +336,9 @@ export default function LeadsPage() {
                             </div>
                           </div>
                         </div>
-                      </td>
-                      <td onClick={() => router.push(`/leads/${lead.id}`)} className="whitespace-nowrap px-3 py-5">
+                      </div>
+                    </td>
+                      <td onClick={() => router.push(`/leads/${lead.id}`)} className="whitespace-nowrap px-3 py-4">
                         <div className="text-xs font-semibold text-slate-900 flex items-center gap-1.5 uppercase tracking-wide">
                           <Zap className="h-3.5 w-3.5 text-amber-500" />
                           {lead.serviceType.replace("_", " ")}
@@ -316,7 +348,7 @@ export default function LeadsPage() {
                           <span className="truncate">{lead.fullAddress || "Address not provided"}</span>
                         </div>
                       </td>
-                      <td onClick={() => router.push(`/leads/${lead.id}`)} className="whitespace-nowrap px-3 py-5">
+                      <td onClick={() => router.push(`/leads/${lead.id}`)} className="whitespace-nowrap px-3 py-4">
                         <span className={cn(
                           "inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider border",
                           lead.status === "NEW_INQUIRY" ? "bg-amber-50 text-amber-700 border-amber-200" :
@@ -327,7 +359,7 @@ export default function LeadsPage() {
                           {lead.status.replace("_", " ")}
                         </span>
                       </td>
-                      <td onClick={() => router.push(`/leads/${lead.id}`)} className="whitespace-nowrap px-3 py-5">
+                      <td onClick={() => router.push(`/leads/${lead.id}`)} className="whitespace-nowrap px-3 py-4">
                         <div className="text-xs font-semibold text-slate-900 flex items-center gap-2">
                           <div className="h-5 w-5 bg-slate-200 rounded-full flex items-center justify-center text-[10px] border border-white">
                              <User className="h-3 w-3 text-slate-500" />
@@ -336,7 +368,7 @@ export default function LeadsPage() {
                         </div>
                         <div className="mt-1.5 text-[10px] font-medium text-slate-400">{format(new Date(lead.createdAt), "dd MMM yyyy")}</div>
                       </td>
-                      <td className="relative whitespace-nowrap py-5 pl-3 pr-8 text-right">
+                      <td className="relative whitespace-nowrap py-4 pl-3 pr-8 text-right">
                         <div className="flex items-center justify-end gap-2">
                            <button 
                              onClick={(e) => {

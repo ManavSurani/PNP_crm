@@ -82,25 +82,72 @@ export const { handlers: { GET, POST }, auth, signIn, signOut } = NextAuth({
         session.user.role = token.role as string;
         session.sessionToken = token.sessionToken as string;
 
-        const dbSession = await prisma.session.findUnique({
+        let dbSession = await prisma.session.findUnique({
           where: { sessionToken: token.sessionToken as string }
         });
 
-        if (!dbSession || new Date() > dbSession.expires) {
+        // AUTO-REPAIR: If DB session is missing (e.g. DB reset) but JWT is valid, re-create DB session
+        if (!dbSession) {
+          console.log(`[Auth] ⚠️ Session record missing for ${token.email}. Attempting auto-repair...`);
+          
+          try {
+            // Check if user still exists before repairing
+            const userExists = await prisma.user.findUnique({ where: { id: token.id as string } });
+            if (!userExists) {
+              console.error("[Auth] ❌ Auto-repair failed: User no longer exists.");
+              return null as any;
+            }
+
+            const settings = await prisma.systemSetting.findUnique({ where: { id: "global" } });
+            const maxAge = settings?.sessionMaxAge || 30 * 24 * 60 * 60;
+            
+            dbSession = await prisma.session.create({
+              data: {
+                sessionToken: token.sessionToken as string,
+                userId: token.id as string,
+                expires: new Date(Date.now() + maxAge * 1000),
+                userAgent: "Auto-Repaired Session",
+              }
+            });
+            console.log("[Auth] ✅ Session auto-repaired successfully.");
+          } catch (error) {
+            console.error("[Auth] ❌ Session auto-repair critical failure:", error);
+            // If we can't repair, we MUST return null to break any potential loops
+            return null as any;
+          }
+        }
+
+        if (dbSession && new Date() > dbSession.expires) {
+          console.log("[Auth] ⌛ Session expired. Redirecting to login.");
           return null as any; 
         }
 
-        // Update last active
-        await prisma.session.update({
-          where: { id: dbSession.id },
-          data: { lastActive: new Date() }
-        });
+        // Update last active if session is healthy
+        if (dbSession) {
+          await prisma.session.update({
+            where: { id: dbSession.id },
+            data: { lastActive: new Date() }
+          }).catch(err => console.error("[Auth] Failed to update lastActive:", err));
+        }
       }
       return session;
     }
   },
   session: {
     strategy: "jwt",
+  },
+  cookies: {
+    sessionToken: {
+      name: process.env.NODE_ENV === "production" 
+        ? `__Secure-next-auth.session-token` 
+        : `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
   },
   secret: process.env.AUTH_SECRET,
 });

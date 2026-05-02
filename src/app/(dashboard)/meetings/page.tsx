@@ -19,8 +19,17 @@ export default function MeetingsPage() {
     setIsLoading(true);
     try {
       const res = await fetch("/api/meetings");
-      setMeetings(await res.json());
-    } catch (e) { console.error(e); }
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setMeetings(data);
+      } else {
+        console.error("Meetings API returned non-array data:", data);
+        setMeetings([]);
+      }
+    } catch (e) { 
+      console.error("Failed to fetch meetings:", e);
+      setMeetings([]);
+    }
     finally { setIsLoading(false); }
   };
 

@@ -18,6 +18,18 @@ async function main() {
   });
 
   console.log("Admin user created!", adminOffsetUser);
+
+  // Seed global system settings for session management
+  const globalSettings = await prisma.systemSetting.upsert({
+    where: { id: "global" },
+    update: {},
+    create: {
+      id: "global",
+      sessionMaxAge: 30 * 24 * 60 * 60, // 30 days
+    }
+  });
+
+  console.log("Global system settings seeded!", globalSettings);
 }
 
 main()

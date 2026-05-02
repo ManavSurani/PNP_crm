@@ -35,7 +35,8 @@ export async function GET(request: Request) {
 
     return NextResponse.json(ordersWithFinancials);
   } catch (error) {
-    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+    console.error("[ORDERS_GET]", error);
+    return NextResponse.json({ error: "Failed to fetch orders" }, { status: 500 });
   }
 }
 
@@ -47,46 +48,57 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { leadId, quotationId, totalAmount, advanceAmount, status, completionDate } = body;
 
-    const count = await prisma.order.count();
-    const orderNo = `INV-${new Date().getFullYear()}-${String(count + 1).padStart(4, '0')}`;
-
-    const order = await prisma.order.create({
-      data: {
-        leadId,
-        quotationId: quotationId || null,
-        orderNo,
-        totalAmount,
-        advanceAmount,
-        pendingAmount: totalAmount - advanceAmount,
-        status: status || "CONFIRMED",
-        endDate: completionDate ? new Date(completionDate) : null
-      }
-    });
-
-    // Update Lead to WON_ORDER
-    await prisma.lead.update({
-      where: { id: leadId },
-      data: { status: "WON_ORDER", isCancelled: false }
-    });
-
-    // If advance amount exists, automatically create a LeadTransaction entry
-    if (advanceAmount > 0) {
-      await prisma.leadTransaction.create({
-        data: {
-          leadId,
-          amount: parseFloat(advanceAmount.toString()),
-          type: "RECEIVED",
-          date: new Date(),
-          paidTo: "PNP Projects",
-          category: "Advance",
-          paymentMode: "BANK_TRANSFER",
-          description: `Advance received for Order ${orderNo}`
-        }
-      });
+    if (!leadId || !totalAmount) {
+      return NextResponse.json({ error: "Missing required fields (leadId, totalAmount)" }, { status: 400 });
     }
 
-    return NextResponse.json(order);
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Generate Order Number with basic collision avoidance
+      const count = await tx.order.count();
+      const orderNo = `INV-${new Date().getFullYear()}-${String(count + 1).padStart(4, '0')}`;
+
+      // 2. Create the Order
+      const order = await tx.order.create({
+        data: {
+          leadId,
+          quotationId: quotationId || null,
+          orderNo,
+          totalAmount: parseFloat(totalAmount),
+          advanceAmount: parseFloat(advanceAmount || 0),
+          pendingAmount: parseFloat(totalAmount) - parseFloat(advanceAmount || 0),
+          status: status || "CONFIRMED",
+          endDate: completionDate ? new Date(completionDate) : null
+        }
+      });
+
+      // 3. Update Lead Status to WON_ORDER
+      await tx.lead.update({
+        where: { id: leadId },
+        data: { status: "WON_ORDER", isCancelled: false }
+      });
+
+      // 4. If advance amount exists, automatically create a LeadTransaction entry
+      if (advanceAmount > 0) {
+        await tx.leadTransaction.create({
+          data: {
+            leadId,
+            amount: parseFloat(advanceAmount.toString()),
+            type: "RECEIVED",
+            date: new Date(),
+            paidTo: "PNP Projects",
+            category: "Advance",
+            paymentMode: "BANK_TRANSFER",
+            description: `Advance received for Order ${orderNo}`
+          }
+        });
+      }
+
+      return order;
+    });
+
+    return NextResponse.json(result);
   } catch (error) {
-    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+    console.error("[ORDERS_POST]", error);
+    return NextResponse.json({ error: "Failed to create order" }, { status: 500 });
   }
 }

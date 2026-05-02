@@ -22,8 +22,23 @@ export default function SuppliersPage() {
     setIsLoading(true);
     try {
       const res = await fetch("/api/suppliers");
-      setSuppliers(await res.json());
-    } catch (e) { console.error(e); }
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        console.error(`[Suppliers] API Error (${res.status}):`, errorData);
+        setSuppliers([]);
+        return;
+      }
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setSuppliers(data);
+      } else {
+        console.error("[Suppliers] API returned non-array data:", data);
+        setSuppliers([]);
+      }
+    } catch (e) { 
+      console.error("Failed to fetch suppliers:", e);
+      setSuppliers([]);
+    }
     finally { setIsLoading(false); }
   };
 

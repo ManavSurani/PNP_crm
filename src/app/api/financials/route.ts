@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { auth } from "@/lib/auth";
 
 export async function GET() {
   try {
+    const session = await auth();
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
     const customers = await prisma.lead.findMany({
       where: { status: "WON_ORDER" },
       include: {
@@ -15,8 +19,8 @@ export async function GET() {
     });
 
     return NextResponse.json(customers);
-  } catch (error: any) {
+  } catch (error) {
     console.error("[FINANCIALS_GET]", error);
-    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to fetch financial data" }, { status: 500 });
   }
 }

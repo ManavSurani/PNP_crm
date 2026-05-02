@@ -40,9 +40,15 @@ export default function CustomersPage() {
       const res = await fetch("/api/customers");
       if (!res.ok) throw new Error("Failed to fetch customers");
       const data = await res.json();
-      setCustomers(data);
+      if (Array.isArray(data)) {
+        setCustomers(data);
+      } else {
+        console.error("Customers API returned non-array data:", data);
+        setCustomers([]);
+      }
     } catch (error) {
-      console.error(error);
+      console.error("Failed to fetch customers:", error);
+      setCustomers([]);
     } finally {
       setIsLoading(false);
     }

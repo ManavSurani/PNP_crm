@@ -29,8 +29,17 @@ export default function WorkersPage() {
     setIsLoading(true);
     try {
       const res = await fetch("/api/workers");
-      setWorkers(await res.json());
-    } catch (e) { console.error(e); }
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setWorkers(data);
+      } else {
+        console.error("Workers API returned non-array data:", data);
+        setWorkers([]);
+      }
+    } catch (e) { 
+      console.error("Failed to fetch workers:", e);
+      setWorkers([]);
+    }
     finally { setIsLoading(false); }
   };
 

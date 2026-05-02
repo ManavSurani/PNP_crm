@@ -22,15 +22,12 @@ export const authConfig = {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
-      const isOnDashboard = !nextUrl.pathname.startsWith("/login");
+      const isDashboardPage = nextUrl.pathname === "/" || nextUrl.pathname.startsWith("/leads") || nextUrl.pathname.startsWith("/customers") || nextUrl.pathname.startsWith("/quotations"); // Add more paths as needed or use a catch-all
       
-      if (isOnDashboard) {
-        if (isLoggedIn) return true;
-        return false; // Redirect to login
-      } else if (isLoggedIn) {
-        return Response.redirect(new URL("/", nextUrl));
-      }
-      return true;
+      // If the user is on the dashboard, they MUST be logged in
+      if (!isDashboardPage) return true; // Allow landing pages/login/etc
+      
+      return isLoggedIn; // NextAuth handles redirect to 'signIn' page automatically if false
     },
     async jwt({ token, user }) {
       if (user) {

@@ -39,8 +39,17 @@ export default function OrdersPage() {
     setIsLoading(true);
     try {
       const res = await fetch("/api/orders");
-      setOrders(await res.json());
-    } catch (e) { console.error(e); }
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setOrders(data);
+      } else {
+        console.error("Orders API returned non-array data:", data);
+        setOrders([]);
+      }
+    } catch (e) { 
+      console.error("Failed to fetch orders:", e);
+      setOrders([]);
+    }
     finally { setIsLoading(false); }
   };
 

@@ -21,40 +21,52 @@ export async function POST(
       // Body might be empty or invalid JSON
     }
 
-    const lead = await prisma.lead.update({
-      where: { id },
-      data: {
-        status: "FOLLOW_UP",
-        isCancelled: false,
-        cancelReason: null,
-        reactivatedAt: new Date(),
-        reactivationNote: reactivationNote || null,
-      },
+    const result = await prisma.$transaction(async (tx) => {
+      const lead = await tx.lead.update({
+        where: { id },
+        data: {
+          status: "FOLLOW_UP",
+          isCancelled: false,
+          cancelReason: null,
+          reactivatedAt: new Date(),
+          reactivationNote: reactivationNote || null,
+        },
+      });
+
+      // Log a note in the timeline
+      await tx.leadNote.create({
+        data: {
+          leadId: id,
+          content: `🔄 Lead Reactivated. ${reactivationNote ? `Reason: ${reactivationNote}` : ""}`,
+        },
+      });
+
+      // 1. Clear ANY old pending follow-ups first to avoid duplicates
+      await tx.followUp.deleteMany({
+        where: {
+          leadId: id,
+          completedDate: null
+        }
+      });
+
+      // 2. Create a fresh pending follow-up for tomorrow
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      await tx.followUp.create({
+        data: {
+          leadId: id,
+          nextCallDate: tomorrow,
+          completedDate: null
+        }
+      });
+
+      return lead;
     });
 
-    // Log a note in the timeline
-    await prisma.leadNote.create({
-      data: {
-        leadId: id,
-        content: `🔄 Lead Reactivated. ${reactivationNote ? `Reason: ${reactivationNote}` : ""}`,
-      },
-    });
-
-    // Create a pending follow-up for tomorrow by default
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    await prisma.followUp.create({
-      data: {
-        leadId: id,
-        nextCallDate: tomorrow,
-        completedDate: null
-      }
-    });
-
-    return NextResponse.json(lead);
+    return NextResponse.json(result);
   } catch (error) {
     console.error("[LEAD_REACTIVATE]", error);
-    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to reactivate lead" }, { status: 500 });
   }
 }

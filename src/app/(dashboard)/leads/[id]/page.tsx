@@ -114,6 +114,7 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
   };
 
   const fetchLead = async () => {
+    if (!id || id === "undefined") return;
     try {
       const res = await fetch(`/api/leads/${id}`);
       if (!res.ok) throw new Error("Lead not found");
@@ -270,6 +271,23 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
   const getAttemptNumber = (id: string) => {
     const idx = notPickedItems.findIndex(item => item.id === id);
     return idx !== -1 ? idx + 1 : null;
+  };
+
+  const getStatusColor = (item: any) => {
+    if (item.type === "MEETING") return "bg-indigo-500";
+    if (item.type === "NOTE") return "bg-amber-400";
+    if (item.type === "TRANSACTION") return (item as any).type === "RECEIVED" ? "bg-emerald-500" : "bg-rose-500";
+    if (item.type === "FOLLOW_UP") {
+      switch ((item as any).outcome) {
+        case "PICKED": return "bg-emerald-500";
+        case "NOT_PICKED": return "bg-rose-500";
+        case "MEETING": return "bg-indigo-500";
+        case "CANCELLED": return "bg-rose-500";
+        case "INTERESTED": return "bg-sky-500";
+        default: return "bg-slate-400";
+      }
+    }
+    return "bg-slate-300";
   };
 
   return (
@@ -450,128 +468,146 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
         </div>
 
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm min-h-[500px]">
-            <div className="flex items-center gap-4 mb-10">
-              <h3 className="text-lg font-semibold text-slate-900 tracking-tight">Lead Activity Timeline</h3>
-              <div className="h-px flex-1 bg-slate-100" />
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{timeline.length} Events</p>
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col h-full overflow-hidden">
+            <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-md shadow-indigo-100">
+                  <Activity className="h-4 w-4 text-white" />
+                </div>
+                <h3 className="text-base font-bold text-slate-900 tracking-tight">Activity Timeline</h3>
+              </div>
+              <span className="px-3 py-1 bg-white border border-slate-200 rounded-full text-[10px] font-bold text-slate-500 uppercase tracking-widest shadow-sm">
+                {timeline.length} Events
+              </span>
             </div>
-            <div className="relative pl-8 border-l border-slate-100 space-y-10">
-              {timeline.map((item: any) => (
-                <div key={item.id} className="relative">
-                    <div className={cn(
-                      "absolute -left-[2.5rem] top-0 h-8 w-8 rounded-full border-4 border-white shadow-sm flex items-center justify-center",
-                      item.type === "MEETING" ? "bg-indigo-600" :
-                      item.type === "NOTE" ? "bg-amber-500" :
-                      item.type === "TRANSACTION" ? ((item as any).type === "RECEIVED" ? "bg-emerald-600" : "bg-rose-600") :
-                      item.type === "FOLLOW_UP" && (item as any).outcome === "PICKED" ? "bg-emerald-500" :
-                      item.type === "FOLLOW_UP" && (item as any).outcome === "NOT_PICKED" ? "bg-rose-500" : "bg-slate-800"
-                    )}>
-                      {item.type === "MEETING" ? <Calendar className="h-3 w-3 text-white" /> :
-                       item.type === "NOTE" ? <MessageSquare className="h-3 w-3 text-white" /> :
-                       item.type === "TRANSACTION" ? <Banknote className="h-3 w-3 text-white" /> :
-                       <Phone className="h-3 w-3 text-white" />}
-                    </div>
-                  <div className="space-y-2.5">
-                    <div className="flex flex-wrap gap-2 items-center">
-                      <span className="text-[10px] font-medium text-slate-400 flex items-center gap-1.5 uppercase tracking-wide">
-                        <Clock className="h-3 w-3" />
-                        {format(new Date(item.createdAt), "dd MMM, h:mm a")}
-                      </span>
-                      <span className={cn("text-[10px] font-bold uppercase tracking-wider",
-                        item.type === "MEETING" ? "text-indigo-600" :
-                        item.type === "NOTE" ? "text-amber-600" :
-                        item.type === "TRANSACTION" ? ((item as any).type === "RECEIVED" ? "text-emerald-600" : "text-rose-600") :
-                        item.type === "FOLLOW_UP" && (item as any).outcome === "PICKED" ? "text-emerald-600" :
-                        item.type === "FOLLOW_UP" && (item as any).outcome === "NOT_PICKED" ? "text-rose-600" : "text-slate-600"
-                      )}>
-                        {item.type === "MEETING" ? "Site Update" :
-                         item.type === "NOTE" ? "Internal Note" :
-                         item.type === "TRANSACTION" ? `${(item as any).type === "RECEIVED" ? "Payment Received" : "Expense Logged"}` :
-                         (item.type === "FOLLOW_UP" && (item as any).outcome ? `Call: ${(item as any).outcome.replace(/_/g, " ")}` : "Manual Log")}
-                        {item.type === "FOLLOW_UP" && (item as any).outcome === "NOT_PICKED" && ` (#${getAttemptNumber(item.id)})`}
-                      </span>
-                    </div>
-                    <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 text-sm text-slate-700 leading-relaxed group shadow-sm hover:shadow-md transition-shadow relative">
-                      {/* Action Buttons - Locked if Cancelled/Won */}
-                      {!isLocked && (
-                        <div className="absolute top-3 right-3 flex items-center gap-2 z-30">
-                          <button 
-                            type="button"
-                            onClick={() => {
-                              setEditingItem({ ...item });
-                              let initialText = "";
-                              if (item.type === "MEETING") initialText = item.notes || "";
-                              else if (item.type === "NOTE") initialText = item.content || "";
-                              else if (item.type === "FOLLOW_UP") initialText = item.noteGiven || "";
-                              setEditNoteText(initialText);
-                            }}
-                            className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-md border border-transparent hover:border-slate-100 shadow-sm transition-all"
-                          >
-                            <Pencil className="h-3 w-3" />
-                          </button>
-                          <button 
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleDeleteActivity(item.id, item.type);
-                            }}
-                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-white rounded-md border border-transparent hover:border-slate-100 shadow-sm transition-all z-30"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      )}
 
-                      {item.type === "MEETING" ? (
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-2 text-slate-900 font-semibold text-xs"><MapPin className="h-3.5 w-3.5 text-indigo-500" /> {item.address}</div>
-                          <div className="flex gap-4 text-[11px] font-medium text-slate-500">
-                            <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {format(new Date(item.date), "PPP")}</span>
-                            <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {item.time}</span>
+            <div className="flex-1 overflow-auto max-h-[750px] scrollbar-thin scrollbar-thumb-slate-200">
+              <div className="divide-y divide-slate-100">
+                {timeline.map((item: any) => (
+                  <div key={item.id} className="group relative flex hover:bg-slate-50/50 transition-all">
+                    {/* Status Bar */}
+                    <div className={cn("w-1.5 self-stretch shrink-0", getStatusColor(item))} />
+                    
+                    <div className="flex-1 p-5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={cn(
+                            "h-7 w-7 rounded-lg flex items-center justify-center shadow-sm border",
+                            item.type === "MEETING" ? "bg-indigo-50 border-indigo-100 text-indigo-600" :
+                            item.type === "NOTE" ? "bg-amber-50 border-amber-100 text-amber-600" :
+                            item.type === "TRANSACTION" ? (item.type === "RECEIVED" ? "bg-emerald-50 border-emerald-100 text-emerald-600" : "bg-rose-50 border-rose-100 text-rose-600") :
+                            "bg-slate-50 border-slate-100 text-slate-600"
+                          )}>
+                            {item.type === "MEETING" ? <Calendar className="h-3.5 w-3.5" /> :
+                             item.type === "NOTE" ? <MessageSquare className="h-3.5 w-3.5" /> :
+                             item.type === "TRANSACTION" ? <Banknote className="h-3.5 w-3.5" /> :
+                             <Phone className="h-3.5 w-3.5" />}
                           </div>
-                          {item.notes && <p className="italic text-slate-600 text-xs border-t border-slate-200 pt-2 leading-relaxed">"{item.notes}"</p>}
+                          <div className="flex flex-col">
+                            <span className="text-xs font-bold text-slate-900 leading-none">
+                              {item.type === "MEETING" ? "Site Visit" :
+                               item.type === "NOTE" ? "Internal Note" :
+                               item.type === "TRANSACTION" ? (item.type === "RECEIVED" ? "Payment In" : "Expense Out") :
+                               `Call Attempt: ${item.outcome?.replace(/_/g, " ") || "Manual Log"}`}
+                              {item.type === "FOLLOW_UP" && item.outcome === "NOT_PICKED" && ` (#${getAttemptNumber(item.id)})`}
+                            </span>
+                            <span className="text-[10px] font-semibold text-slate-400 mt-1 flex items-center gap-1">
+                              <Clock className="h-2.5 w-2.5" />
+                              {format(new Date(item.createdAt), "dd MMM, yyyy · h:mm a")}
+                            </span>
+                          </div>
                         </div>
-                      ) : item.type === "TRANSACTION" ? (
-                        <div className="space-y-2">
-                           <div className="flex items-center justify-between">
-                              <span className="text-xs font-bold text-slate-900">₹{item.amount.toLocaleString()}</span>
-                              <span className="text-[9px] font-bold bg-slate-100 px-2 py-0.5 rounded uppercase">{item.category}</span>
-                           </div>
-                           <p className="text-[11px] text-slate-500">Paid to: <span className="font-semibold text-slate-700">{item.paidTo}</span> via {item.paymentMode}</p>
-                           {item.description && <p className="text-xs text-slate-600 border-t border-slate-100 pt-1.5 italic">"{item.description}"</p>}
-                        </div>
-                      ) : item.type === "NOTE" ? (
-                        <p className="whitespace-pre-wrap pr-12 text-slate-700">
-                          {item.content}
-                        </p>
-                      ) : (
-                        <div className="space-y-3">
-                          {item.nextCallDate && (
-                            <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 border border-indigo-100 rounded-lg w-fit shadow-sm">
-                               <Calendar className="h-3 w-3 text-indigo-500" />
-                               <span className="text-[10px] font-bold text-indigo-700 uppercase tracking-widest">
-                                 Scheduled for: {format(new Date(item.nextCallDate), "dd MMM, yyyy")}
-                                 {item.nextCallTime && ` @ ${item.nextCallTime}`}
-                               </span>
+
+                        {/* Action Buttons */}
+                        {!isLocked && (
+                          <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button 
+                              onClick={() => {
+                                setEditingItem({ ...item });
+                                let initialText = "";
+                                if (item.type === "MEETING") initialText = item.notes || "";
+                                else if (item.type === "NOTE") initialText = item.content || "";
+                                else if (item.type === "FOLLOW_UP") initialText = item.noteGiven || "";
+                                setEditNoteText(initialText);
+                              }}
+                              className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-md border border-transparent hover:border-slate-200 transition-all"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </button>
+                            <button 
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleDeleteActivity(item.id, item.type);
+                              }}
+                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-white rounded-md border border-transparent hover:border-slate-200 transition-all"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="pl-10 pr-4">
+                        {item.type === "MEETING" ? (
+                          <div className="space-y-3 bg-white p-3.5 rounded-xl border border-slate-200/60 shadow-sm">
+                            <div className="flex items-start gap-2 text-slate-900 font-bold text-[11px]">
+                              <MapPin className="h-3.5 w-3.5 text-indigo-500 mt-0.5" /> 
+                              <span className="leading-relaxed">{item.address}</span>
                             </div>
-                          )}
-                          <p className="whitespace-pre-wrap pr-12 text-slate-700 leading-relaxed">
-                            {item.noteGiven || <span className="text-slate-400 italic font-medium">No documentation provided.</span>}
+                            <div className="flex gap-4 text-[10px] font-bold text-slate-500">
+                              <span className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded border border-slate-100"><Calendar className="h-3 w-3 text-slate-400" /> {format(new Date(item.date), "dd MMM, yyyy")}</span>
+                              <span className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded border border-slate-100"><Clock className="h-3 w-3 text-slate-400" /> {item.time}</span>
+                            </div>
+                            {item.notes && <p className="text-[11px] text-slate-600 bg-indigo-50/30 p-2.5 rounded-lg border border-indigo-100/50 italic leading-relaxed">"{item.notes}"</p>}
+                          </div>
+                        ) : item.type === "TRANSACTION" ? (
+                          <div className="flex items-center justify-between bg-white p-3.5 rounded-xl border border-slate-200/60 shadow-sm">
+                             <div className="flex flex-col gap-1">
+                               <span className="text-sm font-black text-slate-900">₹{item.amount.toLocaleString()}</span>
+                               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Paid to: {item.paidTo}</span>
+                             </div>
+                             <span className={cn(
+                               "px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border",
+                               item.type === "RECEIVED" ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-rose-50 text-rose-700 border-rose-100"
+                             )}>
+                               {item.category}
+                             </span>
+                          </div>
+                        ) : item.type === "NOTE" ? (
+                          <p className="text-sm text-slate-700 leading-relaxed font-medium">
+                            {item.content}
                           </p>
-                        </div>
-                      )}
+                        ) : (
+                          <div className="space-y-3">
+                            {item.nextCallDate && (
+                              <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 border border-indigo-100/50 rounded-lg w-fit">
+                                 <Calendar className="h-3 w-3 text-indigo-500" />
+                                 <span className="text-[9px] font-black text-indigo-700 uppercase tracking-widest">
+                                   Next Call: {format(new Date(item.nextCallDate), "dd MMM, yyyy")}
+                                   {item.nextCallTime && ` @ ${item.nextCallTime}`}
+                                 </span>
+                              </div>
+                            )}
+                            <p className="text-sm text-slate-700 leading-relaxed font-medium">
+                              {item.noteGiven || <span className="text-slate-300 italic">No conversation summary logged.</span>}
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-              {timeline.length === 0 && (
-                <div className="text-center py-24 text-slate-300">
-                  <Activity className="h-12 w-12 mx-auto mb-3 opacity-20" />
-                  <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">No events logged</p>
-                </div>
-              )}
+                ))}
+
+                {timeline.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-32 text-slate-300">
+                    <div className="h-16 w-16 bg-slate-50 rounded-full flex items-center justify-center border border-slate-100 mb-4 opacity-50">
+                      <Activity className="h-8 w-8" />
+                    </div>
+                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Activity stream is empty</p>
+                    <p className="text-[10px] text-slate-300 mt-1 font-medium">Log an outcome to start the pipeline.</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -816,15 +852,13 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                   <span className="font-bold">System Note:</span> Lead will be auto-scheduled for a recall tomorrow. Frequent misses lead to auto-archival.
                 </p>
               </div>
-              <Field label="Brief Observation *">
+              <Field label="Brief Observation (Optional)">
                 <textarea rows={4} className={inputCls}
                   placeholder="Ringing but no answer, switched off..."
                   value={noteContent} onChange={e => setNoteContent(e.target.value)}
                 />
               </Field>
-              <ModalFooter onClose={closeModal} isSubmitting={isSubmitting} label="Log Attempt"
-                disabled={!noteContent}
-              />
+              <ModalFooter onClose={closeModal} isSubmitting={isSubmitting} label="Log Attempt" />
             </div>
           </form>
         </Modal>

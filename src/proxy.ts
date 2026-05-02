@@ -1,9 +1,11 @@
 import NextAuth from "next-auth";
 import { authConfig } from "./lib/auth.config";
 
-export default NextAuth(authConfig).auth;
+const { auth: middleware } = NextAuth(authConfig);
+export default middleware;
 
 export const config = {
-  // Protects all routes except api, _next/static, _next/image, favicon.ico and logo.png
+  // We match everything including /login so that the 'authorized' callback 
+  // can detect 'ghost' sessions and decide whether to redirect or allow.
   matcher: ["/((?!api|_next/static|_next/image|favicon.ico|logo.png|Gemini_Generated_Image_5m69l15m69l15m69.png).*)"],
 };

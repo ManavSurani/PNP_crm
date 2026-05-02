@@ -1,37 +1,25 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
 // -----------------------------------------------------------------------------
 // MODULE: Auth & Role Management
 // -----------------------------------------------------------------------------
 
-enum Role {
-  ADMIN
-  MANAGER
-  SALES_EXECUTIVE
-  PROJECT_MANAGER
-  SITE_SUPERVISOR
-}
-
 model User {
   id        String   @id @default(uuid())
   name      String
   email     String   @unique
   password  String
-  role      Role     @default(SALES_EXECUTIVE)
+  role      String   @default("SALES_EXECUTIVE") // ADMIN, MANAGER, SALES_EXECUTIVE, etc.
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -48,12 +36,12 @@ model Account {
   type               String
   provider           String
   providerAccountId  String
-  refresh_token      String?  @db.Text
-  access_token       String?  @db.Text
+  refresh_token      String?
+  access_token       String?
   expires_at         Int?
   token_type         String?
   scope              String?
-  id_token           String?  @db.Text
+  id_token           String?
   session_state      String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -81,55 +69,9 @@ model SystemSetting {
   updatedAt DateTime @updatedAt
 }
 
-
-
 // -----------------------------------------------------------------------------
 // MODULE: Leads & Inquiry Management
 // -----------------------------------------------------------------------------
-
-enum InquirySource {
-  WHATSAPP
-  FACEBOOK
-  INSTAGRAM
-  REFERENCE
-  DIRECT_CALL
-  WEBSITE
-  WALK_IN
-  OTHER
-}
-
-enum ServiceType {
-  INTERIOR_DESIGN
-  MODULAR_KITCHEN
-  WARDROBE_PLANNING
-  FULL_HOME_INTERIOR
-  TWO_BHK_INTERIOR
-  THREE_BHK_INTERIOR
-  VILLA_INTERIOR
-  OFFICE_INTERIOR
-  CUSTOM_FURNITURE_DESIGN
-  MATERIAL_SUPPLY
-  LABOUR_ONLY
-  FULL_COMBO_PROJECT
-  SOFA_WORK
-  CHAIR_WORK
-  REPAIRING_WORK
-  OTHER
-}
-
-enum Priority {
-  LOW
-  MEDIUM
-  HIGH
-}
-
-enum LeadStatus {
-  NEW_INQUIRY
-  FOLLOW_UP
-  MEETING_SCHEDULED
-  WON_ORDER
-  CANCELLED
-}
 
 model Lead {
   id              String        @id @default(uuid())
@@ -137,10 +79,10 @@ model Lead {
   contactNumber   String
   alternateNumber String?
   fullAddress     String?
-  inquirySource   InquirySource @default(OTHER)
-  serviceType     ServiceType   @default(OTHER)
-  priority        Priority      @default(MEDIUM)
-  status          LeadStatus    @default(NEW_INQUIRY)
+  inquirySource   String        @default("OTHER")
+  serviceType     String        @default("OTHER")
+  priority        String        @default("MEDIUM")
+  status          String        @default("NEW_INQUIRY")
   assignedStaffId String?
   assignedStaff   User?         @relation(fields: [assignedStaffId], references: [id], onDelete: SetNull)
   createdAt       DateTime      @default(now())
@@ -159,23 +101,27 @@ model Lead {
   reactivatedAt     DateTime?
   reactivationNote  String?
 
-  // New Service-Based Relations
+  // Relations
   requirement Requirement?
-
   followUps   FollowUp[]
   meetings    Meeting[]
   quotations  Quotation[]
   orders      Order[]
   transactions  LeadTransaction[]
   leadNotes     LeadNote[]
+
+  @@index([status])
+  @@index([isCancelled])
+  @@index([createdAt])
+  @@index([assignedStaffId])
 }
 
 model Requirement {
   id              String   @id @default(uuid())
   leadId          String   @unique
   lead            Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  propertyType    String?  // 2BHK, 3BHK, Villa, etc.
-  areaSize        String?  // sq.ft.
+  propertyType    String?
+  areaSize        String?
   numRooms        Int?
   kitchenType     String?
   wardrobeCount   Int?
@@ -195,42 +141,29 @@ model Requirement {
 // MODULE: Call Follow-up & Notes Timeline
 // -----------------------------------------------------------------------------
 
-enum CallOutcome {
-  PICKED
-  NOT_PICKED
-  CALL_LATER
-  WRONG_NUMBER
-  CANCELLED
-}
-
 model FollowUp {
   id              String      @id @default(uuid())
   leadId          String
   lead            Lead        @relation(fields: [leadId], references: [id], onDelete: Cascade)
   attemptNumber   Int         @default(1)
-  outcome         CallOutcome @default(NOT_PICKED)
+  outcome         String      @default("NOT_PICKED")
   nextCallDate    DateTime?
   nextCallTime    String?
   noteGiven       String?
-  scheduledDate   DateTime    @default(now()) // When this follow up is supposed to happen
-  completedDate   DateTime?   // Null means it's pending
+  scheduledDate   DateTime    @default(now())
+  completedDate   DateTime?
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
+
+  @@index([completedDate])
+  @@index([scheduledDate])
+  @@index([leadId])
+  @@index([outcome])
 }
-
-// Note model removed in favor of LeadNote
-
 
 // -----------------------------------------------------------------------------
 // MODULE: Meeting Management
 // -----------------------------------------------------------------------------
-
-enum MeetingStatus {
-  SCHEDULED
-  COMPLETED
-  RESCHEDULED
-  CANCELLED
-}
 
 model Meeting {
   id            String        @id @default(uuid())
@@ -239,7 +172,7 @@ model Meeting {
   address       String
   date          DateTime
   time          String
-  status        MeetingStatus @default(SCHEDULED)
+  status        String        @default("SCHEDULED")
   notes         String?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
@@ -249,13 +182,6 @@ model Meeting {
 // MODULE: Quotation Module
 // -----------------------------------------------------------------------------
 
-enum PackageType {
-  DESIGN_ONLY
-  MATERIALS_ONLY
-  FULL_COMBO
-  CUSTOM
-}
-
 model Quotation {
   id            String          @id @default(uuid())
   leadId        String
@@ -264,8 +190,7 @@ model Quotation {
   issueDate     DateTime        @default(now())
   expiryDate    DateTime?
   
-  // Package & Project Costs
-  packageType   PackageType     @default(FULL_COMBO)
+  packageType   String          @default("FULL_COMBO")
   designCost    Float           @default(0)
   materialCost  Float           @default(0)
   labourCost    Float           @default(0)
@@ -277,9 +202,8 @@ model Quotation {
   gstAmount     Float           @default(0)
   discount      Float           @default(0)
   finalTotal    Float           @default(0)
-  status        String          @default("DRAFT") // DRAFT, SENT, ACCEPTED, REJECTED
+  status        String          @default("DRAFT")
   
-  // Terms & Scope
   workScope       String?
   milestoneTerms  String?
   projectTimeline String?
@@ -288,20 +212,23 @@ model Quotation {
   
   items         QuotationItem[]
   milestones    QuotationMilestone[]
-  
   orders        Order[]
   
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
+
+  @@index([status])
+  @@index([leadId])
+  @@index([quotationNo])
 }
 
 model QuotationItem {
   id          String    @id @default(uuid())
   quotationId String
   quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
-  section     String    @default("GENERAL") // DESIGN, MATERIAL, LABOUR, etc.
+  section     String    @default("GENERAL")
   description String
-  quantity    Int       @default(1)
+  quantity    Float     @default(1)
   unitPrice   Float     @default(0)
   totalPrice  Float     @default(0)
 }
@@ -313,7 +240,7 @@ model QuotationMilestone {
   description   String
   percentage    Float?
   amount        Float
-  status        String    @default("PENDING") // PENDING, PAID
+  status        String    @default("PENDING")
   dueDate       DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -323,29 +250,17 @@ model QuotationMilestone {
 // MODULE: Order & Production Management
 // -----------------------------------------------------------------------------
 
-enum OrderStatus {
-  CONFIRMED
-  DESIGN
-  MATERIAL_PROCUREMENT
-  PRODUCTION
-  INSTALLATION
-  QUALITY_CHECK
-  HANDOVER
-  COMPLETED
-  CANCELLED
-}
-
 model Order {
   id            String      @id @default(uuid())
   leadId        String
   lead          Lead        @relation(fields: [leadId], references: [id], onDelete: Cascade)
   
-  quotationId   String?     // Link to the quotation that generated this order
+  quotationId   String?
   quotation     Quotation?  @relation(fields: [quotationId], references: [id], onDelete: SetNull)
 
   orderNo       String      @unique
-  status        OrderStatus @default(DESIGN)
-  packageType   PackageType @default(FULL_COMBO)
+  status        String      @default("DESIGN")
+  packageType   String      @default("FULL_COMBO")
   
   totalAmount   Float       @default(0)
   advanceAmount Float       @default(0)
@@ -362,41 +277,32 @@ model Order {
 
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+
+  @@index([status])
+  @@index([leadId])
+  @@index([orderNo])
 }
 
 model OrderUpdate {
   id          String      @id @default(uuid())
   orderId     String
   order       Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  fromStatus  OrderStatus?
-  toStatus    OrderStatus
+  fromStatus  String?
+  toStatus    String
   note        String?
-  userId      String?     // Who made the update
+  userId      String?
   createdAt   DateTime    @default(now())
 }
-
-// -----------------------------------------------------------------------------
-// MODULE: Payment & Financials
-// -----------------------------------------------------------------------------
-
-// Payment and Expense models consolidated into LeadTransaction
-
 
 // -----------------------------------------------------------------------------
 // MODULE: Worker & Supplier Management
 // -----------------------------------------------------------------------------
 
-enum WorkerType {
-  CARPENTER
-  INSTALLER
-  HELPER
-}
-
 model Worker {
   id           String             @id @default(uuid())
   name         String
   phone        String
-  type         WorkerType         @default(CARPENTER)
+  type         String             @default("CARPENTER")
   dailyRate    Float?
   assignments  WorkerAssignment[]
   createdAt    DateTime           @default(now())
@@ -409,7 +315,7 @@ model WorkerAssignment {
   worker    Worker   @relation(fields: [workerId], references: [id], onDelete: Cascade)
   orderId   String
   order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  status    String   @default("ASSIGNED") // ASSIGNED, IN_PROGRESS, COMPLETED
+  status    String   @default("ASSIGNED")
   date      DateTime @default(now())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -418,9 +324,11 @@ model WorkerAssignment {
 model Supplier {
   id           String            @id @default(uuid())
   name         String
+  contactPerson String?
   phone        String
+  gstNumber    String?
   address      String?
-  materials    String?           // What they supply
+  materials    String?
   payments     SupplierPayment[]
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
@@ -433,22 +341,22 @@ model SupplierPayment {
   amount      Float
   date        DateTime @default(now())
   notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 // -----------------------------------------------------------------------------
-// MODULE: System & Security (Phase 7)
+// MODULE: System & Security
 // -----------------------------------------------------------------------------
 
 model AuditLog {
   id          String   @id @default(uuid())
   userId      String?
-  action      String   // CREATE, UPDATE, DELETE
-  entity      String   // LEAD, QUOTATION, ORDER, PAYMENT, EXPENSE
+  action      String
+  entity      String
   entityId    String
-  oldValue    Json?
-  newValue    Json?
+  oldValue    String?
+  newValue    String?
   ipAddress   String?
   userAgent   String?
   createdAt   DateTime @default(now())
@@ -456,11 +364,11 @@ model AuditLog {
 
 model Notification {
   id          String   @id @default(uuid())
-  userId      String   // Target user
+  userId      String
   title       String
   message     String
-  type        String   @default("INFO") // INFO, WARNING, SUCCESS, ERROR
-  link        String?  // Optional target page
+  type        String   @default("INFO")
+  link        String?
   isRead      Boolean  @default(false)
   createdAt   DateTime @default(now())
 }
@@ -469,7 +377,7 @@ model LeadTransaction {
   id          String          @id @default(cuid())
   leadId      String?
   lead        Lead?           @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  type        TransactionType
+  type        String
   amount      Float
   date        DateTime
   paidTo      String
@@ -478,6 +386,11 @@ model LeadTransaction {
   description String?
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
+
+  @@index([leadId])
+  @@index([type])
+  @@index([date])
+  @@index([category])
 }
 
 model LeadNote {
@@ -488,9 +401,4 @@ model LeadNote {
   isCompleted Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-}
-
-enum TransactionType {
-  RECEIVED
-  EXPENSE
 }
