@@ -6,19 +6,23 @@ export async function GET(request: Request) {
   try {
     const session = await auth();
     if (!session) {
-      console.warn("[SUPPLIERS_GET] Unauthorized access attempt.");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     
-    console.log("[SUPPLIERS_GET] Fetching for user:", session.user?.email);
+    console.log(`[SUPPLIERS_GET] Fetching for user: ${session.user?.email}`);
+    
     const suppliers = await prisma.supplier.findMany({
       orderBy: { name: "asc" }
     });
-    console.log(`[SUPPLIERS_GET] Found ${suppliers.length} vendors.`);
+    
+    console.log(`[SUPPLIERS_GET] Successfully found ${suppliers.length} vendors.`);
     return NextResponse.json(suppliers);
-  } catch (error) {
-    console.error("[SUPPLIERS_GET]", error);
-    return NextResponse.json({ error: "Failed to fetch suppliers" }, { status: 500 });
+  } catch (error: any) {
+    console.error("[SUPPLIERS_GET] CRITICAL_FAILURE:", error);
+    return NextResponse.json({ 
+      error: "Failed to fetch suppliers",
+      details: error.message || "Unknown error"
+    }, { status: 500 });
   }
 }
 

@@ -143,8 +143,11 @@ export async function GET() {
       },
       chartData,
     });
-  } catch (error) {
-    console.error("[STATS_ERROR]", error);
-    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+  } catch (error: any) {
+    console.error("[STATS_API_ERROR]", error);
+    return NextResponse.json({ 
+      error: "Failed to compile dashboard statistics", 
+      details: error.message || String(error)
+    }, { status: 500 });
   }
 }

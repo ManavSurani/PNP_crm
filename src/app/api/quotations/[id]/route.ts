@@ -22,8 +22,11 @@ export async function GET(
     if (!quotation) return NextResponse.json({ error: "Quotation not found" }, { status: 404 });
 
     return NextResponse.json(quotation);
-  } catch (error) {
-    console.error("[QUOTATION_GET]", error);
-    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+  } catch (error: any) {
+    console.error("[QUOTATION_GET_ERROR]", error);
+    return NextResponse.json({ 
+      error: "Failed to retrieve quotation profile", 
+      details: error.message || String(error)
+    }, { status: 500 });
   }
 }

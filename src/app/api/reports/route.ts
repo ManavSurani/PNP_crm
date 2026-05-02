@@ -102,8 +102,11 @@ export async function GET() {
       recentLeads,
       conversionRate: totalLeads > 0 ? ((conversionData / totalLeads) * 100).toFixed(1) : "0",
     });
-  } catch (error) {
-    console.error("[REPORTS_GET]", error);
-    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+  } catch (error: any) {
+    console.error("[REPORTS_GET_ERROR]", error);
+    return NextResponse.json({ 
+      error: "Failed to generate business intelligence reports", 
+      details: error.message || String(error)
+    }, { status: 500 });
   }
 }

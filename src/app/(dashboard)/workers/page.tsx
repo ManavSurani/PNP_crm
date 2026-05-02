@@ -216,8 +216,10 @@ export default function WorkersPage() {
                 {filtered.map(w => {
                   const role = roleMeta(w.role);
                   return (
-                    <tr key={w.id} className="group hover:bg-slate-50 transition-colors">
-                      <td className="whitespace-nowrap py-5 pl-8 pr-3">
+                    <tr key={w.id} className="group hover:bg-slate-50 transition-colors relative">
+                      <td className="whitespace-nowrap py-5 pl-10 pr-3 relative">
+                        {/* Status Vertical Bar */}
+                        <div className={cn("absolute left-0 top-0 bottom-0 w-1", role.color.split(" ")[0])} />
                         <div className="flex items-center">
                           <div className="h-10 w-10 flex-shrink-0 bg-slate-100 rounded-lg flex items-center justify-center text-slate-600 font-semibold border border-slate-200">
                             {w.name.charAt(0)}

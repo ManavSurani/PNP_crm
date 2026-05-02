@@ -243,8 +243,13 @@ export default function PaymentsPage() {
               {data.map((c) => {
                 const rate = c.projectAmount > 0 ? (c.received / c.projectAmount) * 100 : 0;
                 return (
-                  <tr key={c.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-6 py-4">
+                  <tr key={c.id} className="hover:bg-slate-50/50 transition-colors relative group">
+                    <td className="px-6 py-4 pl-10 relative">
+                      {/* Status Bar */}
+                      <div className={cn(
+                        "absolute left-0 top-0 bottom-0 w-1",
+                        rate >= 100 ? "bg-emerald-500" : rate > 0 ? "bg-indigo-500" : "bg-rose-500"
+                      )} />
                       <p className="font-bold text-slate-900">{c.customerName}</p>
                       <p className="text-xs text-slate-500 mt-0.5">{c.contactNumber}</p>
                     </td>

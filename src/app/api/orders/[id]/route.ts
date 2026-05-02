@@ -69,9 +69,12 @@ export async function PUT(
     });
 
     return NextResponse.json(order);
-  } catch (error) {
-    console.error("[ORDER_PUT]", error);
-    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+  } catch (error: any) {
+    console.error("[ORDER_PUT_ERROR]", error);
+    return NextResponse.json({ 
+      error: "Failed to update order details", 
+      details: error.message || String(error)
+    }, { status: 500 });
   }
 }
 
@@ -92,7 +95,6 @@ export async function GET(
             transactions: { orderBy: { date: "desc" } } 
           },
         },
-        // Definitive Fix: Use any-casting for new dynamic relation
         updates: { orderBy: { createdAt: "desc" } },
         assignments: {
           include: { worker: true }
@@ -102,9 +104,12 @@ export async function GET(
 
     if (!order) return NextResponse.json({ error: "Not Found" }, { status: 404 });
     return NextResponse.json(order);
-  } catch (error) {
-    console.error("[ORDER_GET]", error);
-    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+  } catch (error: any) {
+    console.error("[ORDER_GET_ERROR]", error);
+    return NextResponse.json({ 
+      error: "Failed to retrieve order profile", 
+      details: error.message || String(error)
+    }, { status: 500 });
   }
 }
 
@@ -131,8 +136,11 @@ export async function DELETE(
     });
 
     return new NextResponse(null, { status: 204 });
-  } catch (error) {
-    console.error("[ORDER_DELETE]", error);
-    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+  } catch (error: any) {
+    console.error("[ORDER_DELETE_ERROR]", error);
+    return NextResponse.json({ 
+      error: "Failed to delete order record", 
+      details: error.message || String(error)
+    }, { status: 500 });
   }
 }

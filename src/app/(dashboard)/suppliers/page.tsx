@@ -200,8 +200,10 @@ export default function SuppliersPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {filtered.map(s => (
-            <div key={s.id} className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all group overflow-hidden">
-              <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center gap-4">
+            <div key={s.id} className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all group overflow-hidden relative">
+              {/* Status Bar */}
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500" />
+              <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center gap-4 pl-7">
                 <div className="h-12 w-12 bg-white rounded-lg border border-slate-200 flex items-center justify-center font-bold text-slate-400 text-lg group-hover:text-primary group-hover:border-primary/20 transition-all">
                   {s.name.charAt(0)}
                 </div>
