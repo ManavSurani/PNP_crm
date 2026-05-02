@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { HardHat, Plus, Loader2, Check, X, Phone, IndianRupee, Wrench, User, Search, RotateCcw, Filter } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { HardHat, Plus, Loader2, Check, X, Phone, IndianRupee, Wrench, User, Search, RotateCcw, Filter, ChevronRight, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 const ROLES = [
@@ -14,6 +16,7 @@ const ROLES = [
 ];
 
 export default function WorkersPage() {
+  const router = useRouter();
   const [workers, setWorkers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -85,6 +88,7 @@ export default function WorkersPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-10">
+
       {/* Header */}
       <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-48 h-48 bg-primary rounded-full blur-[100px] opacity-5 -mr-24 -mt-24" />

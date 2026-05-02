@@ -1,15 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { format, isPast, isToday } from "date-fns";
 import { 
   Calendar, MapPin, Clock, User, Phone, CheckCircle2, 
-  Loader2, Search, Filter, ExternalLink, Map, ChevronRight
+  Loader2, Search, Filter, ExternalLink, Map, ChevronRight, ArrowLeft
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 export default function MeetingsPage() {
+  const router = useRouter();
   const [meetings, setMeetings] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -47,6 +49,7 @@ export default function MeetingsPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-10">
+
       {/* Header */}
       <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-48 h-48 bg-primary rounded-full blur-[100px] opacity-5 -mr-24 -mt-24" />

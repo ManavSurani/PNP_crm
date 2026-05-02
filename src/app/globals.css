@@ -69,4 +69,34 @@ body {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  .sidebar-scroll {
+    scrollbar-width: thin !important;
+    scrollbar-color: transparent transparent !important;
+    transition: scrollbar-color 0.3s !important;
+  }
+
+  .sidebar-scroll::-webkit-scrollbar {
+    width: 4px !important;
+  }
+
+  .sidebar-scroll::-webkit-scrollbar-track {
+    background: transparent !important;
+  }
+
+  .sidebar-scroll::-webkit-scrollbar-thumb {
+    background: transparent !important;
+    border-radius: 10px !important;
+    transition: background 0.3s !important;
+  }
+
+  .sidebar-scroll:hover,
+  .sidebar-scroll-hover {
+    scrollbar-color: rgba(148, 163, 184, 0.4) transparent !important;
+  }
+
+  .sidebar-scroll:hover::-webkit-scrollbar-thumb,
+  .sidebar-scroll-hover::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.4) !important;
+  }
 }

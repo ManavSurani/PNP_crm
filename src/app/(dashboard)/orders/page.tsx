@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { format } from "date-fns";
 import {
   CopyCheck, Loader2, Package, ArrowRight, Clock, IndianRupee,
-  TrendingUp, AlertCircle, Check, Search, Filter, ArrowUpDown, RotateCcw
+  TrendingUp, AlertCircle, Check, Search, Filter, ArrowUpDown, RotateCcw, ChevronRight, ArrowLeft
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +27,7 @@ const STAGES = ["DESIGN", "PROCURING", "CARPENTRY", "ELECTRICAL", "PAINTING", "I
 const FINAL_STAGES = ["COMPLETED", "CANCELLED"];
 
 export default function OrdersPage() {
+  const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [movingId, setMovingId] = useState<string | null>(null);
@@ -101,6 +103,7 @@ export default function OrdersPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-10">
+
       {/* Header */}
       <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500 rounded-full blur-[100px] opacity-5 -mr-24 -mt-24" />

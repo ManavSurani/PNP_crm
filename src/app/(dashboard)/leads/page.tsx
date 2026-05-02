@@ -6,9 +6,10 @@ import { format } from "date-fns";
 import { 
   Plus, Search, MoreHorizontal, User, Phone, MapPin, Loader2, 
   Filter, ArrowUpDown, ChevronRight, Activity, Zap, X, CheckCircle2, Check,
-  Trash2, Pencil, ExternalLink, AlertTriangle, RotateCcw
+  Trash2, Pencil, ExternalLink, AlertTriangle, RotateCcw, ArrowLeft
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 type Lead = {
   id: string;
@@ -140,6 +141,7 @@ export default function LeadsPage() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] space-y-4 overflow-hidden">
+
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden shrink-0">
         <div className="absolute top-0 right-0 w-48 h-48 bg-primary rounded-full blur-[100px] opacity-5 -mr-24 -mt-24" />

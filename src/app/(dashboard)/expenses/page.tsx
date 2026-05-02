@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { Plus, Wallet, Loader2, Check, X, TrendingDown, PieChart, Package, Wrench, IndianRupee, Filter, RotateCcw, Search } from "lucide-react";
+import { Plus, Wallet, Loader2, Check, X, TrendingDown, PieChart, Package, Wrench, IndianRupee, Filter, RotateCcw, Search, ChevronRight, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 const CATEGORIES = [
@@ -15,6 +17,7 @@ const CATEGORIES = [
 ];
 
 export default function ExpensesPage() {
+  const router = useRouter();
   const [expenses, setExpenses] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -99,6 +102,7 @@ export default function ExpensesPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-10">
+
       {/* Header */}
       <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-48 h-48 bg-primary rounded-full blur-[100px] opacity-5 -mr-24 -mt-24" />

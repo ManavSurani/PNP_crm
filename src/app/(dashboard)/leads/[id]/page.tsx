@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useEffect, use } from "react";
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import {
   Phone, MapPin, FileText, Clock, Zap, Loader2, Pencil, X, CheckCircle2,
   PhoneMissed, Calendar, Check, RotateCcw, Ban, AlertTriangle, ListTodo, Activity, Trash2,
-  Banknote, MessageSquare
+  Banknote, MessageSquare, ChevronRight, ArrowLeft
 } from "lucide-react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 type FollowUp = { 
@@ -68,6 +70,7 @@ const SERVICE_TYPES = [
 
 
 export default function LeadDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const router = useRouter();
   const { id } = use(params);
   const [lead, setLead] = useState<LeadDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -292,6 +295,25 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-24">
+      {/* Navigation */}
+      <div className="flex items-center justify-between shrink-0">
+        <button 
+          onClick={() => router.back()} 
+          className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-emerald-600 transition-colors group"
+        >
+          <div className="h-8 w-8 rounded-lg border border-slate-200 flex items-center justify-center group-hover:border-emerald-200 bg-white shadow-sm transition-colors">
+            <ArrowLeft className="h-4 w-4" />
+          </div>
+          BACK
+        </button>
+
+        <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 tracking-widest uppercase">
+          <Link href="/leads" className="hover:text-emerald-600 transition-colors text-indigo-400/80">Lead Pipeline</Link>
+          <ChevronRight className="h-3 w-3 text-slate-300" /> 
+          <span className="text-slate-900 font-black">Details</span>
+        </div>
+      </div>
+
       {/* Header */}
       <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-48 h-48 bg-primary rounded-full blur-[100px] opacity-5 -mr-24 -mt-24" />

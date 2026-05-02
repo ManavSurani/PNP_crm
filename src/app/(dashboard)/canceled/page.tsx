@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { 
   Trash2, Search, ArrowRight, RotateCcw, 
   Trash, Loader2, User, ShoppingCart, 
   ChevronRight, Calendar, AlertCircle,
-  MoreHorizontal, Eye
+  MoreHorizontal, Eye, ArrowLeft
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -17,6 +18,7 @@ type CanceledData = {
 };
 
 export default function CanceledArchivePage() {
+  const router = useRouter();
   const [data, setData] = useState<CanceledData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"leads" | "orders">("leads");
@@ -99,6 +101,7 @@ export default function CanceledArchivePage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-20">
+
       {/* Header */}
       <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="absolute top-0 right-0 w-48 h-48 bg-rose-500 rounded-full blur-[100px] opacity-5 -mr-24 -mt-24" />

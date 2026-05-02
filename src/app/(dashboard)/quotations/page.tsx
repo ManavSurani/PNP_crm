@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { format } from "date-fns";
 import {
   FileText, Plus, Printer, Loader2, IndianRupee, CheckCircle2,
-  Clock, MessageCircle, ChevronRight, Search, Filter, ArrowUpDown, RotateCcw
+  Clock, MessageCircle, ChevronRight, Search, Filter, ArrowUpDown, RotateCcw, ArrowLeft
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +29,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function QuotationsPage() {
+  const router = useRouter();
   const [quotations, setQuotations] = useState<Quotation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -81,6 +83,7 @@ export default function QuotationsPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-10">
+
       {/* Header */}
       <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="absolute top-0 right-0 w-48 h-48 bg-primary rounded-full blur-[100px] opacity-5 -mr-24 -mt-24" />

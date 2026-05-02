@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { format, isPast, isToday } from "date-fns";
 import { 
   PhoneCall, Clock, CheckCircle2, AlertCircle, Loader2, 
-  Search, Filter, ExternalLink, Calendar, ChevronRight, RotateCcw
+  Search, Filter, ExternalLink, Calendar, ChevronRight, RotateCcw, ArrowLeft
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,7 @@ const timeToMinutes = (timeStr?: string | null) => {
 };
 
 export default function FollowUpsPage() {
+  const router = useRouter();
   const [followUps, setFollowUps] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -110,6 +112,7 @@ export default function FollowUpsPage() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] space-y-4 overflow-hidden">
+
       {/* Header */}
       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden shrink-0">
         <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-[80px] -mr-32 -mt-32" />

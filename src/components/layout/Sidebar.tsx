@@ -47,7 +47,7 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <div className="flex h-full w-64 flex-col bg-slate-950 border-r border-white/5 shadow-2xl relative z-[50]">
+    <div className="flex h-full w-64 flex-col bg-slate-950 border-r border-white/5 shadow-2xl relative z-[50] group/sidebar">
       <Link href="/leads" className="flex h-20 shrink-0 items-center px-8 border-b border-white/5 hover:bg-white/[0.02] transition-colors group">
         <div className="flex items-center gap-3">
           <BrandLogo className="h-10 w-10 group-hover:scale-105" />
@@ -55,7 +55,7 @@ export default function Sidebar() {
         </div>
       </Link>
 
-      <div className="flex flex-1 flex-col overflow-y-auto pt-6 pb-6 scrollbar-hide">
+      <div className="flex flex-1 flex-col overflow-y-auto pt-6 pb-6 sidebar-scroll group-hover/sidebar:sidebar-scroll-hover">
         <nav className="flex-1 space-y-1 px-4">
           <div className="px-4 mb-4">
              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">CRM Modules</p>
