@@ -197,25 +197,6 @@ export default function OrdersPage() {
         </div>
       )}
 
-      {/* Summary Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {[
-          { label: "Active Orders", val: activeOrders, icon: Package, color: "text-amber-600", bg: "bg-amber-50" },
-          { label: "Total Order Value", val: `₹${totalRevenue.toLocaleString()}`, icon: TrendingUp, color: "text-indigo-600", bg: "bg-indigo-50" },
-          { label: "Pending Payments", val: `₹${totalPending.toLocaleString()}`, icon: AlertCircle, color: "text-rose-600", bg: "bg-rose-50" },
-        ].map((card, i) => (
-          <div key={i} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-            <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center transition-colors", card.bg, card.color)}>
-              <card.icon className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-xs font-medium text-slate-500">{card.label}</p>
-              <p className="text-xl font-semibold text-slate-900 mt-0.5">{card.val}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
       {/* Orders Table Container */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         {isLoading ? (

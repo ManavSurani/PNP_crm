@@ -203,9 +203,9 @@ export default function CustomerHubPage({ params }: { params: Promise<{ id: stri
             title="Project Progress"
             subtitle="Monitor site milestones and real-time execution status."
             icon={<Activity className="h-8 w-8 text-blue-500" />}
-            href="/progress"
-            badge="In Progress"
-            badgeColor="bg-blue-50 text-blue-600 border-blue-100"
+            href={`/customers/${id}/progress`}
+            badge="Live"
+            badgeColor="bg-emerald-50 text-emerald-700 border-emerald-100"
             iconBg="bg-blue-50/50 group-hover:bg-blue-50"
             accentColor="bg-blue-500"
           />

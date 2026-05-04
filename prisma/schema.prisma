@@ -28,6 +28,7 @@ model User {
   sessions      Session[]
 
   assignedLeads Lead[]
+  executionLogs ExecutionLog[]
 }
 
 model Account {
@@ -118,6 +119,7 @@ model Lead {
   transactions  LeadTransaction[]
   leadNotes     LeadNote[]
   projectQuotations ProjectQuotation[]
+  project           Project?
 
   @@index([status])
   @@index([isCancelled])
@@ -468,3 +470,58 @@ model ProjectPayment {
 
   @@index([projectQuotationId])
 }
+
+// -----------------------------------------------------------------------------
+// MODULE: Project Progress Tracking
+// -----------------------------------------------------------------------------
+
+model Project {
+  id                  String         @id @default(uuid())
+  customerId          String         @unique
+  customer            Lead           @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  startedOn           DateTime       @default(now())
+  estimatedCompletion DateTime?
+  isCompleted         Boolean        @default(false)
+  completedOn         DateTime?
+  createdAt           DateTime       @default(now())
+
+  milestones          Milestone[]
+  executionLogs       ExecutionLog[]
+
+  @@index([customerId])
+}
+
+model Milestone {
+  id          String    @id @default(uuid())
+  projectId   String
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sequence    Int
+  name        String
+  description String?
+  status      String    @default("pending") // pending | in_progress | delay | done
+  progress    Int?      // 0-100, used when status = in_progress
+  delayDays   Int?      // used when status = delay
+  delayReason String?   // used when status = delay
+  startedOn   DateTime?
+  completedOn DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([projectId])
+  @@index([sequence])
+}
+
+model ExecutionLog {
+  id        String    @id @default(uuid())
+  projectId String
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  logText   String
+  logType   String    @default("update") // update | delay | issue
+  loggedOn  DateTime  @default(now())
+  loggedBy  String?
+  logger    User?     @relation(fields: [loggedBy], references: [id], onDelete: SetNull)
+  createdAt DateTime  @default(now())
+
+  @@index([projectId])
+  @@index([loggedOn])
+}
+

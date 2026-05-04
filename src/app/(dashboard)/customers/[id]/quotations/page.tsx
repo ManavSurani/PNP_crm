@@ -130,17 +130,17 @@ export default function CustomerQuotationsPage({ params }: { params: Promise<{ i
       {/* Navigation Breadcrumbs */}
       <div className="flex items-center justify-between">
         <Link 
-          href={`/customers/${customerId}/hub`}
+          href={`/customers/${customerId}`}
           className="group flex items-center gap-2 text-[10px] font-black text-slate-400 hover:text-slate-900 transition-all uppercase tracking-widest"
         >
           <div className="h-7 w-7 rounded-full border border-slate-200 flex items-center justify-center group-hover:border-slate-400 transition-colors">
             <ArrowLeft className="h-3 w-3" />
           </div>
-          Back to Hub
+          Back to Profile
         </Link>
         
         <div className="flex items-center gap-2 text-[10px] font-bold text-slate-300 tracking-widest uppercase">
-          Customer Hub <ChevronRight className="h-3 w-3" /> {customer?.customerName} <ChevronRight className="h-3 w-3" /> Quotations
+          Customer Profile <ChevronRight className="h-3 w-3" /> {customer?.customerName} <ChevronRight className="h-3 w-3" /> Quotations
         </div>
       </div>
 
