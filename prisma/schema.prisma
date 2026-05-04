@@ -109,6 +109,7 @@ model Lead {
   orders      Order[]
   transactions  LeadTransaction[]
   leadNotes     LeadNote[]
+  projectQuotations ProjectQuotation[]
 
   @@index([status])
   @@index([isCancelled])
@@ -401,4 +402,61 @@ model LeadNote {
   isCompleted Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// -----------------------------------------------------------------------------
+// MODULE: Project-Specific Quotations (Electrical, Plumbing, etc.)
+// -----------------------------------------------------------------------------
+
+model ProjectField {
+  id          String             @id @default(uuid())
+  name        String
+  vendors     ProjectVendor[]
+  quotations  ProjectQuotation[]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+}
+
+model ProjectVendor {
+  id          String             @id @default(uuid())
+  fieldId     String
+  field       ProjectField       @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  name         String
+  phone        String
+  quotations  ProjectQuotation[]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+}
+
+model ProjectQuotation {
+  id               String           @id @default(uuid())
+  customerId       String
+  customer         Lead             @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  fieldId          String
+  field            ProjectField     @relation(fields: [fieldId], references: [id])
+  vendorId         String
+  vendor           ProjectVendor    @relation(fields: [vendorId], references: [id])
+  amount           Float
+  priority         Int              @default(0)
+  isPriorityLocked Boolean          @default(false)
+  payments         ProjectPayment[]
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([customerId])
+  @@index([fieldId])
+  @@index([vendorId])
+}
+
+model ProjectPayment {
+  id                String           @id @default(uuid())
+  projectQuotationId String
+  projectQuotation  ProjectQuotation @relation(fields: [projectQuotationId], references: [id], onDelete: Cascade)
+  amount            Float
+  paidOn            DateTime
+  note              String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@index([projectQuotationId])
 }

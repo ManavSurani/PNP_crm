@@ -174,7 +174,7 @@ export default function CustomerHubPage({ params }: { params: Promise<{ id: stri
             title="Quotation"
             subtitle="Review pending proposals and commercial estimates."
             icon={<FileText className="h-8 w-8 text-indigo-500" />}
-            href="/quotation"
+            href={`/customers/${id}/quotations`}
             iconBg="bg-indigo-50/50 group-hover:bg-indigo-50"
             accentColor="bg-indigo-500"
           />
