@@ -2,13 +2,21 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    const { searchParams } = new URL(request.url);
+    const includeCounts = searchParams.get("include_counts") === "true";
+
     const fields = await prisma.projectField.findMany({
-      orderBy: { name: "asc" }
+      orderBy: { name: "asc" },
+      ...(includeCounts && {
+        include: {
+          _count: { select: { vendors: true, quotations: true } }
+        }
+      })
     });
 
     return NextResponse.json(fields);

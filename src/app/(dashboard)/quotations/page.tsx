@@ -1,292 +1,172 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { FileText, Loader2, ChevronRight, Search, IndianRupee, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import Link from "next/link";
-import { format } from "date-fns";
-import {
-  FileText, Plus, Printer, Loader2, IndianRupee, CheckCircle2,
-  Clock, MessageCircle, ChevronRight, Search, Filter, ArrowUpDown, RotateCcw, ArrowLeft
-} from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type Quotation = {
+interface CustomerSummary {
   id: string;
-  quotationNo: string;
-  finalTotal: number;
-  materialCost: number;
-  labourCost: number;
-  status: string;
-  createdAt: string;
-  lead: { customerName: string; serviceType: string; contactNumber: string };
-};
+  customerName: string;
+  totalQuoted: number;
+  totalPaid: number;
+  pendingAmount: number;
+  quotationCount: number;
+  status: "FULLY_PAID" | "PARTIAL" | "PENDING";
+}
 
-const STATUS_COLORS: Record<string, string> = {
-  DRAFT: "bg-slate-100 text-slate-600",
-  SENT: "bg-sky-100 text-sky-700",
-  ACCEPTED: "bg-emerald-100 text-emerald-700",
-  REJECTED: "bg-rose-100 text-rose-700",
-};
-
-export default function QuotationsPage() {
-  const router = useRouter();
-  const [quotations, setQuotations] = useState<Quotation[]>([]);
+export default function QuotationOverviewPage() {
+  const [customers, setCustomers] = useState<CustomerSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("ALL");
-  const [showFilters, setShowFilters] = useState(false);
-  const [dateRange, setDateRange] = useState({ start: "", end: "" });
-  const [sortBy, setSortBy] = useState("NEWEST");
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
-    fetch("/api/quotations")
-      .then(res => res.json())
-      .then(data => { setQuotations(data); setIsLoading(false); });
+    fetchData();
   }, []);
 
-  const filteredQuotations = quotations.filter(q => {
-    const matchesSearch = 
-      q.quotationNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      q.lead.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      q.lead.serviceType.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === "ALL" || q.status === statusFilter;
-    
-    const qDate = new Date(q.createdAt);
-    const matchesStart = !dateRange.start || qDate >= new Date(dateRange.start);
-    const matchesEnd = !dateRange.end || qDate <= new Date(dateRange.end + "T23:59:59");
-    
-    return matchesSearch && matchesStatus && matchesStart && matchesEnd;
-  }).sort((a, b) => {
-    if (sortBy === "NEWEST") return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    if (sortBy === "OLDEST") return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-    if (sortBy === "A-Z") return a.lead.customerName.localeCompare(b.lead.customerName);
-    if (sortBy === "Z-A") return b.lead.customerName.localeCompare(a.lead.customerName);
-    return 0;
-  });
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/project-quotations/overview");
+      if (res.ok) {
+        const data = await res.json();
+        setCustomers(data);
+      }
+    } catch (error) {
+      console.error("Error fetching quotation overview:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const totalValue = filteredQuotations.reduce((s, q) => s + q.finalTotal, 0);
-  const accepted = filteredQuotations.filter(q => q.status === "ACCEPTED").length;
-  const pending = filteredQuotations.filter(q => q.status === "SENT").length;
+  const filtered = customers.filter((c) =>
+    c.customerName.toLowerCase().includes(search.toLowerCase())
+  );
 
-  const sendWhatsApp = (q: Quotation) => {
-    const msg = encodeURIComponent(
-      `🪵 *PNP Furniture — Quotation ${q.quotationNo}*\n\n` +
-      `Dear *${q.lead.customerName}*,\n\n` +
-      `We're pleased to share your estimate for *${q.lead.serviceType.replace(/_/g, " ")}*.\n\n` +
-      `💰 *Total Estimate: ₹${q.finalTotal.toLocaleString()}*\n` +
-      `📋 Material: ₹${q.materialCost.toLocaleString()} | Labour: ₹${q.labourCost.toLocaleString()}\n\n` +
-      `Please confirm your approval to proceed.\n\nThank you! 🙏`
-    );
-    window.open(`https://wa.me/${q.lead.contactNumber.replace(/\D/g, "")}?text=${msg}`, "_blank");
+  const grandTotal   = customers.reduce((s, c) => s + c.totalQuoted, 0);
+  const grandPaid    = customers.reduce((s, c) => s + c.totalPaid, 0);
+  const grandPending = customers.reduce((s, c) => s + c.pendingAmount, 0);
+
+  const statusConfig = {
+    FULLY_PAID: { label: "Paid",    cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+    PARTIAL:    { label: "Partial", cls: "bg-indigo-50 text-indigo-700 border-indigo-200" },
+    PENDING:    { label: "Pending", cls: "bg-amber-50 text-amber-700 border-amber-200" },
   };
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-10">
-
       {/* Header */}
-      <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="absolute top-0 right-0 w-48 h-48 bg-primary rounded-full blur-[100px] opacity-5 -mr-24 -mt-24" />
-        <div className="relative z-10">
-          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Quotations</h1>
-          <p className="text-slate-500 text-sm mt-1">Manage and track your service estimates and deal conversions.</p>
+      <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500 rounded-full blur-[100px] opacity-5 -mr-32 -mt-32" />
+        <div className="relative z-10 space-y-1">
+          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Quotation Overview</h1>
+          <p className="text-slate-500 text-sm">All customer quotations — click a row to view the full project ledger.</p>
         </div>
-        <Link
-          href="/quotations/new"
-          className="relative z-10 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-md hover:bg-indigo-700 transition-all active:scale-95 border border-indigo-500/20"
-        >
-          <Plus className="h-4 w-4" /> Create New Quotation
-        </Link>
-      </div>
-
-      {/* Search and Filters Bar */}
-      <div className="flex flex-col md:flex-row items-center gap-4">
-        <div className="relative flex-grow w-full md:max-w-xl group">
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-            <Search className="h-4 w-4 text-slate-400" />
+        <div className="relative z-10 flex items-center gap-3">
+          <div className="text-right">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Clients</p>
+            <p className="text-xl font-black text-slate-900">{customers.length}</p>
           </div>
-          <input
-            type="text"
-            className="block w-full rounded-lg border border-slate-200 py-2.5 pl-11 pr-4 text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm bg-white transition-all outline-none"
-            placeholder="Search by quote no or customer..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <div className="flex items-center gap-2 w-full md:w-auto">
-          <div className="flex bg-white border border-slate-200 rounded-lg p-1 shadow-sm">
-            {["ALL", "DRAFT", "SENT", "ACCEPTED", "REJECTED"].map((s) => (
-              <button
-                key={s}
-                onClick={() => setStatusFilter(s)}
-                className={cn(
-                  "px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all",
-                  statusFilter === s ? "bg-slate-900 text-white shadow-sm" : "text-slate-500 hover:text-slate-900"
-                )}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-          <button 
-            onClick={() => setShowFilters(!showFilters)}
-            className={cn(
-              "flex items-center gap-2 px-4 py-2 border rounded-lg text-xs font-bold uppercase tracking-wider transition-all shadow-sm",
-              showFilters ? "bg-slate-900 text-white border-slate-900" : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-            )}
-          >
-            <Filter className="h-3.5 w-3.5" /> {showFilters ? "Hide Options" : "More Filters"}
-          </button>
-          <button 
-            onClick={() => {
-              setSearchTerm("");
-              setStatusFilter("ALL");
-              setDateRange({ start: "", end: "" });
-              setSortBy("NEWEST");
-            }}
-            className="p-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition shadow-sm"
-            title="Reset All"
-          >
-            <RotateCcw className="h-4 w-4" />
-          </button>
         </div>
       </div>
 
-      {/* Expanded Filters */}
-      {showFilters && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-50 p-6 rounded-xl border border-slate-200 animate-in slide-in-from-top-2 duration-200">
-           <div>
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Sort Order</label>
-              <select 
-                className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-sm focus:border-primary outline-none font-medium"
-                value={sortBy}
-                onChange={e => setSortBy(e.target.value)}
-              >
-                <option value="NEWEST">Date: Newest First</option>
-                <option value="OLDEST">Date: Oldest First</option>
-                <option value="A-Z">Customer: A-Z</option>
-                <option value="Z-A">Customer: Z-A</option>
-              </select>
-           </div>
-           <div>
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">From Date</label>
-              <input 
-                type="date"
-                className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-sm focus:border-primary outline-none"
-                value={dateRange.start}
-                onChange={e => setDateRange({...dateRange, start: e.target.value})}
-              />
-           </div>
-           <div>
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">To Date</label>
-              <input 
-                type="date"
-                className="w-full rounded-lg border border-slate-200 bg-white py-2 px-3 text-sm focus:border-primary outline-none"
-                value={dateRange.end}
-                onChange={e => setDateRange({...dateRange, end: e.target.value})}
-              />
-           </div>
+      {/* Grand Totals */}
+      {customers.length > 0 && (
+        <div className="grid grid-cols-3 gap-4">
+          {[
+            { label: "Total Quoted",    value: grandTotal,   color: "text-slate-900", bg: "bg-white", border: "border-slate-100" },
+            { label: "Total Collected", value: grandPaid,    color: "text-emerald-600", bg: "bg-emerald-50/50", border: "border-emerald-100" },
+            { label: "Outstanding",     value: grandPending, color: grandPending > 0 ? "text-amber-600" : "text-emerald-600", bg: grandPending > 0 ? "bg-amber-50/50" : "bg-emerald-50/50", border: grandPending > 0 ? "border-amber-100" : "border-emerald-100" },
+          ].map((card) => (
+            <div key={card.label} className={`${card.bg} ${card.border} border rounded-xl p-5 shadow-sm`}>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{card.label}</p>
+              <p className={`text-2xl font-black mt-2 ${card.color}`}>₹{card.value.toLocaleString("en-IN")}</p>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* Summary Chips */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {[
-          { label: "Total Quote Value", val: `₹${totalValue.toLocaleString()}`, icon: IndianRupee, color: "text-indigo-600", bg: "bg-indigo-50" },
-          { label: "Approved Quotes", val: accepted, icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-50" },
-          { label: "Sent Quotes", val: pending, icon: Clock, color: "text-amber-600", bg: "bg-amber-50" },
-        ].map((card, i) => (
-          <div key={i} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-            <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center transition-colors", card.bg, card.color)}>
-              <card.icon className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-xs font-medium text-slate-500">{card.label}</p>
-              <p className="text-xl font-semibold text-slate-900 mt-0.5">{card.val}</p>
-            </div>
-          </div>
-        ))}
+      {/* Search */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+        <input
+          type="text"
+          className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-12 pr-4 text-sm focus:border-indigo-400 focus:ring-4 focus:ring-indigo-400/10 outline-none transition-all"
+          placeholder="Search customer..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
       </div>
 
-      {/* Table Container */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center h-64 text-slate-400">
-             <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
-             <span className="text-sm font-medium">Fetching Estimates...</span>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200">
-              <thead className="bg-slate-50/50">
-                <tr>
-                  <th className="py-4 pl-8 pr-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Quote Info</th>
-                  <th className="px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Service Type</th>
-                  <th className="px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Amount</th>
-                  <th className="px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                  <th className="px-3 py-4 text-right pr-8 text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
-                {filteredQuotations.map(q => (
-                  <tr key={q.id} className="group hover:bg-slate-50 transition-colors">
-                    <td className="py-5 pl-8 pr-3">
-                      <p className="text-xs font-bold text-primary tracking-wide">{q.quotationNo}</p>
-                      <p className="text-sm text-slate-900 font-semibold mt-0.5">{q.lead.customerName}</p>
-                      <p className="text-[11px] text-slate-400 font-medium mt-1">{format(new Date(q.createdAt), "dd MMM yyyy")}</p>
-                    </td>
-                    <td className="px-3 py-5">
-                      <p className="text-xs font-semibold text-slate-700 uppercase tracking-tight">{q.lead.serviceType.replace(/_/g, " ")}</p>
-                    </td>
-                    <td className="px-3 py-5">
-                      <p className="text-base font-bold text-slate-900">₹{q.finalTotal.toLocaleString()}</p>
-                      <p className="text-[10px] text-slate-400 font-medium mt-1">M: ₹{q.materialCost.toLocaleString()} | L: ₹{q.labourCost.toLocaleString()}</p>
-                    </td>
-                    <td className="px-3 py-5">
-                      <span className={cn(
-                        "inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider border",
-                        q.status === "DRAFT" ? "bg-slate-50 text-slate-600 border-slate-200" :
-                        q.status === "SENT" ? "bg-sky-50 text-sky-700 border-sky-200" :
-                        q.status === "ACCEPTED" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
-                        "bg-rose-50 text-rose-700 border-rose-200"
-                      )}>
-                        {q.status}
-                      </span>
-                    </td>
-                    <td className="px-3 py-5 pr-8 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => sendWhatsApp(q)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-[11px] font-semibold transition-all border border-emerald-100"
-                        >
-                          <MessageCircle className="h-3.5 w-3.5" />
-                          WhatsApp
-                        </button>
-                        <Link
-                          href={`/quotations/${q.id}`}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg text-[11px] font-semibold transition-all border border-slate-200"
-                        >
-                          <Printer className="h-3.5 w-3.5" />
-                          Document
-                        </Link>
+      {/* Table */}
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center h-64 text-slate-400">
+          <Loader2 className="h-8 w-8 animate-spin text-indigo-500 mb-3" />
+          <span className="text-sm font-medium">Loading quotations...</span>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="py-24 text-center border-2 border-dashed border-slate-200 rounded-xl">
+          <FileText className="h-10 w-10 text-slate-200 mx-auto mb-4" />
+          <h3 className="text-sm font-bold text-slate-900">No quotations found</h3>
+          <p className="text-xs text-slate-400 mt-1">Quotations will appear here after they are added to a customer.</p>
+        </div>
+      ) : (
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <table className="min-w-full divide-y divide-slate-100">
+            <thead className="bg-slate-50/50">
+              <tr>
+                <th className="py-4 pl-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Customer</th>
+                <th className="py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Fields</th>
+                <th className="py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Quoted</th>
+                <th className="py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Paid</th>
+                <th className="py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Pending</th>
+                <th className="py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                <th className="py-4 pr-6 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">View</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {filtered.map((c) => {
+                const st = statusConfig[c.status];
+                return (
+                  <tr key={c.id} className="group hover:bg-slate-50 transition-colors">
+                    <td className="py-4 pl-6">
+                      <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center font-bold text-indigo-500 text-sm">
+                          {c.customerName.charAt(0).toUpperCase()}
+                        </div>
+                        <p className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{c.customerName}</p>
                       </div>
                     </td>
-                  </tr>
-                ))}
-                {filteredQuotations.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="py-20 text-center">
-                       <FileText className="h-10 w-10 text-slate-200 mx-auto mb-3" />
-                       <h3 className="text-sm font-semibold text-slate-900">No quotations found</h3>
-                       <p className="text-xs text-slate-500 mt-1">Try adjusting your search or filters.</p>
+                    <td className="py-4">
+                      <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">
+                        {c.quotationCount} field{c.quotationCount !== 1 ? "s" : ""}
+                      </span>
+                    </td>
+                    <td className="py-4 font-black text-slate-900 text-sm">₹{c.totalQuoted.toLocaleString("en-IN")}</td>
+                    <td className="py-4 font-bold text-emerald-600 text-sm">₹{c.totalPaid.toLocaleString("en-IN")}</td>
+                    <td className="py-4 font-bold text-sm" style={{ color: c.pendingAmount > 0 ? "#D97706" : "#10B981" }}>
+                      ₹{c.pendingAmount.toLocaleString("en-IN")}
+                    </td>
+                    <td className="py-4">
+                      <span className={cn("px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border", st.cls)}>
+                        {st.label}
+                      </span>
+                    </td>
+                    <td className="py-4 pr-6 text-right">
+                      <Link
+                        href={`/customers/${c.id}/quotations`}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all group-hover:shadow-sm"
+                      >
+                        Open <ChevronRight className="h-3 w-3" />
+                      </Link>
                     </td>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

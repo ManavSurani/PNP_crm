@@ -19,10 +19,11 @@ export default function LoginForm() {
 
   // Forgot Password Flow
   const [isResetMode, setIsResetMode] = useState(false);
-  const [resetStep, setResetStep] = useState(1); // 1: Verify Phone, 2: New Password, 3: Success
+  const [resetStep, setResetStep] = useState(1);
   const [resetPhone, setResetPhone] = useState("");
   const [resetEmail, setResetEmail] = useState("");
   const [resetNewPassword, setResetNewPassword] = useState("");
+  const [resetToken, setResetToken] = useState(""); // one-time token from verify step
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +38,13 @@ export default function LoginForm() {
       });
 
       if (res?.error) {
-        setError("Invalid credentials. Please verify your identity.");
+        // Parse rate-limit error from the thrown Error message
+        if (res.error.includes("TOO_MANY_ATTEMPTS")) {
+          const minutes = res.error.split(":")[1] || "15";
+          setError(`Too many failed attempts. Try again in ${minutes} minute${minutes === "1" ? "" : "s"}.`);
+        } else {
+          setError("Invalid credentials. Please verify your identity.");
+        }
       } else {
         router.push("/");
         router.refresh();
@@ -61,6 +68,7 @@ export default function LoginForm() {
       });
       const data = await res.json();
       if (res.ok) {
+        setResetToken(data.resetToken); // store the one-time token
         setResetStep(2);
       } else {
         setError(data.error || "Verification failed");
@@ -84,10 +92,11 @@ export default function LoginForm() {
       const res = await fetch("/api/auth/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "reset", email: resetEmail, password: resetNewPassword }),
+        body: JSON.stringify({ action: "reset", resetToken, password: resetNewPassword }),
       });
       if (res.ok) {
         setResetStep(3);
+        setResetToken(""); // clear token after use
       } else {
         const data = await res.json();
         setError(data.error || "Reset failed");
@@ -115,7 +124,7 @@ export default function LoginForm() {
               <form onSubmit={handleVerifyPhone} className="space-y-6">
                 <div className="space-y-4">
                   <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-xl text-indigo-700 text-[11px] leading-relaxed font-medium">
-                    Please provide your registered email and the recovery phone number (WhatsApp Dispatch) to proceed.
+                    Enter your account email and the <span className="font-bold">Recovery Phone Number</span> set by the Admin in <span className="font-bold">Settings → System Config</span>. This is the same number used for WhatsApp dispatch.
                   </div>
                   {error && <p className="text-rose-500 text-[10px] font-bold uppercase text-center">{error}</p>}
                   

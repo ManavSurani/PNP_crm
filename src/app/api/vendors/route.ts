@@ -12,6 +12,7 @@ export async function GET(request: Request) {
 
     const vendors = await prisma.projectVendor.findMany({
       where: fieldId ? { fieldId } : {},
+      include: { field: { select: { name: true } } },
       orderBy: { name: "asc" }
     });
 

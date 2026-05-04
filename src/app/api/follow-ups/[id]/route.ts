@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { canDelete } from "@/lib/rbac";
 
 export async function PATCH(
   request: Request,
@@ -36,6 +37,8 @@ export async function DELETE(
   try {
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!canDelete(session.user.role))
+      return NextResponse.json({ error: "Forbidden: Insufficient role" }, { status: 403 });
 
     const { id } = await params;
 

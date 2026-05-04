@@ -18,7 +18,9 @@ import {
   Star,
   ChevronRight,
   Wallet,
-  Trash2
+  Trash2,
+  FileText,
+  Layers
 } from "lucide-react";
 import BrandLogo from "./BrandLogo";
 import { cn } from "@/lib/utils";
@@ -29,6 +31,8 @@ const navigation = [
   { name: "Lead Pipeline", href: "/leads", icon: Users },
   { name: "Follow-Up Queue", href: "/follow-ups", icon: PhoneCall },
   { name: "Site Visits", href: "/meetings", icon: CalendarCheck },
+  { name: "Quotations", href: "/quotations", icon: FileText },
+  { name: "Work Fields", href: "/fields", icon: Layers },
   { name: "Project Progress", href: "/orders", icon: ShoppingCart },
   { name: "Payment Receipts", href: "/payments", icon: IndianRupee },
   { name: "Interested Leads", href: "/interested", icon: Star },

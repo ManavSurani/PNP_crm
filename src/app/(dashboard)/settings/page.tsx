@@ -266,13 +266,13 @@ export default function SettingsPage() {
                        <Zap className="h-4 w-4 text-emerald-600" />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-slate-900">WhatsApp Lead Dispatch</p>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Communication Gateway</p>
+                      <p className="text-sm font-bold text-slate-900">Recovery &amp; WhatsApp Dispatch Number</p>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Password Recovery + Communication Gateway</p>
                     </div>
                   </div>
                   
                   <div className="space-y-2 pt-2">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Dispatch Target Number</label>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Phone Number</label>
                     <div className="flex gap-2">
                       <input 
                         type="text"
@@ -294,11 +294,18 @@ export default function SettingsPage() {
                         {isSaved ? "Saved" : "Save Changes"}
                       </button>
                     </div>
-                    <p className="text-[10px] text-slate-400 italic mt-2 leading-relaxed">
-                      If set, clicking the WhatsApp button on a Lead page will forward the lead's contact info directly to this number instead of the customer.
-                    </p>
+                    <div className="mt-3 p-3 bg-amber-50 border border-amber-100 rounded-lg space-y-1.5">
+                      <p className="text-[10px] text-amber-800 font-bold uppercase tracking-wider">How this number is used</p>
+                      <p className="text-[10px] text-amber-700 leading-relaxed">
+                        <span className="font-bold">🔑 Forgot Password:</span> On the Login page, clicking "Forgot Password?" asks for this number to verify identity before allowing a password reset. Set this first, otherwise password recovery will not work.
+                      </p>
+                      <p className="text-[10px] text-amber-700 leading-relaxed">
+                        <span className="font-bold">💬 WhatsApp Dispatch:</span> Clicking the WhatsApp button on a Lead page forwards the lead's contact to this number.
+                      </p>
+                    </div>
                   </div>
                 </div>
+
               </div>
             </div>
           )}

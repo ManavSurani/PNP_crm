@@ -4,6 +4,7 @@ import prisma from "./prisma";
 import bcrypt from "bcryptjs";
 import { authConfig } from "./auth.config";
 import { randomUUID } from "crypto";
+import { checkRateLimit, clearRateLimit } from "./rate-limit";
 
 export const { handlers: { GET, POST }, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -17,6 +18,14 @@ export const { handlers: { GET, POST }, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
           return null;
+        }
+
+        // Rate limit by email to prevent brute-force
+        const rateLimitKey = `login:${(credentials.email as string).toLowerCase()}`;
+        const rateCheck = checkRateLimit(rateLimitKey);
+        if (!rateCheck.allowed) {
+          const minutes = Math.ceil((rateCheck.retryAfterMs ?? 0) / 60000);
+          throw new Error(`TOO_MANY_ATTEMPTS:${minutes}`);
         }
 
         const user = await prisma.user.findUnique({
@@ -33,8 +42,11 @@ export const { handlers: { GET, POST }, auth, signIn, signOut } = NextAuth({
         );
 
         if (!isPasswordValid) {
-          return null;
+          return null; // rate limiter already incremented
         }
+
+        // Successful login — clear rate limit counter
+        clearRateLimit(rateLimitKey);
 
         return {
           id: user.id,

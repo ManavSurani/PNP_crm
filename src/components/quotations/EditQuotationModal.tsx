@@ -271,10 +271,15 @@ export default function EditQuotationModal({ isOpen, onClose, quotation, onSucce
                             Phone
                           </label>
                           <input
-                            placeholder="Phone Number"
+                            type="tel"
+                            maxLength={10}
+                            placeholder="10-digit number"
                             className="w-full rounded-lg border border-emerald-200 p-2.5 text-sm focus:border-emerald-500 outline-none"
                             value={newVendorPhone}
-                            onChange={(e) => setNewVendorPhone(e.target.value)}
+                            onChange={(e) => {
+                              const val = e.target.value.replace(/\D/g, "");
+                              if (val.length <= 10) setNewVendorPhone(val);
+                            }}
                           />
                         </div>
                       </div>
