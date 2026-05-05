@@ -7,18 +7,10 @@ export async function POST(req: NextRequest) {
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { project_id, name, description, status, progress, delayDays, delayReason, startedOn, completedOn } = await req.json();
+    const { project_id, name, description, status, phase, progress, delayDays, delayReason, startedOn, completedOn } = await req.json();
 
     if (!name?.trim()) return NextResponse.json({ error: "Name required" }, { status: 400 });
     if (!project_id)   return NextResponse.json({ error: "project_id required" }, { status: 400 });
-
-    // If adding as active — demote existing active
-    if (status === "in_progress") {
-      await prisma.milestone.updateMany({
-        where: { projectId: project_id, status: "in_progress" },
-        data: { status: "pending" },
-      });
-    }
 
     const last = await prisma.milestone.findFirst({
       where: { projectId: project_id },
@@ -35,10 +27,11 @@ export async function POST(req: NextRequest) {
         name:        name.trim(),
         description: description?.trim() || null,
         status:      status || "pending",
+        phase:       phase || "General",
         progress:    progress ?? null,
         delayDays:   delayDays ?? null,
         delayReason: delayReason?.trim() || null,
-        startedOn:   startedOn ? new Date(startedOn) : (status === "in_progress" ? today : null),
+        startedOn:   startedOn ? new Date(startedOn) : today,
         completedOn: completedOn ? new Date(completedOn) : (status === "done" ? today : null),
       },
     });

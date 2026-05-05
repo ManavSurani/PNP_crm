@@ -499,6 +499,7 @@ model Milestone {
   name        String
   description String?
   status      String    @default("pending") // pending | in_progress | delay | done
+  phase       String    @default("General") // Survey & Design | Civil & Structural | Elec & Plumbing | Finishing | General
   progress    Int?      // 0-100, used when status = in_progress
   delayDays   Int?      // used when status = delay
   delayReason String?   // used when status = delay

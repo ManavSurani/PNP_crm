@@ -249,9 +249,13 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
       if (res.ok) {
         closeModal();
         fetchLead();
+      } else {
+        const error = await res.json();
+        alert(`Conversion Failed: ${error.details || error.error || "Unknown Error"}`);
       }
     } catch (e) {
       console.error(e);
+      alert(`Network Error: ${String(e)}`);
     } finally {
       setIsSubmitting(false);
     }

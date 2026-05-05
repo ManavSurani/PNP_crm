@@ -12,18 +12,10 @@ export async function PATCH(
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { id } = await params;
     const body = await req.json();
-    const { name, description, status, progress, delayDays, delayReason, startedOn, completedOn } = body;
+    const { name, description, status, phase, progress, delayDays, delayReason, startedOn, completedOn } = body;
 
     const current = await prisma.milestone.findUnique({ where: { id }, select: { projectId: true } });
     if (!current) return NextResponse.json({ error: "Not found" }, { status: 404 });
-
-    // If setting active — demote existing active milestone
-    if (status === "in_progress") {
-      await prisma.milestone.updateMany({
-        where: { projectId: current.projectId, status: "in_progress", id: { not: id } },
-        data: { status: "pending" },
-      });
-    }
 
     const updated = await prisma.milestone.update({
       where: { id },
@@ -31,6 +23,7 @@ export async function PATCH(
         ...(name !== undefined && { name }),
         ...(description !== undefined && { description }),
         ...(status !== undefined && { status }),
+        ...(phase !== undefined && { phase }),
         ...(progress !== undefined && { progress }),
         ...(delayDays !== undefined && { delayDays }),
         ...(delayReason !== undefined && { delayReason }),
@@ -63,7 +56,6 @@ export async function DELETE(
 
     const current = await prisma.milestone.findUnique({ where: { id }, select: { projectId: true, status: true } });
     if (!current) return NextResponse.json({ error: "Not found" }, { status: 404 });
-    if (current.status === "done") return NextResponse.json({ error: "Cannot delete completed milestone" }, { status: 400 });
 
     await prisma.milestone.delete({ where: { id } });
 
