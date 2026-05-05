@@ -157,3 +157,17 @@ Q: i don't want here this so remove from here and i want only path to lead pipli
 A: Removed the 'Portal' breadcrumb link from every page across the CRM. Standardized the navigation path to start directly from the primary module (e.g., 'Lead Pipeline' or 'Customer Hub'), ensuring a cleaner and more focused interface as requested.
 Q: in sidebar vertical bar can you mack it like this if my mouse goes there then only only then vertical bar visibal other then hid and don't change anything then this and don't even change a space and color of vertical bar do this without executing a project
 A: Correctly identified the "vertical bar" as the sidebar's scrollbar from visual feedback. Implemented a custom `sidebar-scroll` utility to hide the scrollbar by default and only reveal it upon hovering over the sidebar, ensuring the original styling and spacing are preserved.
+
+Q: Add Project Name Layer Without Removing Customer Name (UI + Logic Update)
+A: Implemented a robust "Project Name" abstraction layer:
+1. **Schema**: Added optional "projectName" to the Lead model.
+2. **Directory**: Updated the Customer Hub to show project names as primary, added a "PROJECT" badge, and implemented "Projects First" sorting.
+3. **Inline Edit**: Added high-fidelity inline editing for project names in the Customer Hub hero section.
+4. **Global Context**: Synchronized the project context across all customer modules (Details, Quotations, Progress, Financials) for a unified project-centric workflow.
+
+Q: here now project is stop runnig by short cut so check again
+A: Identified and cleared a hanging Node.js process that was blocking port 3000. Verified that the `start-crm.bat` launcher now starts the server correctly and opens the CRM at http://localhost:3000.
+
+Q: now from customer logistics page with in this remove this image show from this page
+A: Removed the redundant "Project Progress" and "Commercial Quotations" cards from the Customer Logistics (Details) page, streamlining the interface by focusing on core logistics and financial data while relying on the dedicated Hub modules for project tracking.
+

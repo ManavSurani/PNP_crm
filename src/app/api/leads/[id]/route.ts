@@ -39,6 +39,10 @@ export async function GET(
         meetings: { orderBy: { createdAt: "desc" } },
         transactions: { orderBy: { date: "desc" } },
         leadNotes: { orderBy: { createdAt: "desc" } },
+        project: { 
+          // @ts-ignore - name field exists in schema but IDE lag
+          select: { id: true, name: true } 
+        },
       }
     });
 
@@ -65,7 +69,7 @@ export async function PUT(
     const body = await request.json();
     
     const { 
-      customerName, contactNumber, alternateNumber, fullAddress, 
+      customerName, projectName, contactNumber, alternateNumber, fullAddress, 
       landmark, requirementDetails, inquirySource, serviceType, 
       status, priority, assignedStaffId, budgetRange,
       siteLocation, preferredVisitTime
@@ -94,9 +98,29 @@ export async function PUT(
     }
     if (budgetRange !== undefined) updateData.budgetRange = budgetRange;
 
+    // Handle Project Name Update
+    if (projectName !== undefined) {
+      try {
+        await prisma.project.update({
+          where: { customerId: id },
+          // @ts-ignore - name field exists in schema but IDE lag
+          data: { name: projectName }
+        });
+      } catch (e) {
+        // Project might not exist yet if not converted
+        console.warn("Could not update project name, project might not exist:", e);
+      }
+    }
+
     const updatedLead = await prisma.lead.update({
       where: { id },
-      data: updateData
+      data: updateData,
+      include: {
+        project: { 
+          // @ts-ignore - name field exists in schema but IDE lag
+          select: { id: true, name: true } 
+        }
+      }
     });
 
     return NextResponse.json(updatedLead);

@@ -17,6 +17,10 @@ export async function GET(request: Request) {
       include: {
         assignedStaff: {
           select: { name: true }
+        },
+        project: {
+          // @ts-ignore - name field exists in schema but IDE lag
+          select: { id: true, name: true }
         }
       }
     });

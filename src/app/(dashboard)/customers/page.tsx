@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 type Customer = {
   id: string;
   customerName: string;
+  project?: { id: string; name: string | null } | null;
   contactNumber: string;
   fullAddress: string | null;
   inquirySource: string;
@@ -59,8 +60,9 @@ export default function CustomersPage() {
   }, []);
 
   const filteredCustomers = customers.filter((customer) => {
+    const displayName = customer.project?.name || customer.customerName;
     const matchesSearch = 
-      customer.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       customer.contactNumber.includes(searchTerm) ||
       customer.serviceType.toLowerCase().includes(searchTerm.toLowerCase());
     
@@ -73,10 +75,17 @@ export default function CustomersPage() {
 
     return matchesSearch && matchesSource && matchesService && matchesStartDate && matchesEndDate;
   }).sort((a, b) => {
+    const aName = a.project?.name || a.customerName;
+    const bName = b.project?.name || b.customerName;
     if (sortBy === "NEWEST") return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     if (sortBy === "OLDEST") return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-    if (sortBy === "A-Z") return a.customerName.localeCompare(b.customerName);
-    if (sortBy === "Z-A") return b.customerName.localeCompare(a.customerName);
+    if (sortBy === "PROJECT_FIRST") {
+      if (a.project?.name && !b.project?.name) return -1;
+      if (!a.project?.name && b.project?.name) return 1;
+      return aName.localeCompare(bName);
+    }
+    if (sortBy === "A-Z") return aName.localeCompare(bName);
+    if (sortBy === "Z-A") return bName.localeCompare(aName);
     return 0;
   });
 
@@ -179,6 +188,7 @@ export default function CustomersPage() {
               >
                 <option value="NEWEST">Date: Newest First</option>
                 <option value="OLDEST">Date: Oldest First</option>
+                <option value="PROJECT_FIRST">Projects First</option>
                 <option value="A-Z">Alphabetical: A-Z</option>
                 <option value="Z-A">Alphabetical: Z-A</option>
               </select>
@@ -239,27 +249,38 @@ export default function CustomersPage() {
                     </td>
                   </tr>
                 ) : (
-                  filteredCustomers.map((customer) => (
-                    <tr 
-                      key={customer.id} 
-                      className="group hover:bg-slate-50 transition-colors cursor-pointer relative"
-                    >
-                      <td onClick={() => router.push(`/customers/${customer.id}`)} className="whitespace-nowrap py-5 pl-8 pr-3">
-                        <div className="flex items-center">
-                          <div className="h-10 w-10 flex-shrink-0 bg-emerald-50 rounded-lg flex items-center justify-center text-emerald-600 font-semibold border border-emerald-100">
-                            {customer.customerName.charAt(0)}
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-semibold text-slate-900 group-hover:text-emerald-600 transition-colors flex items-center gap-2">
-                              {customer.customerName}
+                  filteredCustomers.map((customer) => {
+                    const displayName = customer.project?.name || customer.customerName;
+                    return (
+                      <tr 
+                        key={customer.id} 
+                        className="group hover:bg-slate-50 transition-colors cursor-pointer relative"
+                      >
+                        <td onClick={() => router.push(`/customers/${customer.id}`)} className="whitespace-nowrap py-5 pl-8 pr-3">
+                          <div className="flex items-center">
+                            <div className="h-10 w-10 flex-shrink-0 bg-emerald-50 rounded-lg flex items-center justify-center text-emerald-600 font-semibold border border-emerald-100">
+                              {displayName.charAt(0)}
                             </div>
-                            <div className="mt-0.5 text-xs text-slate-500 flex items-center gap-1.5">
-                              <Phone className="h-3 w-3" />
-                              <span>{customer.contactNumber}</span>
+                            <div className="ml-4">
+                              <div className="text-sm font-semibold text-slate-900 group-hover:text-emerald-600 transition-colors flex items-center gap-2">
+                                {displayName}
+                                {customer.project?.name && (
+                                  <span className="text-[9px] font-black bg-slate-100 text-slate-400 px-1.5 py-0.5 rounded border border-slate-200 uppercase tracking-tighter">Project</span>
+                                )}
+                              </div>
+                              <div className="mt-0.5 text-xs text-slate-500 flex items-center gap-1.5">
+                                <Phone className="h-3 w-3" />
+                                <span>{customer.contactNumber}</span>
+                                {customer.project?.name && (
+                                  <>
+                                    <span className="text-slate-300 mx-1">|</span>
+                                    <span className="text-[10px] text-slate-400 italic">({customer.customerName})</span>
+                                  </>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </td>
+                        </td>
                       <td onClick={() => router.push(`/customers/${customer.id}`)} className="whitespace-nowrap px-3 py-5">
                         <div className="text-xs font-semibold text-slate-900 flex items-center gap-1.5 uppercase tracking-wide">
                           <Zap className="h-3.5 w-3.5 text-emerald-500" />
@@ -293,8 +314,9 @@ export default function CustomersPage() {
                          </button>
                       </td>
                     </tr>
-                  ))
-                )}
+                  );
+                })
+              )}
               </tbody>
             </table>
           </div>

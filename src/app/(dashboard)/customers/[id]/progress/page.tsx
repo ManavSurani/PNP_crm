@@ -1,7 +1,7 @@
 "use client";
 import { use, useState, useEffect } from "react";
 import Link from "next/link";
-import { ChevronRight, Plus, X, Loader2, CheckCircle2 } from "lucide-react";
+import { ChevronRight, Plus, X, Loader2, CheckCircle2, ArrowLeft } from "lucide-react";
 
 interface MS {
   id: string; sequence: number; name: string; description: string | null;
@@ -418,17 +418,32 @@ export default function ProgressPage({ params }: { params: Promise<{ id: string 
 
   return (
     <div style={{ maxWidth: "100%", paddingBottom: 60 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#9CA3AF", marginBottom: 20, flexWrap: "wrap" }}>
-        <Link href="/customers" style={{ color: "#9CA3AF", textDecoration: "none" }}>Customer Hub</Link>
-        <ChevronRight size={12} />
-        <Link href={`/customers/${id}`} style={{ color: "#9CA3AF", textDecoration: "none" }}>{customer?.customerName || "Customer"}</Link>
-        <ChevronRight size={12} />
-        <span style={{ color: "#374151", fontWeight: 600 }}>Project Timeline</span>
+      {/* Navigation & Breadcrumb */}
+      <div className="flex items-center justify-between px-2 pt-2 mb-6">
+        <Link 
+          href={`/customers/${id}`}
+          className="group flex items-center gap-2 text-[10px] font-black text-slate-400 hover:text-slate-900 transition-all uppercase tracking-[0.2em]"
+        >
+          <div className="h-7 w-7 rounded-full border border-slate-200 flex items-center justify-center group-hover:border-slate-400 transition-colors bg-white shadow-sm">
+            <ArrowLeft className="h-3.5 w-3.5" />
+          </div>
+          BACK
+        </Link>
+        
+        <div className="flex items-center gap-2 text-[10px] font-black tracking-[0.2em] uppercase">
+          <Link href="/customers" className="text-slate-300 hover:text-slate-500 transition-colors">Customer Directory</Link>
+          <ChevronRight className="h-3 w-3 text-slate-200" /> 
+          <Link href={`/customers/${id}`} className="text-slate-300 hover:text-slate-500 transition-colors">{customer?.customerName?.toUpperCase() || "CUSTOMER"}</Link>
+          <ChevronRight className="h-3 w-3 text-slate-200" /> 
+          <span className="text-slate-900">PROGRESS</span>
+        </div>
       </div>
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: "#111827", margin: 0 }}>Project Timeline</h1>
+          <h1 style={{ fontSize: 24, fontWeight: 800, color: "#111827", margin: 0 }}>
+            {customer?.project?.name ? `Project: ${customer.project.name}` : "Project Timeline"}
+          </h1>
           {project.isCompleted ? (
             <span style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "#F0FDF4", color: "#166534", border: "1px solid #BBF7D0", borderRadius: 20, padding: "4px 12px", fontSize: 12, fontWeight: 600 }}>
               <CheckCircle2 size={14} /> Completed

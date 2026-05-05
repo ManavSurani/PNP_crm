@@ -128,19 +128,23 @@ export default function CustomerQuotationsPage({ params }: { params: Promise<{ i
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-20">
       {/* Navigation Breadcrumbs */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between px-2 pt-2 mb-4">
         <Link 
           href={`/customers/${customerId}`}
-          className="group flex items-center gap-2 text-[10px] font-black text-slate-400 hover:text-slate-900 transition-all uppercase tracking-widest"
+          className="group flex items-center gap-2 text-[10px] font-black text-slate-400 hover:text-slate-900 transition-all uppercase tracking-[0.2em]"
         >
-          <div className="h-7 w-7 rounded-full border border-slate-200 flex items-center justify-center group-hover:border-slate-400 transition-colors">
-            <ArrowLeft className="h-3 w-3" />
+          <div className="h-7 w-7 rounded-full border border-slate-200 flex items-center justify-center group-hover:border-slate-400 transition-colors bg-white shadow-sm">
+            <ArrowLeft className="h-3.5 w-3.5" />
           </div>
-          Back to Profile
+          BACK
         </Link>
         
-        <div className="flex items-center gap-2 text-[10px] font-bold text-slate-300 tracking-widest uppercase">
-          Customer Profile <ChevronRight className="h-3 w-3" /> {customer?.customerName} <ChevronRight className="h-3 w-3" /> Quotations
+        <div className="flex items-center gap-2 text-[10px] font-black tracking-[0.2em] uppercase">
+          <Link href="/customers" className="text-slate-300 hover:text-slate-500 transition-colors">Customer Directory</Link>
+          <ChevronRight className="h-3 w-3 text-slate-200" /> 
+          <Link href={`/customers/${customerId}`} className="text-slate-300 hover:text-slate-500 transition-colors">{customer?.customerName?.toUpperCase() || "CUSTOMER"}</Link>
+          <ChevronRight className="h-3 w-3 text-slate-200" /> 
+          <span className="text-slate-900">QUOTATIONS</span>
         </div>
       </div>
 
@@ -149,7 +153,7 @@ export default function CustomerQuotationsPage({ params }: { params: Promise<{ i
         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500 rounded-full blur-[100px] opacity-5 -mr-32 -mt-32" />
         <div className="relative z-10 space-y-1">
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">Quotations</h1>
-          <p className="text-slate-500 text-sm font-medium">Manage project proposals, cost estimates & approvals for {customer?.customerName}.</p>
+          <p className="text-slate-500 text-sm font-medium">Manage project proposals, cost estimates & approvals for {customer?.project?.name || customer?.customerName}.</p>
         </div>
         <button 
           onClick={() => setIsModalOpen(true)}

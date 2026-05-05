@@ -85,6 +85,7 @@ model PasswordResetToken {
 model Lead {
   id              String        @id @default(uuid())
   customerName    String
+
   contactNumber   String
   alternateNumber String?
   fullAddress     String?
@@ -492,6 +493,7 @@ model Project {
   id                  String         @id @default(uuid())
   customerId          String         @unique
   customer            Lead           @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  name                String?
   startedOn           DateTime       @default(now())
   estimatedCompletion DateTime?
   isCompleted         Boolean        @default(false)

@@ -18,7 +18,7 @@ type FollowUp = { id: string; attemptNumber: number; outcome: string; noteGiven:
 type Meeting = { id: string; address: string; date: string; time: string; notes: string | null; status: string; createdAt: string };
 
 type CustomerDetails = {
-  id: string; customerName: string; contactNumber: string; alternateNumber: string | null;
+  id: string; customerName: string; project?: { name: string | null } | null; contactNumber: string; alternateNumber: string | null;
   fullAddress: string | null; inquirySource: string; serviceType: string; priority: string;
   status: string; isCancelled: boolean; cancelReason: string | null;
   createdAt: string; updatedAt: string;
@@ -161,8 +161,10 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
     finally { setIsSubmitting(false); }
   };
 
-  if (isLoading) return <div className="flex h-[60vh] items-center justify-center"><Loader2 className="h-10 w-10 animate-spin text-emerald-500" /></div>;
+  if (isLoading) return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="animate-spin h-8 w-8 text-emerald-600" /></div>;
   if (!customer) return <div className="p-10 text-center text-slate-500 font-bold">Customer profile not found.</div>;
+
+  const displayName = customer.project?.name || customer.customerName;
 
   const projectAmount = customer.orders?.reduce((acc: number, o: any) => acc + o.totalAmount, 0) || 0;
   const trxs = customer.transactions ?? [];
@@ -187,23 +189,23 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-24">
       {/* Navigation & Breadcrumb */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
+      <div className="flex items-center justify-between px-2 pt-2 mb-4">
         <Link 
           href={`/customers/${id}`}
-          className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-emerald-600 transition-colors group"
+          className="group flex items-center gap-2 text-[10px] font-black text-slate-400 hover:text-slate-900 transition-all uppercase tracking-[0.2em]"
         >
-          <div className="h-8 w-8 rounded-lg border border-slate-200 flex items-center justify-center group-hover:border-emerald-200 bg-white shadow-sm">
-            <ArrowLeft className="h-4 w-4" />
+          <div className="h-7 w-7 rounded-full border border-slate-200 flex items-center justify-center group-hover:border-slate-400 transition-colors bg-white shadow-sm">
+            <ArrowLeft className="h-3.5 w-3.5" />
           </div>
           BACK
         </Link>
         
-        <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 tracking-widest uppercase">
-          <Link href="/customers" className="hover:text-emerald-600 transition-colors text-indigo-400/80">Customer Directory</Link>
-          <ChevronRight className="h-3 w-3 text-slate-300" /> 
-          <Link href={`/customers/${id}`} className="hover:text-emerald-600 transition-colors text-indigo-400/80">{customer.customerName}</Link>
-          <ChevronRight className="h-3 w-3 text-slate-300" /> 
-          <span className="text-slate-900 font-black">Details</span>
+        <div className="flex items-center gap-2 text-[10px] font-black tracking-[0.2em] uppercase">
+          <Link href="/customers" className="text-slate-300 hover:text-slate-500 transition-colors">Customer Directory</Link>
+          <ChevronRight className="h-3 w-3 text-slate-200" /> 
+          <Link href={`/customers/${id}`} className="text-slate-300 hover:text-slate-500 transition-colors">{customer.customerName.toUpperCase()}</Link>
+          <ChevronRight className="h-3 w-3 text-slate-200" /> 
+          <span className="text-slate-900">DETAILS</span>
         </div>
       </div>
 
@@ -212,13 +214,19 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
         <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500 rounded-full blur-[100px] opacity-10 -mr-24 -mt-24" />
         <div className="flex items-center gap-6 relative z-10">
           <div className="h-16 w-16 bg-emerald-50 rounded-xl flex shrink-0 items-center justify-center border border-emerald-100 shadow-sm">
-            <span className="text-2xl font-bold text-emerald-600 uppercase">{customer.customerName.charAt(0)}</span>
+            <span className="text-2xl font-bold text-emerald-600 uppercase">{displayName.charAt(0)}</span>
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-slate-900 tracking-tight">{customer.customerName}</h1>
-            <div className="mt-1.5 flex flex-wrap gap-3 text-xs">
+            <div className="flex items-center gap-3 mb-1">
+              <h1 className="text-xl font-semibold text-slate-900 tracking-tight">{displayName}</h1>
+              {customer.project?.name && (
+                <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[9px] font-black uppercase tracking-widest rounded border border-emerald-100">Project Active</span>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-3 text-xs">
               <span className="flex items-center gap-1.5 text-slate-600 font-medium bg-slate-50 px-3 py-1 rounded-md border border-slate-200"><Phone className="h-3.5 w-3.5 text-emerald-600" /> {customer.contactNumber}</span>
               <span className="flex items-center gap-1.5 text-slate-600 font-medium bg-slate-50 px-3 py-1 rounded-md border border-slate-200 uppercase"><FileText className="h-3.5 w-3.5 text-emerald-500" /> {customer.serviceType.replace(/_/g, " ")}</span>
+              {customer.project?.name && <span className="flex items-center gap-1.5 text-slate-400 font-bold bg-slate-50 px-3 py-1 rounded-md border border-slate-200 uppercase">Client: {customer.customerName}</span>}
             </div>
           </div>
         </div>
@@ -614,98 +622,9 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
             </div>
           </div>
 
-          {/* Active Projects (Orders) */}
-          <div className="bg-slate-900 p-8 rounded-xl shadow-sm text-white">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold tracking-tight flex items-center gap-2">
-                <ShoppingCart className="h-5 w-5 text-emerald-400" /> Project Progress
-              </h3>
-              <Link href="/orders" className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1">
-                View All <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </div>
 
-            {customer.orders && customer.orders.length > 0 ? (
-              <div className="space-y-3">
-                {customer.orders.map((order: any) => (
-                  <div key={order.id} className="bg-white/10 border border-white/10 rounded-lg p-5 hover:bg-white/15 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                      <div className="flex items-center gap-3 mb-1">
-                        <span className="text-sm font-bold">{order.orderNo}</span>
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                          {order.status.replace("_", " ")}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-400 font-medium">Package: <span className="text-white">{order.packageType.replace("_", " ")}</span></p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold mb-0.5">Project Value</p>
-                      <p className="text-lg font-bold text-emerald-400 flex items-center justify-end gap-1">
-                        <IndianRupee className="h-4 w-4" /> {order.totalAmount.toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12 bg-white/5 rounded-lg border border-white/5 border-dashed">
-                <ShoppingCart className="h-8 w-8 text-slate-500 mx-auto mb-3" />
-                <p className="text-sm font-medium text-slate-300">No active projects found.</p>
-                <p className="text-xs text-slate-500 mt-1">Create an order from the master Project Progress tab.</p>
-              </div>
-            )}
-          </div>
 
-          {/* Quotations */}
-          <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold tracking-tight text-slate-900 flex items-center gap-2">
-                <FileText className="h-5 w-5 text-indigo-500" /> Commercial Quotations
-              </h3>
-              <Link href="/quotations" className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition-colors flex items-center gap-1 border border-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-50">
-                Manage Quotes <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </div>
 
-            {customer.quotations && customer.quotations.length > 0 ? (
-              <div className="overflow-hidden border border-slate-200 rounded-lg">
-                <table className="min-w-full divide-y divide-slate-200">
-                  <thead className="bg-slate-50">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Quote No</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                      <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Value</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-slate-100">
-                    {customer.quotations.map((quote: any) => (
-                      <tr key={quote.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="px-4 py-3 text-sm font-bold text-slate-900">{quote.quotationNo}</td>
-                        <td className="px-4 py-3 text-xs text-slate-500 font-medium">{format(new Date(quote.createdAt), "MMM dd, yyyy")}</td>
-                        <td className="px-4 py-3">
-                          <span className={cn(
-                            "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider",
-                            quote.status === "ACCEPTED" ? "bg-emerald-50 text-emerald-700" :
-                              quote.status === "SENT" ? "bg-indigo-50 text-indigo-700" : "bg-slate-100 text-slate-600"
-                          )}>
-                            {quote.status}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-sm font-bold text-slate-900 text-right flex items-center justify-end gap-1">
-                          <IndianRupee className="h-3.5 w-3.5 text-slate-400" /> {quote.finalTotal.toLocaleString()}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="text-center py-10 bg-slate-50 rounded-lg border border-slate-200 border-dashed">
-                <p className="text-sm font-medium text-slate-500">No quotation history found.</p>
-              </div>
-            )}
-          </div>
 
           {/* Activity Timeline */}
           <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm min-h-[500px]">
