@@ -96,7 +96,7 @@ export async function POST(request: Request) {
     console.error("[LEADS_POST_ERROR]", error);
     return NextResponse.json({ 
       error: "Failed to create lead", 
-      details: error instanceof Error ? error.message : String(error) 
+      details: "A database error occurred." 
     }, { status: 500 });
   }
 }

@@ -51,6 +51,6 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   } catch (error: any) {
     console.error("[LEAD_CONVERT_POST]", error);
     require("fs").appendFileSync("c:\\Vs\\pnp_crm\\convert_error.log", String(error.stack || error) + "\\n");
-    return NextResponse.json({ error: "Internal Error", details: String(error) }, { status: 500 });
+    return NextResponse.json({ error: "Internal Error", details: "A database error occurred during conversion. Please check server logs." }, { status: 500 });
   }
 }
