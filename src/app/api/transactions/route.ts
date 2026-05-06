@@ -11,7 +11,14 @@ export async function GET(req: NextRequest) {
     const type = req.nextUrl.searchParams.get("type") as "RECEIVED" | "EXPENSE" | null;
     
     const where: any = {};
-    if (leadId) where.leadId = leadId;
+    if (leadId) {
+      where.leadId = leadId;
+    } else {
+      where.OR = [
+        { leadId: null },
+        { lead: { isCancelled: false } }
+      ];
+    }
     if (type) where.type = type;
 
     const transactions = await prisma.leadTransaction.findMany({

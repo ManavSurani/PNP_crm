@@ -9,7 +9,7 @@ export async function GET() {
 
     const [leads, globalTransactions] = await Promise.all([
       prisma.lead.findMany({
-        where: { initialDealAmount: { gt: 0 } } as any,
+        where: { initialDealAmount: { gt: 0 }, isCancelled: false } as any,
         include: {
           transactions: true,
           project: { select: { name: true } }

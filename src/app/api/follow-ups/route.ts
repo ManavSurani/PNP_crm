@@ -12,8 +12,9 @@ export async function GET(request: Request) {
       where: {
         completedDate: null,
         lead: {
+          isCancelled: false,
           status: {
-            notIn: ["WON_ORDER", "CANCELLED"]
+            not: "WON_ORDER"
           }
         }
       },
@@ -146,7 +147,11 @@ export async function POST(request: Request) {
           scheduledCallDate = new Date(followUpDate);
         }
       } else if (outcome === "CANCELLED") {
-        leadStatusUpdate = "CANCELLED";
+        // 🚨 CRITICAL: If it's a Customer (WON_ORDER), don't wipe that status. 
+        // We only change status to CANCELLED for Leads.
+        if (lead.status !== "WON_ORDER") {
+          leadStatusUpdate = "CANCELLED";
+        }
         isCancelled = true;
         finalCancelReason = cancelReason || "Not Specified";
       }

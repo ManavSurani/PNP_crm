@@ -9,7 +9,8 @@ export async function GET(request: Request) {
 
     const customers = await prisma.lead.findMany({
       where: {
-        status: "WON_ORDER"
+        status: "WON_ORDER",
+        isCancelled: false
       },
       orderBy: {
         updatedAt: "desc"

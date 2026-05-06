@@ -27,6 +27,7 @@ export async function GET() {
         where: {
           nextCallDate: { gte: startOfDay, lte: endOfDay },
           completedDate: null,
+          lead: { isCancelled: false }
         },
         include: { lead: { select: { customerName: true, contactNumber: true, serviceType: true } } },
         orderBy: { nextCallDate: "asc" },
@@ -36,6 +37,7 @@ export async function GET() {
         where: {
           nextCallDate: { lt: startOfDay },
           completedDate: null,
+          lead: { isCancelled: false }
         },
         include: { lead: { select: { customerName: true, contactNumber: true, status: true } } },
         orderBy: { nextCallDate: "asc" },
@@ -46,30 +48,33 @@ export async function GET() {
         where: {
           date: { gte: startOfDay, lte: endOfDay },
           status: "SCHEDULED",
+          lead: { isCancelled: false }
         },
         include: { lead: { select: { customerName: true, contactNumber: true } } },
         orderBy: { date: "asc" },
       }),
       // Recent 5 leads
       prisma.lead.findMany({
+        where: { isCancelled: false },
         orderBy: { createdAt: "desc" },
         take: 5,
         select: { id: true, customerName: true, serviceType: true, status: true, createdAt: true },
       }),
       // Count by status
-      prisma.lead.groupBy({ by: ["status"], _count: { _all: true } }),
+      prisma.lead.groupBy({ where: { isCancelled: false }, by: ["status"], _count: { _all: true } }),
       // Count by inquiry source
-      prisma.lead.groupBy({ by: ["inquirySource"], _count: { _all: true }, orderBy: { _count: { inquirySource: "desc" } } }),
+      prisma.lead.groupBy({ where: { isCancelled: false }, by: ["inquirySource"], _count: { _all: true }, orderBy: { _count: { inquirySource: "desc" } } }),
       // Last 6 months revenue - Unified via LeadTransaction
       prisma.leadTransaction.findMany({
         where: { 
           type: "RECEIVED",
-          createdAt: { gte: new Date(new Date().setMonth(new Date().getMonth() - 5)) } 
+          createdAt: { gte: new Date(new Date().setMonth(new Date().getMonth() - 5)) },
+          lead: { isCancelled: false }
         },
         select: { amount: true, createdAt: true },
       }),
       // Conversion: leads that reached WON_ORDER vs total
-      prisma.lead.count({ where: { status: "WON_ORDER" } }),
+      prisma.lead.count({ where: { status: "WON_ORDER", isCancelled: false } }),
     ]);
 
     // Build 6-month revenue chart

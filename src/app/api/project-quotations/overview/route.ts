@@ -9,6 +9,9 @@ export async function GET() {
 
     // Get all project quotations grouped by customer
     const quotations = await prisma.projectQuotation.findMany({
+      where: {
+        customer: { isCancelled: false }
+      },
       include: {
         customer: { select: { id: true, customerName: true } },
         payments: true,

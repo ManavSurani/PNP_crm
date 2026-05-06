@@ -22,10 +22,23 @@ export async function POST(
     }
 
     const result = await prisma.$transaction(async (tx) => {
+      // 1. Fetch current lead state to determine restoration target
+      const currentLead = await tx.lead.findUnique({
+        where: { id },
+        select: { status: true }
+      });
+
+      if (!currentLead) throw new Error("Lead not found");
+
+      // 2. Determine new status: 
+      // If it's a Customer (WON_ORDER), keep it. 
+      // If it's a Lead (CANCELLED), move to FOLLOW_UP.
+      const newStatus = currentLead.status === "WON_ORDER" ? "WON_ORDER" : "FOLLOW_UP";
+
       const lead = await tx.lead.update({
         where: { id },
         data: {
-          status: "FOLLOW_UP",
+          status: newStatus as any,
           isCancelled: false,
           cancelReason: null,
           reactivatedAt: new Date(),

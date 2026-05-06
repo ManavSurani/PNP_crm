@@ -13,7 +13,10 @@ export async function GET(request: Request) {
     const status = searchParams.get("status");
 
     const leads = await (prisma.lead as any).findMany({
-      where: status ? { status: status as any } : {},
+      where: {
+        ...(status ? { status: status as any } : {}),
+        isCancelled: false
+      },
       orderBy: { createdAt: "desc" },
       select: {
         id: true,

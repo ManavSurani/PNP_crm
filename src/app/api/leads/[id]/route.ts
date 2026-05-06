@@ -46,7 +46,10 @@ export async function GET(
         // @ts-ignore - newly added
         initialDealAmount: true,
         // @ts-ignore - newly added
+        // @ts-ignore - newly added
         initialDealNotes: true,
+        isCancelled: true,
+        cancelReason: true,
       }
     });
 
@@ -76,7 +79,7 @@ export async function PUT(
       customerName, projectName, contactNumber, alternateNumber, fullAddress, 
       landmark, requirementDetails, inquirySource, serviceType, 
       status, priority, assignedStaffId, budgetRange,
-      siteLocation, preferredVisitTime, initialDealAmount, initialDealNotes
+      siteLocation, preferredVisitTime, initialDealAmount, initialDealNotes, isCancelled, cancelReason
     } = body;
 
     const updateData: any = {};
