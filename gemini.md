@@ -171,3 +171,6 @@ A: Identified and cleared a hanging Node.js process that was blocking port 3000.
 Q: now from customer logistics page with in this remove this image show from this page
 A: Removed the redundant "Project Progress" and "Commercial Quotations" cards from the Customer Logistics (Details) page, streamlining the interface by focusing on core logistics and financial data while relying on the dedicated Hub modules for project tracking.
 
+Q :   i m p r o v e   g i t   i g n o r e   f i l e   l i k e   r e m o v e   a l l   u n e e s r y   f i l e   f r o m   t h i s   p r o j e c t   t o   p u s h   i n t o   g i t   h u b 
+ A :   C l e a n e d   u p   t h e   r e p o s i t o r y   f o r   G i t H u b   d e p l o y m e n t .   U p d a t e d   \ . g i t i g n o r e \   t o   e x c l u d e   l o g s ,   s c r a t c h   s c r i p t s ,   l o c a l   d a t a b a s e s ,   a n d   t h e   p o r t a b l e   N o d e . j s   r u n t i m e .   D e l e t e d   u n n e c e s s a r y   f i l e s   f r o m   t h e   r o o t   d i r e c t o r y   a n d   u p d a t e d   \ p r o j e c t _ c o d e . t x t \   w i t h   t h e   l a t e s t   c o d e b a s e .  
+ 

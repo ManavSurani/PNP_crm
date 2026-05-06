@@ -45,3 +45,25 @@ next-env.d.ts
 # database
 *.db
 *.db-journal
+/_data/
+
+# logs and temp files
+*.log
+server_error.txt
+server_log.txt
+tsconfig.tsbuildinfo
+
+# scratch and tools
+/scratch/
+/node_runtime/
+check_users.js
+convert-icon.ps1
+create-shortcut.*
+install_tools.bat
+launch-pnp.vbs
+
+# miscellaneous
+CHANGELOG.md
+CLAUDE.md
+README_DESKTOP.md
+.vscode/
