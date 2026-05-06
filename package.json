@@ -16,7 +16,10 @@
     "@hookform/resolvers": "^5.2.2",
     "@prisma/client": "^6.19.3",
     "@react-google-maps/api": "^2.20.8",
+    "@types/archiver": "^7.0.0",
     "@types/bcryptjs": "^2.4.6",
+    "@types/unzipper": "^0.10.11",
+    "adm-zip": "^0.5.17",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
@@ -33,6 +36,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/adm-zip": "^0.5.8",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

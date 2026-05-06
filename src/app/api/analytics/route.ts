@@ -24,6 +24,7 @@ export async function GET() {
     let totalBusinessValue = 0;
     let totalReceived = 0;
     let totalLoss = 0;
+    let totalAdjustments = 0;
     let totalDesignExpenses = 0;
 
     const customerFinancials = (leads as any[]).map(lead => {
@@ -34,12 +35,15 @@ export async function GET() {
         .filter(t => t.type === "RECEIVED")
         .reduce((sum, t) => sum + t.amount, 0);
       
-      // Use Design Expenses only (source="DESIGN", category="Design Expense" or "Adjustment")
+      // Design Expenses (Design Expense source)
       const designCost = transactions
-        .filter(t => t.source === "DESIGN" && t.type === "EXPENSE" && (t.category === "Design Expense" || t.category === "Adjustment"))
+        .filter(t => t.source === "DESIGN" && t.type === "EXPENSE")
         .reduce((sum, t) => sum + t.amount, 0);
       
-      const profit = dealAmount - designCost;
+      // Explicit Losses (Adjustments)
+      const adjustments = transactions
+        .filter(t => t.type === "EXPENSE" && t.category === "Adjustment")
+        .reduce((sum, t) => sum + t.amount, 0);
       
       const remainingDue = Math.max(0, dealAmount - received);
       
@@ -47,8 +51,12 @@ export async function GET() {
         t.type === "RECEIVED" && t.category === "Final Payment"
       );
 
-      const isLoss = hasFinalPayment && remainingDue > 0;
-      const lossAmount = isLoss ? remainingDue : 0;
+      const unpaidLoss = hasFinalPayment && remainingDue > 0 ? remainingDue : 0;
+      const lossAmount = unpaidLoss + adjustments;
+      const isLoss = lossAmount > 0;
+
+      // Profit = Deal - (All Project Expenses) - (Unpaid money we won't get)
+      const profit = dealAmount - designCost - unpaidLoss;
 
       // Status Logic
       let status = "Pending";
@@ -63,6 +71,7 @@ export async function GET() {
       totalBusinessValue += dealAmount;
       totalReceived += received;
       totalLoss += lossAmount;
+      totalAdjustments += adjustments;
       totalDesignExpenses += designCost;
 
       return {
@@ -85,8 +94,8 @@ export async function GET() {
       .filter((t: any) => t.type === "EXPENSE")
       .reduce((sum: number, t: any) => sum + t.amount, 0);
 
-    // Business Net Profit = Sum of all customer profits
-    const globalProfit = customerFinancials.reduce((sum, f) => sum + f.profit, 0);
+    // Business Net Profit = Sum of all customer profits - Global Business Overheads
+    const globalProfit = customerFinancials.reduce((sum, f) => sum + f.profit, 0) - totalGlobalExpenses;
 
 
     // Activity Feed (Simplified: last 20 transactions across all)
@@ -117,7 +126,7 @@ export async function GET() {
       summary: {
         totalBusinessValue,
         totalReceived,
-        totalPending: Math.max(0, totalBusinessValue - totalReceived - totalLoss),
+        totalPending: Math.max(0, totalBusinessValue - totalReceived - (totalLoss - totalAdjustments)),
         totalLoss,
         totalGlobalExpenses,
         globalProfit,

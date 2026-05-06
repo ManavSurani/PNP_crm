@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { 
   User, Shield, Smartphone, LogOut, Loader2, Save, 
   Key, Globe, Clock, Monitor, RefreshCcw, AlertCircle,
-  Zap, Check, Settings as SettingsIcon
+  Zap, Check, Settings as SettingsIcon, Database
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -31,6 +31,10 @@ export default function SettingsPage() {
   // System States (WhatsApp Dispatch)
   const [dispatchNumber, setDispatchNumber] = useState("");
   const [isSaved, setIsSaved] = useState(false);
+
+  // Backup & Restore States
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [showRestoreModal, setShowRestoreModal] = useState(false);
 
   useEffect(() => {
     if (session?.user) {
@@ -133,10 +137,67 @@ export default function SettingsPage() {
     } catch (err) { console.error(err); }
   };
 
+  const handleCreateBackup = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/settings/backup");
+      if (!response.ok) throw new Error("Backup failed");
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = response.headers.get("Content-Disposition")?.split("filename=")[1]?.replace(/"/g, "") || "PNP-CRM-Backup.pnpcrm";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setMessage({ type: "success", text: "Backup created successfully" });
+    } catch (err) {
+      setMessage({ type: "error", text: "Failed to create backup" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.[0]) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
+
+  const handleRestoreBackup = async () => {
+    if (!selectedFile) return;
+    setIsLoading(true);
+    setShowRestoreModal(false);
+    
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+
+    try {
+      const res = await fetch("/api/settings/restore", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        setMessage({ type: "success", text: "Backup restored successfully. Refreshing..." });
+        setTimeout(() => window.location.reload(), 2000);
+      } else {
+        setMessage({ type: "error", text: data.error || "Restore failed" });
+      }
+    } catch (err) {
+      setMessage({ type: "error", text: "Connection error during restore" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const tabs = [
     { id: "profile", label: "Identity Profile", icon: User },
     { id: "system", label: "System Config", icon: SettingsIcon },
     { id: "security", label: "Advanced Security", icon: Shield },
+    { id: "backup", label: "Backup & Restore", icon: Database },
   ];
 
   return (
@@ -410,8 +471,150 @@ export default function SettingsPage() {
               </div>
             </div>
           )}
+
+          {activeTab === "backup" && (
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2">
+              <div className="p-6 border-b border-slate-100 bg-slate-50/50">
+                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                  <Database className="h-4 w-4 text-primary" /> Backup & Restore
+                </h2>
+                <p className="text-slate-500 text-[10px] font-medium mt-1 uppercase tracking-wider">Securely export and restore your PNP CRM database and configuration.</p>
+              </div>
+              
+              <div className="p-8 space-y-10">
+                {/* Create Backup Section */}
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-[11px] font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                      CREATE SECURE BACKUP
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1">Export all CRM business data into an encrypted restore file.</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">BACKUP FORMAT</label>
+                      <input
+                        type="text"
+                        readOnly
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none text-slate-500"
+                        value="Encrypted .pnpcrm File"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">INCLUDED DATA</label>
+                      <input
+                        type="text"
+                        readOnly
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none text-slate-500"
+                        value="Customers, Leads, Projects, Payments, Analytics"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="pt-4 flex justify-end">
+                    <button
+                      onClick={handleCreateBackup}
+                      disabled={isLoading}
+                      className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl text-sm font-bold hover:shadow-lg hover:shadow-primary/20 active:scale-95 transition-all disabled:opacity-50 min-w-[160px] justify-center"
+                    >
+                      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                      {isLoading ? "Creating Backup..." : "Create Backup"}
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="border-t border-slate-100" />
+                
+                {/* Restore Backup Section */}
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-[11px] font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                      RESTORE BACKUP
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1">Import and restore a previously exported PNP CRM backup.</p>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div className="relative group">
+                      <input
+                        type="file"
+                        accept=".pnpcrm"
+                        onChange={handleFileSelect}
+                        className="hidden"
+                        id="backup-upload"
+                      />
+                      <label
+                        htmlFor="backup-upload"
+                        className="flex items-center justify-between w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium cursor-pointer hover:border-primary transition-all group"
+                      >
+                        <span className="text-slate-500">{selectedFile ? selectedFile.name : "No backup file selected"}</span>
+                        <span className="text-[10px] font-bold text-primary uppercase tracking-widest px-3 py-1 bg-primary/5 rounded-lg">Select File</span>
+                      </label>
+                    </div>
+                    
+                    <div className="pt-4 flex justify-end">
+                      <button
+                        onClick={() => setShowRestoreModal(true)}
+                        disabled={!selectedFile || isLoading}
+                        className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:shadow-lg hover:shadow-indigo-100 active:scale-95 transition-all disabled:opacity-50 min-w-[160px] justify-center"
+                      >
+                        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
+                        Import Backup
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Restore Confirmation Modal */}
+      {showRestoreModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md p-8 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3 text-rose-600 mb-6">
+              <div className="h-12 w-12 rounded-full bg-rose-50 flex items-center justify-center">
+                <AlertCircle className="h-6 w-6" />
+              </div>
+              <h2 className="text-xl font-bold text-slate-900">Restore Backup?</h2>
+            </div>
+            <p className="text-slate-600 text-sm leading-relaxed mb-8">
+              This action will replace all current CRM data, settings, and branding with the contents of the selected backup file. This cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                disabled={isLoading}
+                onClick={() => setShowRestoreModal(false)}
+                className="flex-1 px-6 py-3 bg-slate-100 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-200 transition-all disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={isLoading}
+                onClick={handleRestoreBackup}
+                className="flex-1 px-6 py-3 bg-rose-600 text-white rounded-xl text-sm font-bold hover:bg-rose-700 shadow-lg shadow-rose-100 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                {isLoading ? "Restoring..." : "Restore Now"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isLoading && activeTab === "backup" && selectedFile && !showRestoreModal && (
+        <div className="fixed inset-0 z-[110] flex flex-col items-center justify-center bg-white/80 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="relative">
+            <div className="h-20 w-20 rounded-full border-4 border-indigo-100 border-t-indigo-600 animate-spin" />
+            <Database className="h-8 w-8 text-indigo-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-900 mt-6 tracking-tight">Restoring Backup...</h2>
+          <p className="text-slate-500 text-sm mt-2">Please do not close this window.</p>
+        </div>
+      )}
     </div>
   );
 }
