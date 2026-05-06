@@ -48,6 +48,50 @@ exit /b 0
 
 
 
+--- FILE: C:\Vs\pnp_crm\create-shortcut.bat ---
+@echo off
+pushd "%~dp0"
+echo Setting up PNP CRM Desktop Shortcut...
+powershell.exe -ExecutionPolicy Bypass -File .\create-shortcut.ps1
+echo Setup complete.
+pause
+popd
+
+
+
+--- FILE: C:\Vs\pnp_crm\create-shortcut.ps1 ---
+$WshShell = New-Object -ComObject WScript.Shell
+$DesktopPath = [System.Environment]::GetFolderPath('Desktop')
+$ShortcutPath = Join-Path $DesktopPath "PNP CRM.lnk"
+$AppFolder = $PSScriptRoot.TrimEnd('\')
+$IconPath = Join-Path $AppFolder "public\crm_logo.ico"
+$LauncherPath = Join-Path $AppFolder "launch-pnp.vbs"
+
+# Delete old shortcut if exists
+if (Test-Path $ShortcutPath) { Remove-Item $ShortcutPath -Force }
+
+$Shortcut = $WshShell.CreateShortcut($ShortcutPath)
+$Shortcut.TargetPath = "wscript.exe"
+$Shortcut.Arguments = "`"$LauncherPath`""
+$Shortcut.WorkingDirectory = $AppFolder
+$Shortcut.IconLocation = $IconPath
+$Shortcut.Description = "PNP CRM Application"
+$Shortcut.Save()
+
+Write-Host "Success! Desktop shortcut created at $ShortcutPath" -ForegroundColor Green
+
+
+
+--- FILE: C:\Vs\pnp_crm\create-shortcut.vbs ---
+Set oWS = WScript.CreateObject("WScript.Shell")
+' Get the folder where this VBS file lives
+sAppFolder = Left(WScript.ScriptFullName, InStrRev(WScript.ScriptFullName, "\") - 1)
+oWS.CurrentDirectory = sAppFolder
+' Run the PowerShell shortcut creator
+oWS.Run "powershell.exe -ExecutionPolicy Bypass -File .\create-shortcut.ps1", 1, True
+
+
+
 --- FILE: C:\Vs\pnp_crm\eslint.config.mjs ---
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
@@ -244,6 +288,20 @@ A: Identified and cleared a hanging Node.js process that was blocking port 3000.
 Q: now from customer logistics page with in this remove this image show from this page
 A: Removed the redundant "Project Progress" and "Commercial Quotations" cards from the Customer Logistics (Details) page, streamlining the interface by focusing on core logistics and financial data while relying on the dedicated Hub modules for project tracking.
 
+Q: improve git ignore file like remove all uneesry file from this project to push into git hub
+A: Cleaned up the repository for GitHub deployment. Updated .gitignore to exclude logs, scratch scripts, local databases, and the portable Node.js runtime. Deleted unnecessary files from the root directory and updated project_code.txt with the latest codebase.
+
+
+
+--- FILE: C:\Vs\pnp_crm\launch-pnp.vbs ---
+Set WshShell = CreateObject("WScript.Shell")
+Set fso = CreateObject("Scripting.FileSystemObject")
+strPath = fso.GetParentFolderName(WScript.ScriptFullName)
+WshShell.CurrentDirectory = strPath
+' Run the PowerShell startup script hidden (0)
+WshShell.Run "powershell.exe -ExecutionPolicy Bypass -File .\start-crm.ps1", 0, False
+Set WshShell = Nothing
+Set fso = Nothing
 
 
 
@@ -1281,6 +1339,17 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+
+
+
+--- FILE: C:\Vs\pnp_crm\start-crm.bat ---
+@echo off
+pushd "%~dp0"
+title PNP CRM Startup
+echo Starting PNP CRM...
+powershell.exe -ExecutionPolicy Bypass -File .\start-crm.ps1
+popd
+exit
 
 
 

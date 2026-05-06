@@ -58,9 +58,7 @@ tsconfig.tsbuildinfo
 /node_runtime/
 check_users.js
 convert-icon.ps1
-create-shortcut.*
 install_tools.bat
-launch-pnp.vbs
 
 # miscellaneous
 CHANGELOG.md

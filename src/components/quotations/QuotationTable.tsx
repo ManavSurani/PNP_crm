@@ -69,12 +69,15 @@ function SortableRow({ quotation, isLocked, onEdit, onDelete, onRowClick }: {
   };
 
   const totalPaid = quotation.payments.reduce((sum, p) => sum + p.amount, 0);
-  const status = totalPaid === 0 ? "Pending" : totalPaid >= quotation.amount ? "Paid" : "Partial";
+  const pending = Math.max(0, quotation.amount - totalPaid);
+  
+  // Status Logic: If pending == 0 → PAID, If paid > 0 && pending > 0 → PARTIAL, If paid == 0 → UNPAID
+  const status = pending === 0 ? "PAID" : totalPaid > 0 ? "PARTIAL" : "UNPAID";
   
   const statusColors = {
-    Pending: "bg-amber-50 text-amber-700 border-amber-200",
-    Paid: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    Partial: "bg-indigo-50 text-indigo-700 border-indigo-200"
+    UNPAID: "bg-slate-100 text-slate-600 border-slate-200",
+    PAID: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    PARTIAL: "bg-amber-50 text-amber-700 border-amber-200"
   };
 
   return (
@@ -104,7 +107,17 @@ function SortableRow({ quotation, isLocked, onEdit, onDelete, onRowClick }: {
         </div>
       </td>
       <td className="py-4 font-bold text-slate-900">{quotation.field.name}</td>
-      <td className="w-[120px] py-4 font-black text-slate-900">₹{quotation.amount.toLocaleString("en-IN")}</td>
+      <td className="py-4 font-black text-slate-900">₹{quotation.amount.toLocaleString("en-IN")}</td>
+      <td className="py-4">
+        <div className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] font-black">
+          ₹{totalPaid.toLocaleString("en-IN")}
+        </div>
+      </td>
+      <td className="py-4">
+        <div className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-100 text-[10px] font-black">
+          ₹{pending.toLocaleString("en-IN")}
+        </div>
+      </td>
       <td className="w-[180px] py-4">
         <p className="text-xs font-bold text-slate-900">{quotation.vendor.name}</p>
         <p className="text-[10px] text-slate-400 font-medium flex items-center gap-1 mt-0.5">
@@ -171,7 +184,9 @@ export default function QuotationTable({ quotations, onReorder, onEdit, onDelete
                 <th className="w-9 py-4"></th>
                 <th className="w-9 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">#</th>
                 <th className="py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Work Field</th>
-                <th className="w-[120px] py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Amount</th>
+                <th className="py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Amount</th>
+                <th className="py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Paid</th>
+                <th className="py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Pending</th>
                 <th className="w-[180px] py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Vendor</th>
                 <th className="w-[100px] py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
                 <th className="w-[100px] py-4 text-right pr-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">Actions</th>

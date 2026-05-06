@@ -34,13 +34,40 @@ const STATUS_LBL: Record<string, string> = { done: "Completed", in_progress: "Ac
 function GanttSVG({ milestones, onEdit }: { milestones: MS[]; onEdit: (m: MS) => void; }) {
   const [hovered, setHovered] = useState<string | null>(null);
 
-  const dates = milestones.map(m => m.status === "done" && m.completedOn ? new Date(m.completedOn).getTime() : (m.startedOn ? new Date(m.startedOn).getTime() : Date.now()));
-  dates.push(Date.now());
+  // Helper to get start of day in local time for consistent comparison
+  const getStartOfDay = (d: Date) => {
+    const res = new Date(d);
+    res.setHours(0, 0, 0, 0);
+    return res.getTime();
+  };
+
+  const now = new Date();
+  const todayTS = getStartOfDay(now);
+
+  const dates = milestones.map(m => {
+    const d = m.status === "done" && m.completedOn ? new Date(m.completedOn) : (m.startedOn ? new Date(m.startedOn) : now);
+    return getStartOfDay(d);
+  });
+  dates.push(todayTS);
+
   const minD = Math.min(...dates);
   const maxD = Math.max(...dates);
 
-  const minDate = new Date(minD); minDate.setDate(1);
-  const maxDate = new Date(maxD); maxDate.setMonth(maxDate.getMonth() + 1); maxDate.setDate(0);
+  // Buffer: Show at least current month and next month
+  const minDate = new Date(minD);
+  minDate.setDate(1);
+  minDate.setHours(0, 0, 0, 0);
+
+  const maxDate = new Date(maxD);
+  maxDate.setMonth(maxDate.getMonth() + 1);
+  maxDate.setDate(1); // Start of next month
+  maxDate.setHours(0, 0, 0, 0);
+  // Ensure we show at least 2 months
+  if (maxDate.getTime() - minDate.getTime() < 45 * 24 * 60 * 60 * 1000) {
+    maxDate.setMonth(minDate.getMonth() + 2);
+    maxDate.setDate(1);
+  }
+
   const AXIS_START = minDate.getTime();
   const AXIS_END = maxDate.getTime();
 
@@ -48,20 +75,26 @@ function GanttSVG({ milestones, onEdit }: { milestones: MS[]; onEdit: (m: MS) =>
   const svgW = endX + START_X;
 
   function dateToX(t: number) {
+    const time = typeof t === 'number' ? t : new Date(t).getTime();
     if (AXIS_END === AXIS_START) return START_X;
-    return START_X + ((t - AXIS_START) / (AXIS_END - AXIS_START)) * (endX - START_X);
+    return START_X + ((time - AXIS_START) / (AXIS_END - AXIS_START)) * (endX - START_X);
   }
 
   const ticks = [];
   let curr = new Date(minDate);
-  while (curr.getTime() <= maxDate.getTime() + 86400000) {
-    ticks.push({ l: curr.toLocaleDateString("en-US", { month: "short", year: curr.getFullYear() !== new Date().getFullYear() ? "2-digit" : undefined }), x: dateToX(curr.getTime()) });
+  while (curr.getTime() < AXIS_END + 86400000) {
+    ticks.push({
+      l: curr.toLocaleDateString("en-US", { month: "short", year: curr.getFullYear() !== now.getFullYear() ? "2-digit" : undefined }),
+      x: dateToX(curr.getTime())
+    });
     curr.setMonth(curr.getMonth() + 1);
   }
 
   // Auto layout (no overlap)
   const sorted = [...milestones].map(m => {
-    const t = m.status === "done" && m.completedOn ? new Date(m.completedOn).getTime() : (m.startedOn ? new Date(m.startedOn).getTime() : Date.now());
+    const d = m.status === "done" && m.completedOn ? new Date(m.completedOn) : (m.startedOn ? new Date(m.startedOn) : now);
+    // Put milestone at midday (12:00) of that day for better visual centering
+    const t = getStartOfDay(d) + 12 * 60 * 60 * 1000;
     return { m, t, x: dateToX(t) };
   }).sort((a, b) => a.t - b.t);
 
@@ -78,7 +111,7 @@ function GanttSVG({ milestones, onEdit }: { milestones: MS[]; onEdit: (m: MS) =>
   const maxLevel = Math.max(0, ...positions.map(p => p.level));
   const AXIS_Y = 40;
   const svgH = AXIS_Y + 40 + (maxLevel + 1) * (CARD_H + 20) + 20;
-  const todayX = dateToX(Date.now());
+  const todayX = dateToX(now.getTime());
 
   return (
     <div style={{ overflowX: "auto", paddingBottom: 10 }}>
@@ -161,8 +194,9 @@ function GanttSVG({ milestones, onEdit }: { milestones: MS[]; onEdit: (m: MS) =>
   );
 }
 
-function Modal({ mode, init, projectId, onSave, onMarkProjectDone, onDelete, onClose }: {
+function Modal({ mode, init, projectId, isProjectCompleted, onSave, onMarkProjectDone, onDelete, onClose }: {
   mode: "add" | "edit"; init?: MS | null; projectId: string;
+  isProjectCompleted?: boolean;
   onSave: (d: any) => Promise<void>; onMarkProjectDone: () => Promise<void>;
   onDelete: (id: string) => Promise<void>; onClose: () => void;
 }) {
@@ -175,17 +209,18 @@ function Modal({ mode, init, projectId, onSave, onMarkProjectDone, onDelete, onC
     "Furniture Work": ["Quotation Given", "Work Started", "Basic Work Done", "Laminate Work Started", "Final Work Done"],
     "Colour Work": ["Quotation Given", "Color Work Started", "Final Work & Cleaning Done"],
     "Sofa / Curtain / Mattress": ["Selection Started", "Quotation Given", "All Delivered"],
-    "Glass Work": ["Quotation Given", "Work Finalize"]
+    "Glass Work": ["Quotation Given", "Work Finalize"],
+    "Project Completed": ["Project Completed"]
   };
 
   const [phaseData, setPhaseData] = useState<Record<string, string[]>>(INITIAL_PHASE_DATA);
-  
+
   const initPhase = init?.phase && phaseData[init.phase] ? init.phase : Object.keys(phaseData)[0];
   const [phase, setPhase] = useState<string>(initPhase);
-  
+
   const initSub = init?.name || (phaseData[initPhase]?.[0] || "");
   const [subcategory, setSubcategory] = useState<string>(initSub);
-  
+
   const [sdate, setSdate] = useState(init?.startedOn ? new Date(init.startedOn).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
   const [err, setErr] = useState("");
   const [saving, setSaving] = useState(false);
@@ -200,8 +235,16 @@ function Modal({ mode, init, projectId, onSave, onMarkProjectDone, onDelete, onC
     }
   }, [phase, isAddingPhase, phaseData]);
 
+  const todayStr = new Date().toISOString().split('T')[0];
+
   const save = async () => {
+    if (phase === "Project Completed") {
+      await markProjectDone();
+      onClose();
+      return;
+    }
     if (!subcategory.trim()) { setErr("Subcategory is required."); return; }
+    if (sdate > todayStr) { setErr("Future dates are not allowed."); return; }
     setSaving(true);
     await onSave({
       name: subcategory.trim(),
@@ -224,7 +267,7 @@ function Modal({ mode, init, projectId, onSave, onMarkProjectDone, onDelete, onC
     if (!newPhaseName.trim()) { setErr("Phase Name is required"); return; }
     const validSubs = newSubcats.filter(s => s.trim() !== "");
     if (validSubs.length === 0) { setErr("At least one subcategory is required"); return; }
-    
+
     setPhaseData(prev => ({ ...prev, [newPhaseName.trim()]: validSubs }));
     setPhase(newPhaseName.trim());
     setSubcategory(validSubs[0]);
@@ -286,23 +329,36 @@ function Modal({ mode, init, projectId, onSave, onMarkProjectDone, onDelete, onC
               </select>
             </div>
 
+            {phase !== "Project Completed" && (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12, marginBottom: 12 }}>
+                <div>
+                  <label style={{ fontSize: 11, fontWeight: 600, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>Subcategory</label>
+                  <select value={subcategory} onChange={e => { setSubcategory(e.target.value); setErr(""); }}
+                    disabled={!phase || !phaseData[phase]}
+                    style={{ width: "100%", marginTop: 4, border: "1px solid #D1D5DB", borderRadius: 8, padding: "8px 10px", fontSize: 13, outline: "none", boxSizing: "border-box", background: (!phase || !phaseData[phase]) ? "#F3F4F6" : "white" }}>
+                    {phaseData[phase]?.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+              </div>
+            )}
             <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12, marginBottom: 12 }}>
               <div>
-                <label style={{ fontSize: 11, fontWeight: 600, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>Subcategory</label>
-                <select value={subcategory} onChange={e => { setSubcategory(e.target.value); setErr(""); }}
-                  disabled={!phase || !phaseData[phase]}
-                  style={{ width: "100%", marginTop: 4, border: "1px solid #D1D5DB", borderRadius: 8, padding: "8px 10px", fontSize: 13, outline: "none", boxSizing: "border-box", background: (!phase || !phaseData[phase]) ? "#F3F4F6" : "white" }}>
-                  {phaseData[phase]?.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-              </div>
-              <div>
                 <label style={{ fontSize: 11, fontWeight: 600, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>Date</label>
-                <input type="date" value={sdate} onChange={e => setSdate(e.target.value)}
+                <input type="date" value={sdate} max={todayStr}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setSdate(val);
+                    if (val > todayStr) {
+                      setErr("Future dates are not allowed.");
+                    } else if (err === "Future dates are not allowed.") {
+                      setErr("");
+                    }
+                  }}
                   style={{ width: "100%", marginTop: 4, border: "1px solid #D1D5DB", borderRadius: 8, padding: "8px 10px", fontSize: 13, boxSizing: "border-box", outline: "none" }} />
               </div>
             </div>
 
-            {mode === "add" && (
+            {mode === "add" && !isProjectCompleted && (
               <div style={{ marginBottom: 16, paddingTop: 10, borderTop: "1px solid #E5E7EB" }}>
                 <button onClick={markProjectDone} disabled={saving}
                   style={{ width: "100%", background: "#F0FDF4", color: "#166534", border: "1px solid #BBF7D0", borderRadius: 8, padding: "10px", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "all 0.2s" }}>
@@ -352,37 +408,37 @@ export default function ProgressPage({ params }: { params: Promise<{ id: string 
     })();
   }, [id]);
 
-  const startDate = project ? new Date(project.startedOn) : new Date();
-  
+  // --- START: Active Work Days Calculation ---
+  const start = project ? new Date(project.startedOn) : new Date();
+
+  // Normalize start to midnight for day-based counting
+  const startMidnight = new Date(start);
+  startMidnight.setHours(0, 0, 0, 0);
+
   let lastMilestoneDate = new Date();
   if (milestones.length > 0) {
-    const dates = milestones.filter(m => m.startedOn).map(m => new Date(m.startedOn!).getTime());
-    if (dates.length > 0) {
-      lastMilestoneDate = new Date(Math.max(...dates));
-    }
-  }
-
-  const totalDays = Math.max(1, Math.ceil((lastMilestoneDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1);
-
-  let months = (lastMilestoneDate.getFullYear() - startDate.getFullYear()) * 12 + (lastMilestoneDate.getMonth() - startDate.getMonth());
-  let tempDate = new Date(startDate);
-  tempDate.setMonth(tempDate.getMonth() + months);
-  let days = Math.ceil((lastMilestoneDate.getTime() - tempDate.getTime()) / (1000 * 60 * 60 * 24));
-
-  if (days < 0) {
-    months -= 1;
-    tempDate.setMonth(tempDate.getMonth() - 1);
-    days = Math.ceil((lastMilestoneDate.getTime() - tempDate.getTime()) / (1000 * 60 * 60 * 24));
-  }
-
-  let durationDisplay;
-  if (months <= 0) {
-    durationDisplay = "Less than 1 Month";
-  } else if (days === 0) {
-    durationDisplay = `${months} Month${months !== 1 ? "s" : ""}`;
+    const dates = milestones.map(m => {
+      const d = m.status === "done" && m.completedOn ? new Date(m.completedOn) : (m.startedOn ? new Date(m.startedOn) : new Date());
+      const res = new Date(d);
+      res.setHours(0, 0, 0, 0);
+      return res.getTime();
+    });
+    lastMilestoneDate = new Date(Math.max(...dates));
   } else {
-    durationDisplay = `${months} Month${months !== 1 ? "s" : ""} ${days} Day${days !== 1 ? "s" : ""}`;
+    lastMilestoneDate.setHours(0, 0, 0, 0);
   }
+
+  // Calculate inclusive days: (End - Start) / 1 day + 1
+  const totalDays = Math.max(1, Math.floor((lastMilestoneDate.getTime() - startMidnight.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+  // --- END: Active Work Days Calculation ---
+
+  // --- START: Total Project Days Calculation (Start -> Today/Completion) ---
+  const endPoint = (project?.isCompleted && project.completedOn) ? new Date(project.completedOn) : new Date();
+  endPoint.setHours(0, 0, 0, 0);
+
+  const totalProjectDays = Math.max(1, Math.floor((endPoint.getTime() - startMidnight.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+  const totalProjectDaysDisplay = `${totalProjectDays} Total Day${totalProjectDays !== 1 ? "s" : ""}`;
+  // --- END: Total Project Days Calculation ---
 
   const handleSave = async (data: any) => {
     if (!project) return;
@@ -420,7 +476,7 @@ export default function ProgressPage({ params }: { params: Promise<{ id: string 
     <div style={{ maxWidth: "100%", paddingBottom: 60 }}>
       {/* Navigation & Breadcrumb */}
       <div className="flex items-center justify-between px-2 pt-2 mb-6">
-        <Link 
+        <Link
           href={`/customers/${id}`}
           className="group flex items-center gap-2 text-[10px] font-black text-slate-400 hover:text-slate-900 transition-all uppercase tracking-[0.2em]"
         >
@@ -429,12 +485,12 @@ export default function ProgressPage({ params }: { params: Promise<{ id: string 
           </div>
           BACK
         </Link>
-        
+
         <div className="flex items-center gap-2 text-[10px] font-black tracking-[0.2em] uppercase">
           <Link href="/customers" className="text-slate-300 hover:text-slate-500 transition-colors">Customer Directory</Link>
-          <ChevronRight className="h-3 w-3 text-slate-200" /> 
+          <ChevronRight className="h-3 w-3 text-slate-200" />
           <Link href={`/customers/${id}`} className="text-slate-300 hover:text-slate-500 transition-colors">{customer?.customerName?.toUpperCase() || "CUSTOMER"}</Link>
-          <ChevronRight className="h-3 w-3 text-slate-200" /> 
+          <ChevronRight className="h-3 w-3 text-slate-200" />
           <span className="text-slate-900">PROGRESS</span>
         </div>
       </div>
@@ -462,7 +518,7 @@ export default function ProgressPage({ params }: { params: Promise<{ id: string 
           <p style={{ fontSize: 12, color: "#6B7280", margin: 0, fontWeight: 500 }}>Active Work Days</p>
         </div>
         <div style={{ background: "white", borderRadius: 12, padding: "16px 20px", border: "1px solid #E5E7EB", flex: 1, minWidth: 200, boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
-          <p style={{ fontSize: 24, fontWeight: 800, color: "#111827", margin: "0 0 4px" }}>{durationDisplay}</p>
+          <p style={{ fontSize: 24, fontWeight: 800, color: "#111827", margin: "0 0 4px" }}>{totalProjectDaysDisplay}</p>
           <p style={{ fontSize: 12, color: "#6B7280", margin: 0, fontWeight: 500 }}>Project Duration</p>
         </div>
       </div>
@@ -471,12 +527,10 @@ export default function ProgressPage({ params }: { params: Promise<{ id: string 
         <span style={{ fontSize: 13, color: "#6B7280", fontWeight: 500 }}>
           Click any milestone to edit details or update status.
         </span>
-        {!project.isCompleted && (
-          <button onClick={() => { setModalMode("add"); setModalMs(null); setShowModal(true); }}
-            style={{ display: "flex", alignItems: "center", gap: 6, background: "#111827", color: "white", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}>
-            <Plus size={16} /> Add Milestone
-          </button>
-        )}
+        <button onClick={() => { setModalMode("add"); setModalMs(null); setShowModal(true); }}
+          style={{ display: "flex", alignItems: "center", gap: 6, background: "#111827", color: "white", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}>
+          <Plus size={16} /> Add Milestone
+        </button>
       </div>
 
       <div style={{ background: "white", border: "1px solid #E5E7EB", borderRadius: 16, padding: "24px 0", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)" }}>
@@ -487,7 +541,7 @@ export default function ProgressPage({ params }: { params: Promise<{ id: string 
         )}
       </div>
 
-      {showModal && <Modal mode={modalMode} init={modalMs} projectId={project.id} onSave={handleSave} onMarkProjectDone={handleProjectComplete} onDelete={handleDelete} onClose={() => setShowModal(false)} />}
+      {showModal && <Modal mode={modalMode} init={modalMs} projectId={project.id} isProjectCompleted={project.isCompleted} onSave={handleSave} onMarkProjectDone={handleProjectComplete} onDelete={handleDelete} onClose={() => setShowModal(false)} />}
     </div>
   );
 }

@@ -10,6 +10,7 @@ async function main() {
     where: { email: "admin@pnp.com" },
     update: { password: hashedPassword },
     create: {
+      id: "df181284-f05a-43ad-bd96-eb14ea8cdbe7",
       name: "Super Admin",
       email: "admin@pnp.com",
       password: hashedPassword,

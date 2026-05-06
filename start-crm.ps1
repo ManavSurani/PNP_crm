@@ -5,7 +5,7 @@ $AppRoot = $PSScriptRoot
 $DataDir = Join-Path $AppRoot "_data"
 $DbFile = Join-Path $DataDir "crm.db"
 $Port = 3000
-$NpmCmd = Join-Path $AppRoot "node_runtime\npm.cmd"
+$NpmCmd = "npm.cmd"
 $LogFile = Join-Path $AppRoot "server_log.txt"
 $ErrFile = Join-Path $AppRoot "server_error.txt"
 
@@ -25,6 +25,7 @@ if (Test-Path $ErrFile) { Remove-Item $ErrFile -Force }
 # 4. Database Initialization if missing
 if (-not (Test-Path $DbFile)) {
     Start-Process -FilePath $NpmCmd -ArgumentList 'exec', 'prisma', 'db', 'push', '--', '--accept-data-loss' -WorkingDirectory $AppRoot -Wait -WindowStyle Hidden
+    Start-Process -FilePath "node" -ArgumentList "seed.mjs" -WorkingDirectory $AppRoot -Wait -WindowStyle Hidden
 }
 
 # 5. Set Environment Variables

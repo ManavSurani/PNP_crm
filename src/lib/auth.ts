@@ -104,7 +104,31 @@ export const { handlers: { GET, POST }, auth, signIn, signOut } = NextAuth({
           console.log(`[Auth] ⚠️ Session record missing for ${token.email}. Attempting auto-repair...`);
           
           try {
-            const userExists = await prisma.user.findUnique({ where: { id: token.id as string } });
+            // Check if user exists by ID (cookie) or Email
+            let userExists = await prisma.user.findFirst({ 
+              where: { 
+                OR: [
+                  { id: token.id as string },
+                  { email: token.email as string }
+                ] 
+              } 
+            });
+            
+            // If admin is totally missing from DB, re-seed them
+            if (!userExists && token.email === "admin@pnp.com") {
+              console.log("[Auth] 🔨 Re-seeding Super Admin to repair ghost session...");
+              const hashedPassword = await bcrypt.hash("pnpadmin123", 10);
+              userExists = await prisma.user.create({
+                data: {
+                  id: token.id as string,
+                  email: "admin@pnp.com",
+                  name: "Super Admin",
+                  password: hashedPassword,
+                  role: "ADMIN",
+                }
+              });
+            }
+
             if (!userExists) {
               console.error("[Auth] ❌ Auto-repair failed: User no longer exists.");
               return null as any;
@@ -116,7 +140,7 @@ export const { handlers: { GET, POST }, auth, signIn, signOut } = NextAuth({
             await prisma.session.create({
               data: {
                 sessionToken: token.sessionToken as string,
-                userId: token.id as string,
+                userId: userExists.id,
                 expires: new Date(Date.now() + maxAge * 1000),
                 userAgent: "Auto-Repaired Session",
               }
