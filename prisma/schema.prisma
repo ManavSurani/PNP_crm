@@ -122,6 +122,11 @@ model Lead {
   projectQuotations ProjectQuotation[]
   project           Project?
 
+  // Financial System (Independent from Quotation)
+  initialDealAmount Float     @default(0)
+  initialDealNotes  String?
+  financialLogs     LeadFinancialLog[]
+
   @@index([status])
   @@index([isCancelled])
   @@index([createdAt])
@@ -539,5 +544,18 @@ model ExecutionLog {
 
   @@index([projectId])
   @@index([loggedOn])
+}
+
+model LeadFinancialLog {
+  id        String   @id @default(cuid())
+  leadId    String
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  action    String   // DEAL_UPDATE, INCOME_ADDED, EXPENSE_ADDED, TRANSACTION_DELETED, etc.
+  details   String
+  amount    Float?
+  createdAt DateTime @default(now())
+
+  @@index([leadId])
+  @@index([createdAt])
 }
 

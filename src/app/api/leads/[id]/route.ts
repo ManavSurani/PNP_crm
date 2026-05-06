@@ -43,6 +43,10 @@ export async function GET(
           // @ts-ignore - name field exists in schema but IDE lag
           select: { id: true, name: true } 
         },
+        // @ts-ignore - newly added
+        initialDealAmount: true,
+        // @ts-ignore - newly added
+        initialDealNotes: true,
       }
     });
 
@@ -72,7 +76,7 @@ export async function PUT(
       customerName, projectName, contactNumber, alternateNumber, fullAddress, 
       landmark, requirementDetails, inquirySource, serviceType, 
       status, priority, assignedStaffId, budgetRange,
-      siteLocation, preferredVisitTime
+      siteLocation, preferredVisitTime, initialDealAmount, initialDealNotes
     } = body;
 
     const updateData: any = {};
@@ -111,6 +115,29 @@ export async function PUT(
         console.warn("Could not update project name, project might not exist:", e);
       }
     }
+
+    // Handle Financial Fields
+    if (initialDealAmount !== undefined) {
+      updateData.initialDealAmount = parseFloat(initialDealAmount);
+      
+      // Log the update
+      // @ts-ignore - newly added
+      const oldLead = await prisma.lead.findUnique({ where: { id }, select: { initialDealAmount: true } });
+      // @ts-ignore - newly added
+      if (oldLead && oldLead.initialDealAmount !== parseFloat(initialDealAmount)) {
+        // @ts-ignore - newly added
+        await prisma.leadFinancialLog.create({
+          data: {
+            leadId: id,
+            action: "DEAL_UPDATE",
+            // @ts-ignore - newly added
+            details: `Deal amount updated from ₹${oldLead.initialDealAmount.toLocaleString()} to ₹${parseFloat(initialDealAmount).toLocaleString()}`,
+            amount: parseFloat(initialDealAmount)
+          }
+        });
+      }
+    }
+    if (initialDealNotes !== undefined) updateData.initialDealNotes = initialDealNotes;
 
     const updatedLead = await prisma.lead.update({
       where: { id },

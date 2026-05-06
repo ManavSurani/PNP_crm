@@ -229,10 +229,10 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
           iconBg="bg-indigo-50"
         />
         <HubCard 
-          title="Designs"
-          subtitle="3D renders, layouts & moodboards."
+          title="Design Expenses"
+          subtitle="Track renders, layouts & design costs."
           icon={<Palette className="h-6 w-6 text-rose-500" />}
-          href="#"
+          href={`/customers/${id}/design`}
           iconBg="bg-rose-50"
         />
         <HubCard 
