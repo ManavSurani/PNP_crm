@@ -15,7 +15,6 @@ export default function MeetingsPage() {
   const [meetings, setMeetings] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [viewTab, setViewTab] = useState<"LEAD" | "CUSTOMER">("LEAD");
 
   const fetchMeetings = async () => {
     setIsLoading(true);
@@ -39,8 +38,7 @@ export default function MeetingsPage() {
 
   const filtered = meetings.filter(m => 
     (m.lead.customerName.toLowerCase().includes(search.toLowerCase()) ||
-    m.address.toLowerCase().includes(search.toLowerCase())) &&
-    (viewTab === "CUSTOMER" ? m.lead.status === "WON_ORDER" : m.lead.status !== "WON_ORDER")
+    m.address.toLowerCase().includes(search.toLowerCase()))
   );
 
   const pending = filtered.filter(m => m.status === "SCHEDULED");
@@ -69,21 +67,7 @@ export default function MeetingsPage() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex border-b border-slate-200">
-        <button 
-          onClick={() => setViewTab("LEAD")} 
-          className={cn("px-6 py-3 text-sm font-semibold border-b-2 transition-all", viewTab === "LEAD" ? "text-primary border-primary" : "text-slate-500 border-transparent hover:text-slate-900")}
-        >
-          Pre-Sales (Leads)
-        </button>
-        <button 
-          onClick={() => setViewTab("CUSTOMER")} 
-          className={cn("px-6 py-3 text-sm font-semibold border-b-2 transition-all", viewTab === "CUSTOMER" ? "text-emerald-600 border-emerald-600" : "text-slate-500 border-transparent hover:text-slate-900")}
-        >
-          Project Site Check (Customers)
-        </button>
-      </div>
+
 
       {/* Toolset */}
       <div className="flex flex-col md:flex-row gap-4 items-center">
