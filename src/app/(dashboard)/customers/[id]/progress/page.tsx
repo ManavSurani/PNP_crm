@@ -8,8 +8,23 @@ interface MS {
   status: string; phase: string; progress: number | null; delayDays: number | null;
   delayReason: string | null; startedOn: string | null; completedOn: string | null;
 }
+interface ProjectStats {
+  progressPct: number;
+  doneCount: number;
+  daysActive: number;
+  estCompletion: string;
+  estCompletionOverdue: boolean;
+  currentMilestone: MS | null;
+}
 interface Project {
-  id: string; customerId: string; startedOn: string; isCompleted: boolean; completedOn: string | null;
+  id: string; 
+  customerId: string; 
+  name?: string | null;
+  startedOn: string; 
+  isCompleted: boolean; 
+  completedOn: string | null;
+  stats?: ProjectStats;
+  milestones?: MS[];
 }
 
 function fmt(d: string | null | number, short = false) {
@@ -41,29 +56,43 @@ function GanttSVG({ milestones, onEdit }: { milestones: MS[]; onEdit: (m: MS) =>
     return res.getTime();
   };
 
-  const now = new Date();
-  const todayTS = getStartOfDay(now);
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Helper to get local midnight for any date input (string or Date)
+  const getLocalMidnight = (d: any) => {
+    const date = new Date(d);
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  };
+
+  const todayTS = getLocalMidnight(now);
 
   const dates = milestones.map(m => {
-    const d = m.status === "done" && m.completedOn ? new Date(m.completedOn) : (m.startedOn ? new Date(m.startedOn) : now);
-    return getStartOfDay(d);
+    const d = m.status === "done" && m.completedOn ? m.completedOn : (m.startedOn ? m.startedOn : now);
+    return getLocalMidnight(d);
   });
   dates.push(todayTS);
 
   const minD = Math.min(...dates);
   const maxD = Math.max(...dates);
 
-  // Buffer: Show at least current month and next month
+  // Axis Start: 1st of the minimum month
   const minDate = new Date(minD);
   minDate.setDate(1);
   minDate.setHours(0, 0, 0, 0);
 
+  // Axis End: End of the timeline buffer
   const maxDate = new Date(maxD);
   maxDate.setMonth(maxDate.getMonth() + 1);
-  maxDate.setDate(1); // Start of next month
+  maxDate.setDate(1);
   maxDate.setHours(0, 0, 0, 0);
-  // Ensure we show at least 2 months
-  if (maxDate.getTime() - minDate.getTime() < 45 * 24 * 60 * 60 * 1000) {
+
+  // Ensure at least 60 days visibility for better scale
+  if (maxDate.getTime() - minDate.getTime() < 60 * 24 * 60 * 60 * 1000) {
     maxDate.setMonth(minDate.getMonth() + 2);
     maxDate.setDate(1);
   }
@@ -71,13 +100,13 @@ function GanttSVG({ milestones, onEdit }: { milestones: MS[]; onEdit: (m: MS) =>
   const AXIS_START = minDate.getTime();
   const AXIS_END = maxDate.getTime();
 
-  const endX = Math.max(START_X + milestones.length * 140, 800);
+  // Dynamic width based on milestone count, min 800px
+  const endX = Math.max(START_X + Math.max(milestones.length, 4) * 140, 800);
   const svgW = endX + START_X;
 
   function dateToX(t: number) {
-    const time = typeof t === 'number' ? t : new Date(t).getTime();
     if (AXIS_END === AXIS_START) return START_X;
-    return START_X + ((time - AXIS_START) / (AXIS_END - AXIS_START)) * (endX - START_X);
+    return START_X + ((t - AXIS_START) / (AXIS_END - AXIS_START)) * (endX - START_X);
   }
 
   const ticks = [];
@@ -90,11 +119,18 @@ function GanttSVG({ milestones, onEdit }: { milestones: MS[]; onEdit: (m: MS) =>
     curr.setMonth(curr.getMonth() + 1);
   }
 
-  // Auto layout (no overlap)
+  const todayX = dateToX(now.getTime());
+
+  // Milestone layout with improved alignment
   const sorted = [...milestones].map(m => {
-    const d = m.status === "done" && m.completedOn ? new Date(m.completedOn) : (m.startedOn ? new Date(m.startedOn) : now);
-    // Put milestone at midday (12:00) of that day for better visual centering
-    const t = getStartOfDay(d) + 12 * 60 * 60 * 1000;
+    const d = m.status === "done" && m.completedOn ? m.completedOn : (m.startedOn ? m.startedOn : now);
+    const ts = new Date(d).getTime();
+    const midnight = getLocalMidnight(d);
+    
+    // If it's today, align closer to current time, otherwise use midday for centering
+    const isTodayMs = midnight === todayTS;
+    const t = isTodayMs ? (midnight + (now.getHours() * 3600000) + (now.getMinutes() * 60000)) : (midnight + 12 * 60 * 60 * 1000);
+    
     return { m, t, x: dateToX(t) };
   }).sort((a, b) => a.t - b.t);
 
@@ -111,7 +147,6 @@ function GanttSVG({ milestones, onEdit }: { milestones: MS[]; onEdit: (m: MS) =>
   const maxLevel = Math.max(0, ...positions.map(p => p.level));
   const AXIS_Y = 40;
   const svgH = AXIS_Y + 40 + (maxLevel + 1) * (CARD_H + 20) + 20;
-  const todayX = dateToX(now.getTime());
 
   return (
     <div style={{ overflowX: "auto", paddingBottom: 10 }}>
@@ -128,10 +163,13 @@ function GanttSVG({ milestones, onEdit }: { milestones: MS[]; onEdit: (m: MS) =>
           </g>
         ))}
 
-        {/* Today Line */}
-        <line x1={todayX} y1={AXIS_Y - 10} x2={todayX} y2={svgH - 20} stroke="#EF4444" strokeWidth={1.5} strokeDasharray="4,3" />
-        <rect x={todayX - 20} y={svgH - 20} width={40} height={16} rx={4} fill="#FEF2F2" stroke="#EF4444" strokeWidth={1} />
-        <text x={todayX} y={svgH - 9} textAnchor="middle" fontSize={9} fontWeight={600} fill="#EF4444">TODAY</text>
+        {/* Today Indicator */}
+        <g>
+          <line x1={todayX} y1={AXIS_Y - 10} x2={todayX} y2={svgH - 20} stroke="#EF4444" strokeWidth={1.5} strokeDasharray="4,3" />
+          <path d={`M${todayX - 5},${AXIS_Y - 12} L${todayX + 5},${AXIS_Y - 12} L${todayX},${AXIS_Y - 2} Z`} fill="#EF4444" />
+          <rect x={todayX - 20} y={svgH - 20} width={40} height={16} rx={4} fill="#FEF2F2" stroke="#EF4444" strokeWidth={1} />
+          <text x={todayX} y={svgH - 9} textAnchor="middle" fontSize={9} fontWeight={600} fill="#EF4444">TODAY</text>
+        </g>
 
         {/* Milestones */}
         {positions.map(({ m, x, level }) => {

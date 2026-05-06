@@ -400,6 +400,8 @@ model LeadTransaction {
   paidTo      String
   category    String
   paymentMode String
+  source      String          @default("GENERAL") // GENERAL or DESIGN
+  isSystemGenerated Boolean   @default(false)
   description String?
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt

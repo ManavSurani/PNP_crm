@@ -1,10 +1,9 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 async function main() {
-  const project = await prisma.project.findFirst({
-    where: { name: { contains: "Samrat" } },
-    include: { customer: true, milestones: true }
+  const projects = await prisma.project.findMany({
+    include: { customer: { select: { id: true, customerName: true } }, milestones: true }
   });
-  console.log(JSON.stringify(project, null, 2));
+  console.log(JSON.stringify(projects, null, 2));
 }
 main().finally(() => prisma.$disconnect());

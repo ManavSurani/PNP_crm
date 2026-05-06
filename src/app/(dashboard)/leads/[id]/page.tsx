@@ -50,22 +50,13 @@ const CANCEL_REASONS = [
 ];
 
 const SERVICE_TYPES = [
-  "INTERIOR_DESIGN",
-  "MODULAR_KITCHEN",
-  "WARDROBE_PLANNING",
-  "FULL_HOME_INTERIOR",
-  "TWO_BHK_INTERIOR",
-  "THREE_BHK_INTERIOR",
-  "VILLA_INTERIOR",
-  "OFFICE_INTERIOR",
-  "CUSTOM_FURNITURE_DESIGN",
-  "MATERIAL_SUPPLY",
-  "LABOUR_ONLY",
-  "FULL_COMBO_PROJECT",
-  "SOFA_WORK",
-  "CHAIR_WORK",
-  "REPAIRING_WORK",
-  "OTHER",
+  "Interior Design",
+  "2BHK Interior",
+  "3BHK Interior",
+  "4BHK Interior",
+  "Raw house",
+  "Office",
+  "Other",
 ];
 
 

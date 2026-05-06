@@ -38,6 +38,8 @@ type Transaction = {
   category: string;
   paymentMode: string;
   description: string | null;
+  source: string;
+  isSystemGenerated: boolean;
 }
 
 type FinancialLog = {
@@ -101,11 +103,13 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
 
   // Calculations
   const totalReceived = useMemo(() => customer?.transactions?.filter(t => t.type === "RECEIVED").reduce((sum, t) => sum + t.amount, 0) || 0, [customer]);
-  const totalExpense = useMemo(() => customer?.transactions?.filter(t => t.type === "EXPENSE").reduce((sum, t) => sum + t.amount, 0) || 0, [customer]);
+  const totalExpense = useMemo(() => customer?.transactions?.filter(t => t.type === "EXPENSE" && t.source !== "DESIGN").reduce((sum, t) => sum + t.amount, 0) || 0, [customer]);
   const initialDeal = customer?.initialDealAmount || 0;
   
-  const totalProjectCost = initialDeal + totalExpense;
-  const remainingDue = totalProjectCost - totalReceived;
+  // NEW ACCOUNTING LOGIC
+  const currentTotal = initialDeal + totalExpense;
+  const remainingDue = Math.max(0, currentTotal - totalReceived);
+  const paymentProgress = currentTotal > 0 ? (totalReceived / currentTotal) * 100 : 0;
 
   const filteredIncome = useMemo(() => 
     customer?.transactions?.filter(t => t.type === "RECEIVED" && 
@@ -114,7 +118,7 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
   , [customer, searchQuery]);
 
   const filteredExpense = useMemo(() => 
-    customer?.transactions?.filter(t => t.type === "EXPENSE" && 
+    customer?.transactions?.filter(t => t.type === "EXPENSE" && t.source !== "DESIGN" && 
       (t.paidTo.toLowerCase().includes(searchQuery.toLowerCase()) || (t.description || "").toLowerCase().includes(searchQuery.toLowerCase()))
     ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) || []
   , [customer, searchQuery]);
@@ -146,7 +150,7 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
     <div className="min-h-screen bg-slate-50/30">
       
       {/* --- COMPACT STICKY SUMMARY HEADER --- */}
-      <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-3 shadow-sm">
+      <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-3 shadow-sm">
         <div className="max-w-[1600px] mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <Link href={`/customers/${id}`} className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-400">
@@ -164,13 +168,13 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
           </div>
 
           <div className="hidden lg:flex flex-1 items-center justify-center gap-1">
-             <SummaryWidget label="Initial Deal Amount" value={initialDeal} color="text-slate-600" />
+             <SummaryWidget label="Initial Deal" value={initialDeal} color="text-slate-500" />
              <div className="h-8 w-px bg-slate-200 mx-2" />
-             <SummaryWidget label="Total Expenses" value={totalExpense} color="text-rose-600" prefix="+" />
+             <SummaryWidget label="Expenses" value={totalExpense} color="text-rose-600" prefix="+" />
              <div className="h-8 w-px bg-slate-200 mx-2" />
-             <SummaryWidget label="Current Total" value={totalProjectCost} color="text-slate-900" isBold />
+             <SummaryWidget label="Current Total" value={currentTotal} color="text-slate-900" isBold />
              <div className="h-8 w-px bg-slate-200 mx-2" />
-             <SummaryWidget label="Client Paid" value={totalReceived} color="text-emerald-600" prefix="-" />
+             <SummaryWidget label="Client Paid" value={totalReceived} color="text-emerald-600" />
              <div className="h-8 w-px bg-slate-200 mx-2" />
              <SummaryWidget label="Remaining Due" value={remainingDue} color={remainingDue > 0 ? "text-amber-600" : "text-emerald-600"} highlight={remainingDue > 0} />
           </div>
@@ -234,9 +238,8 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
                   <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                     <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
                       <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                      Client Payments (Income)
+                      Client Payments
                     </h3>
-                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">₹{totalReceived.toLocaleString()} Paid</span>
                   </div>
                   <div className="flex-1 overflow-auto max-h-[500px] compact-scrollbar">
                     <table className="w-full text-left">
@@ -297,7 +300,9 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
                           <tr key={t.id} className="group hover:bg-slate-50/50 transition-colors">
                             <td className="px-4 py-2 whitespace-nowrap text-[10px] font-bold text-slate-500 italic">{format(new Date(t.date), "dd MMM")}</td>
                             <td className="px-4 py-2">
-                              <p className="text-[11px] font-black text-slate-800 leading-tight">{t.paidTo}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="text-[11px] font-black text-slate-800 leading-tight">{t.paidTo}</p>
+                              </div>
                               <p className="text-[9px] text-slate-400 font-medium truncate max-w-[120px]">{t.description || t.category}</p>
                             </td>
                             <td className="px-4 py-2 text-right text-[11px] font-black text-rose-600">₹{t.amount.toLocaleString()}</td>
@@ -329,22 +334,36 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
                  </div>
                  <div className="flex-1 overflow-auto p-4 compact-scrollbar">
                     <div className="space-y-6 relative before:absolute before:left-2 before:top-2 before:bottom-2 before:w-px before:bg-slate-100">
-                       {logs.map((log, i) => (
-                         <div key={log.id} className="relative flex items-start gap-4 animate-in fade-in slide-in-from-right-2 duration-300" style={{ animationDelay: `${i * 50}ms` }}>
-                            <div className={cn(
-                              "h-4 w-4 rounded-full border-2 border-white ring-1 ring-slate-100 flex items-center justify-center shrink-0 relative z-10",
-                              log.action === "DEAL_UPDATE" ? "bg-indigo-500" : 
-                              log.action === "INCOME_ADDED" ? "bg-emerald-500" :
-                              log.action === "EXPENSE_ADDED" ? "bg-rose-500" : "bg-slate-400"
-                            )}>
-                              {log.action === "DEAL_UPDATE" ? <Pencil className="h-1.5 w-1.5 text-white" /> : <Plus className="h-1.5 w-1.5 text-white" />}
+                        {logs.map((log, i) => {
+                          const isDeal = log.action === "DEAL_UPDATE";
+                          const isIncome = log.action === "INCOME_ADDED" || (log.action === "TRANSACTION_UPDATED" && log.details.includes("Income"));
+                          const isExpense = log.action === "EXPENSE_ADDED" || log.action === "AUTO_EXPENSE_GENERATED" || (log.action === "TRANSACTION_UPDATED" && log.details.includes("Expense"));
+                          
+                          let actionText = log.details;
+                          if (log.action === "DEAL_UPDATE") actionText = `Project deal initialized — ₹${(log.amount || 0).toLocaleString()}`;
+                          if (log.action === "INCOME_ADDED") actionText = `Client payment received — ₹${(log.amount || 0).toLocaleString()}`;
+                          if (log.action === "EXPENSE_ADDED") actionText = `Project expense added — ₹${(log.amount || 0).toLocaleString()}`;
+                          if (log.action === "AUTO_EXPENSE_GENERATED") actionText = `System adjustment generated — ₹${(log.amount || 0).toLocaleString()}`;
+
+                          return (
+                            <div key={log.id} className="relative flex items-start gap-4 animate-in fade-in slide-in-from-right-2 duration-300" style={{ animationDelay: `${i * 50}ms` }}>
+                               <div className={cn(
+                                 "h-4 w-4 rounded-full border-2 border-white ring-1 ring-slate-100 flex items-center justify-center shrink-0 relative z-10",
+                                 isDeal ? "bg-indigo-500" : 
+                                 isIncome ? "bg-emerald-500" :
+                                 isExpense ? "bg-rose-500" : "bg-slate-400"
+                               )}>
+                                  {isDeal ? <Pencil className="h-1.5 w-1.5 text-white" /> : 
+                                   isIncome ? <TrendingUp className="h-2 w-2 text-white" /> : 
+                                   isExpense ? <TrendingDown className="h-2 w-2 text-white" /> : <Plus className="h-1.5 w-1.5 text-white" />}
+                               </div>
+                               <div className="flex-1">
+                                  <p className="text-[10px] font-black text-slate-800 leading-tight mb-0.5">{actionText}</p>
+                                  <p className="text-[8px] font-bold text-slate-400 uppercase">{format(new Date(log.createdAt), "dd MMM, HH:mm")}</p>
+                               </div>
                             </div>
-                            <div>
-                               <p className="text-[10px] font-black text-slate-800 leading-tight mb-0.5">{log.details}</p>
-                               <p className="text-[8px] font-bold text-slate-400 uppercase">{format(new Date(log.createdAt), "dd MMM, HH:mm")}</p>
-                            </div>
-                         </div>
-                       ))}
+                          );
+                        })}
                        {logs.length === 0 && (
                          <div className="text-center py-10 opacity-30">
                            <Info className="h-8 w-8 mx-auto mb-2" />
@@ -354,11 +373,10 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
                     </div>
                  </div>
               </div>
-
-              </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
+      </div>
 
       {/* --- MODALS --- */}
       {showTransModal && (
@@ -367,6 +385,7 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
           leadId={id} 
           customerName={customer?.customerName}
           editingData={editingTransaction}
+          initialDeal={initialDeal}
           onClose={() => setShowTransModal(false)} 
           onSuccess={() => { fetchData(); fetchLogs(); }} 
         />
@@ -397,20 +416,20 @@ function SummaryWidget({ label, value, color, isBold = false, prefix = "", highl
   );
 }
 
-function TransactionModal({ type, leadId, customerName, editingData, onClose, onSuccess }: any) {
+function TransactionModal({ type, leadId, customerName, editingData, onClose, onSuccess, initialDeal }: any) {
   const [amount, setAmount] = useState(editingData?.amount || "");
   const [paidTo, setPaidTo] = useState(editingData?.paidTo || (type === "RECEIVED" ? customerName : ""));
   const [category, setCategory] = useState(editingData?.category || (type === "RECEIVED" ? "Advance" : "Expense"));
   const [paymentMode, setPaymentMode] = useState(editingData?.paymentMode || "CASH");
   const [date, setDate] = useState(editingData?.date ? new Date(editingData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState(editingData?.description || "");
+  const [source, setSource] = useState(editingData?.source || "GENERAL");
   const [isSaving, setIsSaving] = useState(false);
   const [err, setErr] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate
     const isIncome = type === "RECEIVED";
     if (!amount || !date || (isIncome && !paidTo) || (!isIncome && !description)) {
       setErr(isIncome ? "Amount, Date and Party Name are required" : "Amount, Date and Note are required");
@@ -430,7 +449,8 @@ function TransactionModal({ type, leadId, customerName, editingData, onClose, on
         paidTo: isIncome ? paidTo : description,
         category: isIncome ? category : "Expense",
         paymentMode: isIncome ? paymentMode : "CASH",
-        description
+        description,
+        source
       };
 
       const res = await fetch(url, {
@@ -469,6 +489,17 @@ function TransactionModal({ type, leadId, customerName, editingData, onClose, on
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {type === "RECEIVED" && (!initialDeal || initialDeal <= 0) && (
+            <div className="bg-amber-50 border border-amber-200 p-3 rounded-xl flex items-start gap-3">
+              <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-[9px] font-bold text-amber-900 uppercase tracking-tight">Financial Warning</p>
+                <p className="text-[8px] text-amber-700 font-medium leading-tight mt-1">
+                  Initial deal amount is ₹0. Set the base project value before recording payments to avoid negative balances.
+                </p>
+              </div>
+            </div>
+          )}
           {err && <div className="p-2 bg-rose-50 border border-rose-100 text-rose-600 text-[9px] font-black uppercase rounded-lg">{err}</div>}
 
           <div className="grid grid-cols-2 gap-3">
@@ -492,16 +523,13 @@ function TransactionModal({ type, leadId, customerName, editingData, onClose, on
           {type === "RECEIVED" && (
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                  Party Name
-                </label>
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Party Name</label>
                 <input 
                   value={paidTo} onChange={e => setPaidTo(e.target.value)}
                   placeholder="e.g. Client Name"
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-slate-900/5 transition-all"
                 />
               </div>
-
               <div className="space-y-1">
                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Category</label>
                 <select value={category} onChange={e => setCategory(e.target.value)} className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-bold outline-none cursor-pointer">
@@ -516,17 +544,14 @@ function TransactionModal({ type, leadId, customerName, editingData, onClose, on
             <input 
               value={description} onChange={e => setDescription(e.target.value)}
               placeholder={type === "EXPENSE" ? "Required: Details of expense..." : "Internal remark..."}
-              className={cn(
-                "w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-medium outline-none focus:ring-2 focus:ring-slate-900/5 transition-all",
-                type === "EXPENSE" && !description && "border-rose-200 ring-1 ring-rose-100"
-              )}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-medium outline-none focus:ring-2 focus:ring-slate-900/5 transition-all"
             />
           </div>
 
           <button 
             type="submit" disabled={isSaving}
             className={cn(
-              "w-full py-3 rounded-xl text-white text-[10px] font-black uppercase tracking-widest shadow-xl transition-all disabled:opacity-50",
+              "w-full mt-4 py-3 rounded-xl text-white text-[10px] font-black uppercase tracking-widest shadow-xl transition-all disabled:opacity-50",
               type === "RECEIVED" ? "bg-emerald-600 shadow-emerald-600/20" : "bg-rose-600 shadow-rose-600/20"
             )}
           >

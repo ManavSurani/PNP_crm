@@ -7,7 +7,10 @@ export default function Topbar() {
   const { data: session } = useSession();
 
   return (
-    <header className="sticky top-0 z-[60] flex h-16 shrink-0 items-center gap-x-4 border-b border-slate-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
+    <header 
+      suppressHydrationWarning
+      className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-x-4 border-b border-slate-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8"
+    >
       <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
         <form className="relative flex flex-1" action="#" method="GET">
           <label htmlFor="search-field" className="sr-only">
@@ -47,7 +50,10 @@ export default function Topbar() {
                 </span>
               </span>
             </button>
-            <div className="hidden group-hover:block absolute right-0 top-full mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-[70]">
+            <div 
+              suppressHydrationWarning
+              className="hidden group-hover:block absolute right-0 top-full mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-[60]"
+            >
               <div className="px-4 py-2 border-b border-slate-100">
                 <p className="text-sm font-medium text-slate-900">{session?.user?.name || "Admin"}</p>
                 <p className="text-xs text-slate-500 capitalize">{session?.user?.role?.toLowerCase() || "Role"}</p>

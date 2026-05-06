@@ -168,15 +168,13 @@ export default function CustomersPage() {
                 onChange={e => setFilters({...filters, service: e.target.value})}
               >
                 <option value="ALL">All Services</option>
-                <option value="INTERIOR_DESIGN">Interior Design</option>
-                <option value="MODULAR_KITCHEN">Modular Kitchen</option>
-                <option value="WARDROBE_PLANNING">Wardrobe Planning</option>
-                <option value="FULL_HOME_INTERIOR">Full Home Interior</option>
-                <option value="TWO_BHK_INTERIOR">2BHK Interior</option>
-                <option value="THREE_BHK_INTERIOR">3BHK Interior</option>
-                <option value="VILLA_INTERIOR">Villa Interior</option>
-                <option value="OFFICE_INTERIOR">Office Interior</option>
-                <option value="FULL_COMBO_PROJECT">Full Combo Project</option>
+                <option value="Interior Design">Interior Design</option>
+                <option value="2BHK Interior">2BHK Interior</option>
+                <option value="3BHK Interior">3BHK Interior</option>
+                <option value="4BHK Interior">4BHK Interior</option>
+                <option value="Raw house">Raw house</option>
+                <option value="Office">Office</option>
+                <option value="Other">Other</option>
               </select>
             </div>
             <div>

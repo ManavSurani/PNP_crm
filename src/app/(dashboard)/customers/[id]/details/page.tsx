@@ -45,6 +45,7 @@ type CustomerDetails = {
     createdAt: string;
   }[];
   requirement: any | null;
+  initialDealAmount: number;
 };
 
 type ModalType =
@@ -175,7 +176,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
   const expenses = trxs
     .filter(t => t.type === "EXPENSE")
     .reduce((acc, t) => acc + t.amount, 0);
-  const pending = projectAmount - received;
+  const pending = Math.max(0, projectAmount - received);
   const profit = projectAmount - expenses;
 
   const timeline = [
@@ -858,6 +859,19 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
           onClose={closeModal}
         >
           <div className="p-8 space-y-5 overflow-y-auto max-h-[65vh]">
+            {/* Deal Amount Warning */}
+            {transactionForm.type === "RECEIVED" && (!customer || customer.initialDealAmount <= 0) && (
+              <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl flex items-start gap-3 mb-4">
+                <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-bold text-amber-900 uppercase tracking-tight">Warning: No Deal Amount Set</p>
+                  <p className="text-[10px] text-amber-700 font-medium leading-relaxed mt-1">
+                    This customer has a deal amount of ₹0. Recording payments without a deal amount will cause incorrect financial reporting. 
+                    Please set the Initial Deal Amount in the Financial Ledger.
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Type toggle — only show on ADD */}
             {!editingTransactionId && (

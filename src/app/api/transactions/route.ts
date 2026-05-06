@@ -36,7 +36,10 @@ export async function POST(req: NextRequest) {
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
-    const { leadId, type, amount, date, paidTo, category, paymentMode, description } = body;
+    const { 
+      leadId, type, amount, date, paidTo, category, paymentMode, description, 
+      source = "GENERAL", isSystemGenerated = false 
+    } = body;
 
     if (!leadId || !type || !amount || !date || !paidTo || !category || !paymentMode) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -47,6 +50,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid amount format" }, { status: 400 });
     }
 
+    // CREATE THE PRIMARY TRANSACTION
     const transaction = await prisma.leadTransaction.create({
       data: {
         leadId,
@@ -57,11 +61,15 @@ export async function POST(req: NextRequest) {
         category,
         paymentMode,
         description: description || null,
+        // @ts-ignore
+        source,
+        // @ts-ignore
+        isSystemGenerated
       },
     });
 
-    // Log financial event
-    // @ts-ignore - newly added
+    // LOG FINANCIAL EVENT
+    // @ts-ignore
     await prisma.leadFinancialLog.create({
       data: {
         leadId,
@@ -70,6 +78,71 @@ export async function POST(req: NextRequest) {
         amount: parsedAmount
       }
     });
+
+    // AUTO-TRANSFER LOGIC: FINAL PAYMENT
+    if (type === "RECEIVED" && category === "Final Payment") {
+      // 1. Fetch lead and all current transactions to calculate remaining due
+      const lead = await prisma.lead.findUnique({
+        where: { id: leadId },
+        include: { transactions: true }
+      });
+
+      if (lead) {
+        // @ts-ignore
+        const initialDeal = lead.initialDealAmount || 0;
+        const allTransactions = lead.transactions;
+        
+        const totalReceived = allTransactions.filter(t => t.type === "RECEIVED").reduce((sum, t) => sum + t.amount, 0);
+        // @ts-ignore
+        const totalGeneralExpenses = allTransactions.filter(t => t.type === "EXPENSE" && t.source !== "DESIGN").reduce((sum, t) => sum + t.amount, 0);
+        
+        // Correct Formula for Client Due: (Deal + Expenses) - Paid
+        const remainingDue = (initialDeal + totalGeneralExpenses) - totalReceived;
+
+        if (remainingDue > 0) {
+          // Check for existing auto-transfer to prevent duplicates
+          const existingAuto = await prisma.leadTransaction.findFirst({
+            where: {
+              leadId,
+              category: "Adjustment",
+              // @ts-ignore
+              isSystemGenerated: true
+            }
+          });
+
+          if (!existingAuto) {
+            // 2. Create the auto-generated expense in DESIGN module
+            await prisma.leadTransaction.create({
+              data: {
+                leadId,
+                type: "EXPENSE",
+                amount: remainingDue,
+                date: new Date(),
+                paidTo: "Design Module",
+                category: "Adjustment",
+                paymentMode: "SYSTEM",
+                description: "Auto transferred from Final Payment remaining due",
+                // @ts-ignore
+                source: "DESIGN",
+                // @ts-ignore
+                isSystemGenerated: true
+              }
+            });
+
+            // 3. Log the auto-transfer event
+            // @ts-ignore
+            await prisma.leadFinancialLog.create({
+              data: {
+                leadId,
+                action: "AUTO_EXPENSE_GENERATED",
+                details: `Remaining due auto-adjusted — ₹${remainingDue.toLocaleString()}`,
+                amount: remainingDue
+              }
+            });
+          }
+        }
+      }
+    }
 
     return NextResponse.json(transaction, { status: 201 });
   } catch (error) {
@@ -93,7 +166,7 @@ export async function DELETE(req: NextRequest) {
 
     // Log financial event
     if (existing.leadId) {
-      // @ts-ignore - newly added
+      // @ts-ignore
       await prisma.leadFinancialLog.create({
         data: {
           leadId: existing.leadId,
@@ -117,7 +190,7 @@ export async function PUT(req: NextRequest) {
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
-    const { id, amount, date, paidTo, category, paymentMode, description } = body;
+    const { id, amount, date, paidTo, category, paymentMode, description, source, isSystemGenerated } = body;
 
     if (!id) return NextResponse.json({ error: "Transaction ID required" }, { status: 400 });
 
@@ -133,12 +206,16 @@ export async function PUT(req: NextRequest) {
         category,
         paymentMode,
         description,
+        // @ts-ignore
+        source,
+        // @ts-ignore
+        isSystemGenerated
       },
     });
 
     // Log financial event
     if (existing.leadId) {
-      // @ts-ignore - newly added
+      // @ts-ignore
       await prisma.leadFinancialLog.create({
         data: {
           leadId: existing.leadId,
@@ -147,6 +224,65 @@ export async function PUT(req: NextRequest) {
           amount: updated.amount
         }
       });
+
+      // AUTO-TRANSFER LOGIC IN PUT (Same as POST)
+      if (updated.type === "RECEIVED" && updated.category === "Final Payment") {
+        const lead = await prisma.lead.findUnique({
+          where: { id: existing.leadId },
+          include: { transactions: true }
+        });
+
+        if (lead) {
+          // @ts-ignore
+          const initialDeal = lead.initialDealAmount || 0;
+          const allTransactions = lead.transactions;
+          const totalReceived = allTransactions.filter(t => t.type === "RECEIVED").reduce((sum, t) => sum + t.amount, 0);
+          // @ts-ignore
+          const totalGeneralExpenses = allTransactions.filter(t => t.type === "EXPENSE" && t.source !== "DESIGN").reduce((sum, t) => sum + t.amount, 0);
+          
+          const remainingDue = (initialDeal + totalGeneralExpenses) - totalReceived;
+
+          if (remainingDue > 0) {
+            const existingAuto = await prisma.leadTransaction.findFirst({
+              where: {
+                leadId: existing.leadId,
+                category: "Adjustment",
+                // @ts-ignore
+                isSystemGenerated: true
+              }
+            });
+
+            if (!existingAuto) {
+              await prisma.leadTransaction.create({
+                data: {
+                  leadId: existing.leadId,
+                  type: "EXPENSE",
+                  amount: remainingDue,
+                  date: new Date(),
+                  paidTo: "Design Module",
+                  category: "Adjustment",
+                  paymentMode: "SYSTEM",
+                  description: "Auto transferred from Final Payment remaining due (via Edit)",
+                  // @ts-ignore
+                  source: "DESIGN",
+                  // @ts-ignore
+                  isSystemGenerated: true
+                }
+              });
+
+              // @ts-ignore
+              await prisma.leadFinancialLog.create({
+                data: {
+                  leadId: existing.leadId,
+                  action: "AUTO_EXPENSE_GENERATED",
+                  details: `Remaining due auto-adjusted — ₹${remainingDue.toLocaleString()}`,
+                  amount: remainingDue
+                }
+              });
+            }
+          }
+        }
+      }
     }
 
     return NextResponse.json(updated);
