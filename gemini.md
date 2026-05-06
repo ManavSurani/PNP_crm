@@ -194,3 +194,7 @@ A: Streamlined the CRM by removing 5 standalone dashboard modules (Orders, Payme
 Q: here today indicater is not working so check again
 A: Fixed the Project Progress " Today\ indicator by implementing real-time state updates (auto-refreshing every minute) and adding a visual axis marker (red triangle) for better situational awareness on the Gantt timeline. Synchronised time-to-pixel mapping to ensure perfect alignment with current local time.
 
+
+Q: Update the Business Analytics page logic so that all  Profit calculations come ONLY from the Design Expenses module profit values.
+A: Refactored the Business Analytics dashboard to use a project-centric profit model. Per-customer profit is now read directly from the \Design Expenses\ logic (Initial Deal - Design-source expenses). Global \Business Net Profit\ is now calculated as a clean sum of all customer remaining profits, eliminating redundant subtractions and ensuring 100% financial synchronization across the CRM.
+

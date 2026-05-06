@@ -23,9 +23,8 @@ export async function GET() {
 
     let totalBusinessValue = 0;
     let totalReceived = 0;
-    let totalDesignExpenses = 0;
-    let totalProjectExpenses = 0;
     let totalLoss = 0;
+    let totalDesignExpenses = 0;
 
     const customerFinancials = (leads as any[]).map(lead => {
       const dealAmount = lead.initialDealAmount || 0;
@@ -35,15 +34,13 @@ export async function GET() {
         .filter(t => t.type === "RECEIVED")
         .reduce((sum, t) => sum + t.amount, 0);
       
-      const designExp = transactions
-        .filter(t => t.source === "DESIGN" && t.type === "EXPENSE")
+      // Use Design Expenses only (source="DESIGN", category="Design Expense" or "Adjustment")
+      const designCost = transactions
+        .filter(t => t.source === "DESIGN" && t.type === "EXPENSE" && (t.category === "Design Expense" || t.category === "Adjustment"))
         .reduce((sum, t) => sum + t.amount, 0);
       
-      const projectExp = transactions
-        .filter(t => t.source === "GENERAL" && t.type === "EXPENSE")
-        .reduce((sum, t) => sum + t.amount, 0);
-
-      const totalExpenses = designExp + projectExp;
+      const profit = dealAmount - designCost;
+      
       const remainingDue = Math.max(0, dealAmount - received);
       
       const hasFinalPayment = transactions.some(t => 
@@ -52,8 +49,6 @@ export async function GET() {
 
       const isLoss = hasFinalPayment && remainingDue > 0;
       const lossAmount = isLoss ? remainingDue : 0;
-      
-      const profit = dealAmount - totalExpenses;
 
       // Status Logic
       let status = "Pending";
@@ -67,16 +62,15 @@ export async function GET() {
       // Aggregate
       totalBusinessValue += dealAmount;
       totalReceived += received;
-      totalDesignExpenses += designExp;
-      totalProjectExpenses += projectExp;
       totalLoss += lossAmount;
+      totalDesignExpenses += designCost;
 
       return {
         id: lead.id,
         customerName: lead.customerName,
         projectName: lead.project?.name || "N/A",
         dealAmount,
-        totalExpenses,
+        totalExpenses: designCost,
         currentTotal: dealAmount,
         clientPaid: received,
         remainingDue,
@@ -91,8 +85,9 @@ export async function GET() {
       .filter((t: any) => t.type === "EXPENSE")
       .reduce((sum: number, t: any) => sum + t.amount, 0);
 
-    // Global Profit = Total Deal Value - All Design Expenses - All Project Expenses - All Business Expenses (Global) - All Loss Amounts
-    const globalProfit = totalBusinessValue - totalDesignExpenses - totalProjectExpenses - totalGlobalExpenses - totalLoss;
+    // Business Net Profit = Sum of all customer profits
+    const globalProfit = customerFinancials.reduce((sum, f) => sum + f.profit, 0);
+
 
     // Activity Feed (Simplified: last 20 transactions across all)
     const allLeadTransactions = (leads as any[]).flatMap(l => (l.transactions || []).map((t: any) => ({ ...t, customerName: l.customerName })));
@@ -126,8 +121,7 @@ export async function GET() {
         totalLoss,
         totalGlobalExpenses,
         globalProfit,
-        totalDesignExpenses,
-        totalProjectExpenses
+        totalDesignExpenses
       },
       customerFinancials,
       activityFeed,

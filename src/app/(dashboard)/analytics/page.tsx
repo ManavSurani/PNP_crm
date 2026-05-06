@@ -61,7 +61,7 @@ export default function BusinessAnalyticsPage() {
     { label: "Total Received Amount", val: summary.totalReceived, icon: IndianRupee, color: "text-emerald-600", bg: "bg-emerald-50", sub: "Total Client Payments" },
     { label: "Total Pending Amount", val: summary.totalPending, icon: Wallet, color: "text-amber-600", bg: "bg-amber-50", sub: "Verified Outstanding Dues" },
     { label: "Total Business Loss", val: summary.totalLoss, icon: TrendingDown, color: "text-rose-600", bg: "bg-rose-50", sub: "Unpaid after Final Payment" },
-    { label: "Business Net Profit", val: summary.globalProfit, icon: TrendingUp, color: summary.globalProfit >= 0 ? "text-emerald-600" : "text-rose-600", bg: summary.globalProfit >= 0 ? "bg-emerald-50" : "bg-rose-50", sub: "After all Expenses & Losses" },
+    { label: "Business Net Profit", val: summary.globalProfit, icon: TrendingUp, color: summary.globalProfit >= 0 ? "text-emerald-600" : "text-rose-600", bg: summary.globalProfit >= 0 ? "bg-emerald-50" : "bg-rose-50", sub: "Sum of all Customer Profit margins" },
   ];
 
   return (
