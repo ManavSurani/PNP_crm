@@ -17,7 +17,7 @@ export default function BrandLogo({ className, imageClassName }: BrandLogoProps)
         src={logoImg} 
         alt="PNP Logo" 
         className={cn(
-          "h-full w-full object-contain brightness-0 invert scale-[1.35] [filter:brightness(0)_invert(1)_drop-shadow(0_0_0.2px_white)_drop-shadow(0_0_0.2px_white)]",
+          "h-full w-full object-contain brightness-0 invert scale-[1.1]",
           imageClassName
         )}
       />

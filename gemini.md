@@ -198,3 +198,9 @@ A: Fixed the Project Progress " Today\ indicator by implementing real-time state
 Q: Update the Business Analytics page logic so that all  Profit calculations come ONLY from the Design Expenses module profit values.
 A: Refactored the Business Analytics dashboard to use a project-centric profit model. Per-customer profit is now read directly from the \Design Expenses\ logic (Initial Deal - Design-source expenses). Global \Business Net Profit\ is now calculated as a clean sum of all customer remaining profits, eliminating redundant subtractions and ensuring 100% financial synchronization across the CRM.
 
+Q: $IconPath = Join-Path $AppFolder "public\Gemini_Generated_Image_5m69l15m69l15m69.png" i change my icon here so what should i do
+A: I fixed the "blank icon" by converting the Gemini PNG to a 256x256 ICO format. I also hardened the execution shortcut by using absolute system paths for `wscript.exe` and `powershell.exe`, and improved the startup script to detect both Chrome and Edge with a fallback to the system default browser.
+
+
+Q: check short cut because this is not working
+A: Fixed the CRM desktop shortcut and startup reliability by resolving log file lock conflicts and hardening process cleanup. Reverted the app's internal logo (login/sidebar) to the original PNP branding while preserving the new crm_icon.ico for the desktop shortcut.
