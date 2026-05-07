@@ -3,7 +3,7 @@
 import { use, useState, useEffect, useCallback } from "react";
 import { 
   Plus, Loader2, Lock, Unlock, ArrowLeft, 
-  ChevronRight, Info, AlertCircle 
+  ChevronRight, Info, AlertCircle, MessageCircle, Users, Copy
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -114,6 +114,91 @@ export default function CustomerQuotationsPage({ params }: { params: Promise<{ i
     }
   };
 
+  const generateSummaryMessage = () => {
+    if (!customer || quotations.length === 0) return "";
+    
+    let msg = `Hello ${customer.customerName},
+Here is your complete quotation summary for the project.
+
+Project Name: ${customer.project?.name || customer.customerName}
+
+---
+`;
+
+    quotations.forEach((q, i) => {
+      const totalPaid = q.payments.reduce((sum: number, p: any) => sum + p.amount, 0);
+      const pending = Math.max(0, q.amount - totalPaid);
+      
+      msg += `
+${i + 1}. ${q.field.name}
+   Vendor Name: ${q.vendor.name}
+   Phone Number: ${q.vendor.phone}
+
+Total Amount: ₹${q.amount.toLocaleString("en-IN")}
+Paid Amount: ₹${totalPaid.toLocaleString("en-IN")}
+Pending Amount: ₹${pending.toLocaleString("en-IN")}
+
+---
+`;
+    });
+
+    const grandTotal = quotations.reduce((s, q) => s + q.amount, 0);
+    const grandPaid  = quotations.reduce((s, q) => s + q.payments.reduce((ps: number, p: any) => ps + p.amount, 0), 0);
+    const grandPending = grandTotal - grandPaid;
+
+    msg += `
+PROJECT TOTALS
+Total Quoted Amount: ₹${grandTotal.toLocaleString("en-IN")}
+Total Paid Amount: ₹${grandPaid.toLocaleString("en-IN")}
+Total Pending Amount: ₹${grandPending.toLocaleString("en-IN")}
+
+Thank You.
+Regards,
+PNP Interior`;
+
+    return msg;
+  };
+
+  const handleCopySummary = async () => {
+    const msg = generateSummaryMessage();
+    if (!msg) return;
+    try {
+      await navigator.clipboard.writeText(msg);
+      alert("Summary copied successfully");
+    } catch (err) {
+      const textarea = document.createElement("textarea");
+      textarea.value = msg;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+      alert("Summary copied successfully");
+    }
+  };
+
+  const handleWhatsAppSummary = () => {
+    if (!customer?.contactNumber) {
+      alert("Customer phone number not available");
+      return;
+    }
+    const msg = generateSummaryMessage();
+    if (!msg) return;
+    const url = `https://wa.me/${customer.contactNumber.replace(/\D/g, "")}?text=${encodeURIComponent(msg)}`;
+    window.open(url, "_blank");
+  };
+
+  const handleGroupShareSummary = async () => {
+    const msg = generateSummaryMessage();
+    if (!msg) return;
+    try {
+      await navigator.clipboard.writeText(msg);
+      alert("Message copied. Select WhatsApp group and paste.");
+      window.open("https://web.whatsapp.com/", "_blank");
+    } catch (err) {
+      alert("Copy failed. Please try again.");
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex h-[80vh] items-center justify-center">
@@ -155,12 +240,39 @@ export default function CustomerQuotationsPage({ params }: { params: Promise<{ i
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">Quotations</h1>
           <p className="text-slate-500 text-sm font-medium">Manage project proposals, cost estimates & approvals for {customer?.project?.name || customer?.customerName}.</p>
         </div>
-        <button 
-          onClick={() => setIsModalOpen(true)}
-          className="relative z-10 inline-flex items-center gap-2 bg-emerald-600 text-white px-6 py-3 rounded-xl text-sm font-bold shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 hover:-translate-y-0.5 active:translate-y-0 transition-all"
-        >
-          <Plus className="h-4 w-4" /> Add New Field
-        </button>
+        <div className="relative z-10 flex flex-wrap items-center gap-3">
+          {quotations.length > 0 && (
+            <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200 shadow-sm mr-2">
+              <button 
+                onClick={handleWhatsAppSummary}
+                title="Send WhatsApp Summary"
+                className="p-2.5 hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 rounded-lg transition-all"
+              >
+                <MessageCircle className="h-5 w-5" />
+              </button>
+              <button 
+                onClick={handleGroupShareSummary}
+                title="Share Summary to Group"
+                className="p-2.5 hover:bg-slate-100 text-slate-400 hover:text-slate-900 rounded-lg transition-all"
+              >
+                <Users className="h-5 w-5" />
+              </button>
+              <button 
+                onClick={handleCopySummary}
+                title="Copy Summary"
+                className="p-2.5 hover:bg-slate-100 text-slate-400 hover:text-slate-900 rounded-lg transition-all"
+              >
+                <Copy className="h-5 w-5" />
+              </button>
+            </div>
+          )}
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="inline-flex items-center gap-2 bg-emerald-600 text-white px-6 py-3 rounded-xl text-sm font-bold shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 hover:-translate-y-0.5 active:translate-y-0 transition-all"
+          >
+            <Plus className="h-4 w-4" /> Add New Field
+          </button>
+        </div>
       </div>
 
       {/* Grand Total Summary */}
@@ -215,6 +327,9 @@ export default function CustomerQuotationsPage({ params }: { params: Promise<{ i
 
         <QuotationTable 
           quotations={quotations}
+          customerName={customer?.customerName || "Customer"}
+          projectName={customer?.project?.name || customer?.customerName || "Project"}
+          customerPhone={customer?.contactNumber}
           isLocked={isLocked}
           onReorder={handleReorder}
           onDelete={handleDelete}

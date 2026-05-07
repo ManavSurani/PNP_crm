@@ -18,7 +18,7 @@ import {
   useSortable
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Pencil, Trash2, Phone } from "lucide-react";
+import { GripVertical, Pencil, Trash2, Phone, MessageCircle, Users, Copy } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Payment {
@@ -38,6 +38,9 @@ interface Quotation {
 
 interface Props {
   quotations: Quotation[];
+  customerName: string;
+  projectName: string;
+  customerPhone?: string;
   onReorder: (newOrder: string[]) => void;
   onEdit: (quotation: Quotation) => void;
   onDelete: (id: string) => void;
@@ -45,9 +48,21 @@ interface Props {
   isLocked: boolean;
 }
 
-function SortableRow({ quotation, isLocked, onEdit, onDelete, onRowClick }: { 
+function SortableRow({ 
+  quotation, 
+  isLocked, 
+  customerName, 
+  projectName, 
+  customerPhone,
+  onEdit, 
+  onDelete, 
+  onRowClick 
+}: { 
   quotation: Quotation; 
   isLocked: boolean;
+  customerName: string;
+  projectName: string;
+  customerPhone?: string;
   onEdit: (q: Quotation) => void;
   onDelete: (id: string) => void;
   onRowClick: (q: Quotation) => void;
@@ -71,13 +86,71 @@ function SortableRow({ quotation, isLocked, onEdit, onDelete, onRowClick }: {
   const totalPaid = quotation.payments.reduce((sum, p) => sum + p.amount, 0);
   const pending = Math.max(0, quotation.amount - totalPaid);
   
-  // Status Logic: If pending == 0 → PAID, If paid > 0 && pending > 0 → PARTIAL, If paid == 0 → UNPAID
-  const status = pending === 0 ? "PAID" : totalPaid > 0 ? "PARTIAL" : "UNPAID";
+  // Status Logic: If pending == 0 → PAID, If paid > 0 && pending > 0 → PARTIAL, If paid == 0 → PENDING
+  const status = pending === 0 ? "PAID" : totalPaid > 0 ? "PARTIAL" : "PENDING";
   
   const statusColors = {
-    UNPAID: "bg-slate-100 text-slate-600 border-slate-200",
+    PENDING: "bg-slate-100 text-slate-600 border-slate-200",
     PAID: "bg-emerald-50 text-emerald-700 border-emerald-200",
     PARTIAL: "bg-amber-50 text-amber-700 border-amber-200"
+  };
+
+  const generateMessage = () => {
+    return `Hello ${customerName},
+Here is your quotation and payment update for ${quotation.field.name}.
+
+Project Name: ${projectName}
+Work Field: ${quotation.field.name}
+Vendor Name: ${quotation.vendor.name}
+Phone Number: ${quotation.vendor.phone}
+
+Total Amount: ₹${quotation.amount.toLocaleString("en-IN")}
+Paid Amount: ₹${totalPaid.toLocaleString("en-IN")}
+Pending Amount: ₹${pending.toLocaleString("en-IN")}
+
+Thank You.
+Regards,
+PNP Interior`;
+  };
+
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const msg = generateMessage();
+    try {
+      await navigator.clipboard.writeText(msg);
+      alert("Message copied successfully");
+    } catch (err) {
+      const textarea = document.createElement("textarea");
+      textarea.value = msg;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+      alert("Message copied successfully");
+    }
+  };
+
+  const handleWhatsApp = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!customerPhone) {
+      alert("Customer phone number not available");
+      return;
+    }
+    const msg = generateMessage();
+    const url = `https://wa.me/${customerPhone.replace(/\D/g, "")}?text=${encodeURIComponent(msg)}`;
+    window.open(url, "_blank");
+  };
+
+  const handleGroupShare = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const msg = generateMessage();
+    try {
+      await navigator.clipboard.writeText(msg);
+      alert("Message copied. Select WhatsApp group and paste.");
+      window.open("https://web.whatsapp.com/", "_blank");
+    } catch (err) {
+      alert("Copy failed. Please try again.");
+    }
   };
 
   return (
@@ -132,8 +205,30 @@ function SortableRow({ quotation, isLocked, onEdit, onDelete, onRowClick }: {
           {status}
         </span>
       </td>
-      <td className="w-[100px] py-4 pr-4 text-right">
+      <td className="w-[150px] py-4 pr-4 text-right">
         <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button 
+            onClick={handleWhatsApp}
+            title="Send WhatsApp"
+            className="p-2 hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 rounded-lg transition-all"
+          >
+            <MessageCircle className="h-4 w-4" />
+          </button>
+          <button 
+            onClick={handleGroupShare}
+            title="Share to Group"
+            className="p-2 hover:bg-slate-50 text-slate-400 hover:text-slate-900 rounded-lg transition-all"
+          >
+            <Users className="h-4 w-4" />
+          </button>
+          <button 
+            onClick={handleCopy}
+            title="Copy Message"
+            className="p-2 hover:bg-slate-50 text-slate-400 hover:text-slate-900 rounded-lg transition-all"
+          >
+            <Copy className="h-4 w-4" />
+          </button>
+          <div className="w-px h-4 bg-slate-100 mx-0.5" />
           <button 
             onClick={(e) => { e.stopPropagation(); onEdit(quotation); }}
             className="p-2 hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 rounded-lg transition-all"
@@ -152,7 +247,17 @@ function SortableRow({ quotation, isLocked, onEdit, onDelete, onRowClick }: {
   );
 }
 
-export default function QuotationTable({ quotations, onReorder, onEdit, onDelete, onRowClick, isLocked }: Props) {
+export default function QuotationTable({ 
+  quotations, 
+  customerName, 
+  projectName, 
+  customerPhone,
+  onReorder, 
+  onEdit, 
+  onDelete, 
+  onRowClick, 
+  isLocked 
+}: Props) {
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -189,7 +294,7 @@ export default function QuotationTable({ quotations, onReorder, onEdit, onDelete
                 <th className="py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Pending</th>
                 <th className="w-[180px] py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Vendor</th>
                 <th className="w-[100px] py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-                <th className="w-[100px] py-4 text-right pr-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">Actions</th>
+                <th className="w-[150px] py-4 text-right pr-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -213,6 +318,9 @@ export default function QuotationTable({ quotations, onReorder, onEdit, onDelete
                       key={q.id}
                       quotation={q}
                       isLocked={isLocked}
+                      customerName={customerName}
+                      projectName={projectName}
+                      customerPhone={customerPhone}
                       onEdit={onEdit}
                       onDelete={onDelete}
                       onRowClick={onRowClick}
