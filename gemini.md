@@ -204,3 +204,6 @@ A: I fixed the "blank icon" by converting the Gemini PNG to a 256x256 ICO format
 
 Q: check short cut because this is not working
 A: Fixed the CRM desktop shortcut and startup reliability by resolving log file lock conflicts and hardening process cleanup. Reverted the app's internal logo (login/sidebar) to the original PNP branding while preserving the new crm_icon.ico for the desktop shortcut.
+
+Q: push commit statment to git hub
+A: Resolved the GitHub push failure caused by the oversized `project_code.txt` (912MB). Updated `.gitignore` to permanently exclude large diagnostic files and logs, then re-synchronized the local repository to ensure a clean, limit-compliant push to the main branch.
