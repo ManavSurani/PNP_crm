@@ -190,34 +190,76 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
         doc.line(margin, y, pageW - margin, y);
       };
 
-      // --- BUG 5 FIX: Reduced Header Bar Height (28mm instead of 42mm) ---
+      // --- Header Bar ---
       doc.setFillColor(...COL.headerBg);
-      doc.rect(0, 0, pageW, 28, "F");
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      doc.setTextColor(...COL.headerText);
-      doc.text("PNP CRM", margin, 11);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8);
-      doc.setTextColor(148, 163, 184);
-      doc.text("FINANCIAL LEDGER REPORT", pageW - margin, 11, { align: "right" });
+      doc.rect(0, 0, pageW, 40, "F"); 
+
+      const loadImg = (url: string): Promise<HTMLImageElement> => new Promise((res) => {
+        const img = new Image();
+        img.onload = () => res(img);
+        img.src = url;
+      });
+
+      try {
+        const logo = await loadImg("/Gemini_Generated_Image_5m69l15m69l15m69.png");
+        const logoW = 15; // Increased logo size for better visibility
+        const logoH = (logo.height * logoW) / logo.width;
+        
+        // Brand Name Text Split (White PNP, Light Indigo Hardware)
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(16);
+        const t1 = "PNP ";
+        const t2 = "Hardware";
+        const w1 = doc.getTextWidth(t1);
+        const w2 = doc.getTextWidth(t2);
+        
+        const totalW = logoW + 5 + w1 + w2;
+        const startX = (pageW - totalW) / 2;
+        const logoY = 10;
+
+        doc.addImage(logo, "PNG", startX, logoY, logoW, logoH);
+        
+        // "PNP" in White
+        doc.setTextColor(255, 255, 255);
+        doc.text(t1, startX + logoW + 5, logoY + (logoH / 2) + 1.5);
+        
+        // "Hardware" in Vibrant Indigo
+        doc.setTextColor(165, 180, 252); 
+        doc.text(t2, startX + logoW + 5 + w1, logoY + (logoH / 2) + 1.5);
+        
+        // Report Title
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(148, 163, 184);
+        const titleText = "FINANCIAL LEDGER REPORT";
+        doc.text(titleText, pageW / 2, 32, { align: "center" });
+
+      } catch (e) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(16);
+        doc.setTextColor(255, 255, 255);
+        doc.text("PNP Hardware", pageW / 2, 18, { align: "center" });
+        doc.setFontSize(9);
+        doc.setTextColor(148, 163, 184);
+        doc.text("FINANCIAL LEDGER REPORT", pageW / 2, 28, { align: "center" });
+      }
 
       doc.setFillColor(...COL.accent);
-      doc.rect(0, 28, pageW, 1.5, "F");
+      doc.rect(0, 40, pageW, 1.5, "F");
 
       doc.setFillColor(...COL.sectionBg);
-      doc.rect(0, 29.5, pageW, 14, "F"); // Reduced height (14mm)
+      doc.rect(0, 41.5, pageW, 14, "F"); 
       doc.setFont("helvetica", "bold");
       doc.setFontSize(9);
       doc.setTextColor(...COL.body);
-      doc.text(`Client: ${customer.customerName}`, margin, 36);
+      doc.text(`Client: ${customer.customerName}`, margin, 48);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
       doc.setTextColor(...COL.muted);
-      doc.text(`Project: ${customer.project?.name || "Standard Project"}`, margin, 40);
-      doc.text(`Generated: ${exportDateLabel}`, pageW - margin, 40, { align: "right" });
+      doc.text(`Project: ${customer.project?.name || "Standard Project"}`, margin, 52);
+      doc.text(`Generated: ${exportDateLabel}`, pageW - margin, 52, { align: "right" });
 
-      let curY = 52; // Adjusted starting Y
+      let curY = 64; 
       doc.setFont("helvetica", "bold");
       doc.setFontSize(8);
       doc.setTextColor(...COL.accent);
