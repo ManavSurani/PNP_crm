@@ -65,7 +65,7 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [logs, setLogs] = useState<FinancialLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -109,23 +109,23 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
   const totalReceived = useMemo(() => customer?.transactions?.filter(t => t.type === "RECEIVED").reduce((sum, t) => sum + t.amount, 0) || 0, [customer]);
   const totalExpense = useMemo(() => customer?.transactions?.filter(t => t.type === "EXPENSE" && t.source !== "DESIGN").reduce((sum, t) => sum + t.amount, 0) || 0, [customer]);
   const initialDeal = customer?.initialDealAmount || 0;
-  
+
   // NEW ACCOUNTING LOGIC
   const currentTotal = initialDeal + totalExpense;
   const remainingDue = Math.max(0, currentTotal - totalReceived);
   const paymentProgress = currentTotal > 0 ? (totalReceived / currentTotal) * 100 : 0;
 
-  const filteredIncome = useMemo(() => 
-    customer?.transactions?.filter(t => t.type === "RECEIVED" && 
+  const filteredIncome = useMemo(() =>
+    customer?.transactions?.filter(t => t.type === "RECEIVED" &&
       (t.paidTo.toLowerCase().includes(searchQuery.toLowerCase()) || (t.description || "").toLowerCase().includes(searchQuery.toLowerCase()))
     ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) || []
-  , [customer, searchQuery]);
+    , [customer, searchQuery]);
 
-  const filteredExpense = useMemo(() => 
-    customer?.transactions?.filter(t => t.type === "EXPENSE" && t.source !== "DESIGN" && 
+  const filteredExpense = useMemo(() =>
+    customer?.transactions?.filter(t => t.type === "EXPENSE" && t.source !== "DESIGN" &&
       (t.paidTo.toLowerCase().includes(searchQuery.toLowerCase()) || (t.description || "").toLowerCase().includes(searchQuery.toLowerCase()))
     ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) || []
-  , [customer, searchQuery]);
+    , [customer, searchQuery]);
 
   const handleDeleteTransaction = async (transId: string) => {
     if (!confirm("Are you sure you want to delete this transaction?")) return;
@@ -192,7 +192,7 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
 
       // --- Header Bar ---
       doc.setFillColor(...COL.headerBg);
-      doc.rect(0, 0, pageW, 40, "F"); 
+      doc.rect(0, 0, pageW, 40, "F");
 
       const loadImg = (url: string): Promise<HTMLImageElement> => new Promise((res) => {
         const img = new Image();
@@ -204,29 +204,29 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
         const logo = await loadImg("/Gemini_Generated_Image_5m69l15m69l15m69.png");
         const logoW = 15; // Increased logo size for better visibility
         const logoH = (logo.height * logoW) / logo.width;
-        
+
         // Brand Name Text Split (White PNP, Light Indigo Hardware)
         doc.setFont("helvetica", "bold");
         doc.setFontSize(16);
         const t1 = "PNP ";
-        const t2 = "Hardware";
+        const t2 = "INTERIORS";
         const w1 = doc.getTextWidth(t1);
         const w2 = doc.getTextWidth(t2);
-        
+
         const totalW = logoW + 5 + w1 + w2;
         const startX = (pageW - totalW) / 2;
         const logoY = 10;
 
         doc.addImage(logo, "PNG", startX, logoY, logoW, logoH);
-        
+
         // "PNP" in White
         doc.setTextColor(255, 255, 255);
         doc.text(t1, startX + logoW + 5, logoY + (logoH / 2) + 1.5);
-        
+
         // "Hardware" in Vibrant Indigo
-        doc.setTextColor(165, 180, 252); 
+        doc.setTextColor(165, 180, 252);
         doc.text(t2, startX + logoW + 5 + w1, logoY + (logoH / 2) + 1.5);
-        
+
         // Report Title
         doc.setFont("helvetica", "normal");
         doc.setFontSize(9);
@@ -238,7 +238,7 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
         doc.setFont("helvetica", "bold");
         doc.setFontSize(16);
         doc.setTextColor(255, 255, 255);
-        doc.text("PNP Hardware", pageW / 2, 18, { align: "center" });
+        doc.text("PNP Interior", pageW / 2, 18, { align: "center" });
         doc.setFontSize(9);
         doc.setTextColor(148, 163, 184);
         doc.text("FINANCIAL LEDGER REPORT", pageW / 2, 28, { align: "center" });
@@ -248,7 +248,7 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
       doc.rect(0, 40, pageW, 1.5, "F");
 
       doc.setFillColor(...COL.sectionBg);
-      doc.rect(0, 41.5, pageW, 14, "F"); 
+      doc.rect(0, 41.5, pageW, 14, "F");
       doc.setFont("helvetica", "bold");
       doc.setFontSize(9);
       doc.setTextColor(...COL.body);
@@ -259,7 +259,7 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
       doc.text(`Project: ${customer.project?.name || "Standard Project"}`, margin, 52);
       doc.text(`Generated: ${exportDateLabel}`, pageW - margin, 52, { align: "right" });
 
-      let curY = 64; 
+      let curY = 64;
       doc.setFont("helvetica", "bold");
       doc.setFontSize(8);
       doc.setTextColor(...COL.accent);
@@ -349,7 +349,7 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
       });
 
       curY = (doc as any).lastAutoTable.finalY + 8;
-      
+
       // FINAL SUMMARY BOX
       if (curY > 200) { doc.addPage(); curY = 16; }
 
@@ -362,7 +362,7 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
       const boxH = 45;
       doc.setFillColor(...COL.sectionBg);
       doc.roundedRect(margin, curY, contentW, boxH, 3, 3, "F");
-      
+
       let ry = curY + 10;
       const row = (label: string, val: string, c: [number, number, number], bold = false) => {
         doc.setFont("helvetica", bold ? "bold" : "normal");
@@ -378,7 +378,7 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
       row("Add: Project Expenses", fmt(totalExpense), COL.red);
       row("Current Project Total", fmt(currentTotal), COL.body, true);
       row("Less: Client Payments", fmt(totalReceived), COL.green);
-      
+
       doc.setDrawColor(...COL.border);
       doc.line(margin + 8, ry - 4, pageW - margin - 8, ry - 4);
 
@@ -404,13 +404,13 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
 
   return (
     <div className="min-h-screen bg-slate-50/30">
-      
+
       {/* --- COMPACT STICKY SUMMARY HEADER --- */}
-      <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-3 shadow-sm">
-        <div className="max-w-[1600px] mx-auto grid grid-cols-[auto_1fr_auto] items-center gap-4">
-          
+      <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200 px-4 md:px-6 py-3 shadow-sm">
+        <div className="max-w-[1600px] mx-auto flex items-center justify-between gap-4">
+
           {/* LEFT: Back + Customer Info */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 flex-shrink-0">
             <Link href={`/customers/${id}`} className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-400">
               <ArrowLeft className="h-4 w-4" />
             </Link>
@@ -427,15 +427,15 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
             </div>
           </div>
 
-          {/* CENTER: Summary widgets — perfectly centered via Grid */}
-          <div className="hidden lg:flex items-center justify-center gap-1">
-            <SummaryWidget label="Initial Deal"  value={initialDeal}    color="text-slate-500" />
+          {/* CENTER: Summary widgets — perfectly centered */}
+          <div className="hidden xl:flex items-center justify-center gap-1 flex-1">
+            <SummaryWidget label="Initial Deal" value={initialDeal} color="text-slate-500" />
             <div className="h-8 w-px bg-slate-200 mx-2" />
-            <SummaryWidget label="Expenses"      value={totalExpense}   color="text-rose-600" prefix="+" />
+            <SummaryWidget label="Expenses" value={totalExpense} color="text-rose-600" prefix="+" />
             <div className="h-8 w-px bg-slate-200 mx-2" />
-            <SummaryWidget label="Current Total" value={currentTotal}   color="text-slate-900" isBold />
+            <SummaryWidget label="Current Total" value={currentTotal} color="text-slate-900" isBold />
             <div className="h-8 w-px bg-slate-200 mx-2" />
-            <SummaryWidget label="Client Paid"   value={totalReceived}  color="text-emerald-600" />
+            <SummaryWidget label="Client Paid" value={totalReceived} color="text-emerald-600" />
             <div className="h-8 w-px bg-slate-200 mx-2" />
             <SummaryWidget
               label="Remaining Due"
@@ -446,23 +446,23 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
           </div>
 
           {/* RIGHT: Action buttons — fixed group */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0 flex-nowrap">
             <button
               onClick={() => { setModalType("RECEIVED"); setEditingTransaction(null); setShowTransModal(true); }}
-              className="h-9 px-4 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-emerald-700 transition-all shadow-md flex items-center gap-2"
+              className="h-9 px-2.5 md:px-4 bg-emerald-600 text-white text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-emerald-700 transition-all shadow-md flex items-center gap-1.5 md:gap-2 whitespace-nowrap"
             >
               <Plus className="h-3 w-3" /> Income
             </button>
             <button
               onClick={() => { setModalType("EXPENSE"); setEditingTransaction(null); setShowTransModal(true); }}
-              className="h-9 px-4 bg-rose-600 text-white text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-rose-700 transition-all shadow-md flex items-center gap-2"
+              className="h-9 px-2.5 md:px-4 bg-rose-600 text-white text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-rose-700 transition-all shadow-md flex items-center gap-1.5 md:gap-2 whitespace-nowrap"
             >
               <Plus className="h-3 w-3" /> Expense
             </button>
             <button
               onClick={handleExportPDF}
               disabled={isExportingPDF}
-              className="h-9 px-4 bg-white text-slate-700 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-slate-50 transition-all border border-slate-200 flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="h-9 px-2.5 md:px-4 bg-white text-slate-700 text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-slate-50 transition-all border border-slate-200 flex items-center gap-1.5 md:gap-2 disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap shadow-sm"
             >
               {isExportingPDF ? (
                 <>
@@ -481,7 +481,7 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
       </div>
 
       <div className="max-w-[1600px] mx-auto px-6 py-6">
-        
+
         {/* --- INITIAL DEAL SETUP / EDIT --- */}
         {initialDeal === 0 ? (
           <div className="mb-8 bg-white border-2 border-dashed border-slate-200 rounded-2xl p-12 text-center max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -490,7 +490,7 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
             </div>
             <h2 className="text-xl font-black text-slate-900 mb-2 tracking-tight">Setup Project Finance</h2>
             <p className="text-slate-500 text-sm mb-8 font-medium">Enter the final agreed deal amount to activate the accounting workspace.</p>
-            <button 
+            <button
               onClick={() => setShowDealModal(true)}
               className="bg-slate-900 text-white px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/20"
             >
@@ -499,15 +499,15 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
           </div>
         ) : (
           <div className="grid grid-cols-12 gap-6">
-            
+
             {/* --- MAIN LEDGER COLUMNS --- */}
             <div className="col-span-12 lg:col-span-9 space-y-6">
-              
+
               {/* SEARCH & FILTERS */}
               <div className="flex items-center gap-4 bg-white p-2 rounded-xl border border-slate-200 shadow-sm">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <input 
+                  <input
                     placeholder="Search transactions..."
                     className="w-full pl-10 pr-4 py-2 bg-slate-50 border-none text-xs font-bold outline-none rounded-lg focus:ring-2 focus:ring-slate-900/5 transition-all"
                     value={searchQuery}
@@ -515,14 +515,14 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
                   />
                 </div>
                 <div className="flex items-center gap-1 pr-1">
-                   <button onClick={() => setShowDealModal(true)} className="h-8 px-3 text-[10px] font-black uppercase text-slate-400 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-all flex items-center gap-1.5">
-                     <Pencil className="h-3 w-3" /> Edit Deal
-                   </button>
+                  <button onClick={() => setShowDealModal(true)} className="h-8 px-3 text-[10px] font-black uppercase text-slate-400 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-all flex items-center gap-1.5">
+                    <Pencil className="h-3 w-3" /> Edit Deal
+                  </button>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
+
                 {/* --- INCOME SECTION --- */}
                 <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full">
                   <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
@@ -618,50 +618,50 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
             {/* --- RIGHT SIDEBAR: HISTORY LOGS --- */}
             <div className="col-span-12 lg:col-span-3 space-y-6">
               <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col max-h-[calc(100vh-180px)]">
-                 <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
-                   <History className="h-3.5 w-3.5 text-slate-400" />
-                   <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Financial History</h3>
-                 </div>
-                 <div className="flex-1 overflow-auto p-4 compact-scrollbar">
-                    <div className="space-y-6 relative before:absolute before:left-2 before:top-2 before:bottom-2 before:w-px before:bg-slate-100">
-                        {logs.map((log, i) => {
-                          const isDeal = log.action === "DEAL_UPDATE";
-                          const isIncome = log.action === "INCOME_ADDED" || (log.action === "TRANSACTION_UPDATED" && log.details.includes("Income"));
-                          const isExpense = log.action === "EXPENSE_ADDED" || log.action === "AUTO_EXPENSE_GENERATED" || (log.action === "TRANSACTION_UPDATED" && log.details.includes("Expense"));
-                          
-                          let actionText = log.details;
-                          if (log.action === "DEAL_UPDATE") actionText = `Project deal initialized — ₹${(log.amount || 0).toLocaleString()}`;
-                          if (log.action === "INCOME_ADDED") actionText = `Client payment received — ₹${(log.amount || 0).toLocaleString()}`;
-                          if (log.action === "EXPENSE_ADDED") actionText = `Project expense added — ₹${(log.amount || 0).toLocaleString()}`;
-                          if (log.action === "AUTO_EXPENSE_GENERATED") actionText = `System adjustment generated — ₹${(log.amount || 0).toLocaleString()}`;
+                <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
+                  <History className="h-3.5 w-3.5 text-slate-400" />
+                  <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Financial History</h3>
+                </div>
+                <div className="flex-1 overflow-auto p-4 compact-scrollbar">
+                  <div className="space-y-6 relative before:absolute before:left-2 before:top-2 before:bottom-2 before:w-px before:bg-slate-100">
+                    {logs.map((log, i) => {
+                      const isDeal = log.action === "DEAL_UPDATE";
+                      const isIncome = log.action === "INCOME_ADDED" || (log.action === "TRANSACTION_UPDATED" && log.details.includes("Income"));
+                      const isExpense = log.action === "EXPENSE_ADDED" || log.action === "AUTO_EXPENSE_GENERATED" || (log.action === "TRANSACTION_UPDATED" && log.details.includes("Expense"));
 
-                          return (
-                            <div key={log.id} className="relative flex items-start gap-4 animate-in fade-in slide-in-from-right-2 duration-300" style={{ animationDelay: `${i * 50}ms` }}>
-                               <div className={cn(
-                                 "h-4 w-4 rounded-full border-2 border-white ring-1 ring-slate-100 flex items-center justify-center shrink-0 relative z-10",
-                                 isDeal ? "bg-indigo-500" : 
-                                 isIncome ? "bg-emerald-500" :
-                                 isExpense ? "bg-rose-500" : "bg-slate-400"
-                               )}>
-                                  {isDeal ? <Pencil className="h-1.5 w-1.5 text-white" /> : 
-                                   isIncome ? <TrendingUp className="h-2 w-2 text-white" /> : 
-                                   isExpense ? <TrendingDown className="h-2 w-2 text-white" /> : <Plus className="h-1.5 w-1.5 text-white" />}
-                               </div>
-                               <div className="flex-1">
-                                  <p className="text-[10px] font-black text-slate-800 leading-tight mb-0.5">{actionText}</p>
-                                  <p className="text-[8px] font-bold text-slate-400 uppercase">{format(new Date(log.createdAt), "dd MMM, HH:mm")}</p>
-                               </div>
-                            </div>
-                          );
-                        })}
-                       {logs.length === 0 && (
-                         <div className="text-center py-10 opacity-30">
-                           <Info className="h-8 w-8 mx-auto mb-2" />
-                           <p className="text-[9px] font-black uppercase tracking-widest">No History</p>
-                         </div>
-                       )}
-                    </div>
-                 </div>
+                      let actionText = log.details;
+                      if (log.action === "DEAL_UPDATE") actionText = `Project deal initialized — ₹${(log.amount || 0).toLocaleString()}`;
+                      if (log.action === "INCOME_ADDED") actionText = `Client payment received — ₹${(log.amount || 0).toLocaleString()}`;
+                      if (log.action === "EXPENSE_ADDED") actionText = `Project expense added — ₹${(log.amount || 0).toLocaleString()}`;
+                      if (log.action === "AUTO_EXPENSE_GENERATED") actionText = `System adjustment generated — ₹${(log.amount || 0).toLocaleString()}`;
+
+                      return (
+                        <div key={log.id} className="relative flex items-start gap-4 animate-in fade-in slide-in-from-right-2 duration-300" style={{ animationDelay: `${i * 50}ms` }}>
+                          <div className={cn(
+                            "h-4 w-4 rounded-full border-2 border-white ring-1 ring-slate-100 flex items-center justify-center shrink-0 relative z-10",
+                            isDeal ? "bg-indigo-500" :
+                              isIncome ? "bg-emerald-500" :
+                                isExpense ? "bg-rose-500" : "bg-slate-400"
+                          )}>
+                            {isDeal ? <Pencil className="h-1.5 w-1.5 text-white" /> :
+                              isIncome ? <TrendingUp className="h-2 w-2 text-white" /> :
+                                isExpense ? <TrendingDown className="h-2 w-2 text-white" /> : <Plus className="h-1.5 w-1.5 text-white" />}
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-[10px] font-black text-slate-800 leading-tight mb-0.5">{actionText}</p>
+                            <p className="text-[8px] font-bold text-slate-400 uppercase">{format(new Date(log.createdAt), "dd MMM, HH:mm")}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {logs.length === 0 && (
+                      <div className="text-center py-10 opacity-30">
+                        <Info className="h-8 w-8 mx-auto mb-2" />
+                        <p className="text-[9px] font-black uppercase tracking-widest">No History</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -670,20 +670,20 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
 
       {/* --- MODALS --- */}
       {showTransModal && (
-        <TransactionModal 
-          type={modalType} 
-          leadId={id} 
+        <TransactionModal
+          type={modalType}
+          leadId={id}
           customerName={customer?.customerName}
           editingData={editingTransaction}
           initialDeal={initialDeal}
-          onClose={() => setShowTransModal(false)} 
-          onSuccess={() => { fetchData(); fetchLogs(); }} 
+          onClose={() => setShowTransModal(false)}
+          onSuccess={() => { fetchData(); fetchLogs(); }}
         />
       )}
 
       {showDealModal && (
-        <DealAmountModal 
-          leadId={id} 
+        <DealAmountModal
+          leadId={id}
           currentAmount={customer?.initialDealAmount || 0}
           currentNotes={customer?.initialDealNotes || ""}
           onClose={() => setShowDealModal(false)}
@@ -719,13 +719,13 @@ function TransactionModal({ type, leadId, customerName, editingData, onClose, on
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const isIncome = type === "RECEIVED";
     if (!amount || !date || (isIncome && !paidTo) || (!isIncome && !description)) {
       setErr(isIncome ? "Amount, Date and Party Name are required" : "Amount, Date and Note are required");
       return;
     }
-    
+
     setIsSaving(true);
     try {
       const url = "/api/transactions";
@@ -748,7 +748,7 @@ function TransactionModal({ type, leadId, customerName, editingData, onClose, on
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)
       });
-      
+
       if (res.ok) {
         onSuccess();
         onClose();
@@ -763,7 +763,7 @@ function TransactionModal({ type, leadId, customerName, editingData, onClose, on
     }
   };
 
-  const categories = type === "RECEIVED" 
+  const categories = type === "RECEIVED"
     ? ["Advance", "Installment", "Final Payment", "Other"]
     : ["Expense"];
 
@@ -795,7 +795,7 @@ function TransactionModal({ type, leadId, customerName, editingData, onClose, on
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Amount (₹)</label>
-              <input 
+              <input
                 type="number" value={amount} onChange={e => setAmount(e.target.value)}
                 placeholder="0"
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-black outline-none focus:ring-2 focus:ring-slate-900/5 transition-all"
@@ -803,7 +803,7 @@ function TransactionModal({ type, leadId, customerName, editingData, onClose, on
             </div>
             <div className="space-y-1">
               <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Date</label>
-              <input 
+              <input
                 type="date" value={date} onChange={e => setDate(e.target.value)}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-slate-900/5 transition-all"
               />
@@ -814,7 +814,7 @@ function TransactionModal({ type, leadId, customerName, editingData, onClose, on
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Party Name</label>
-                <input 
+                <input
                   value={paidTo} onChange={e => setPaidTo(e.target.value)}
                   placeholder="e.g. Client Name"
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-slate-900/5 transition-all"
@@ -831,14 +831,14 @@ function TransactionModal({ type, leadId, customerName, editingData, onClose, on
 
           <div className="space-y-1">
             <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Note {type === "EXPENSE" && "*"}</label>
-            <input 
+            <input
               value={description} onChange={e => setDescription(e.target.value)}
               placeholder={type === "EXPENSE" ? "Required: Details of expense..." : "Internal remark..."}
               className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-medium outline-none focus:ring-2 focus:ring-slate-900/5 transition-all"
             />
           </div>
 
-          <button 
+          <button
             type="submit" disabled={isSaving}
             className={cn(
               "w-full mt-4 py-3 rounded-xl text-white text-[10px] font-black uppercase tracking-widest shadow-xl transition-all disabled:opacity-50",
@@ -865,7 +865,7 @@ function DealAmountModal({ leadId, currentAmount, currentNotes, onClose, onSucce
       const res = await fetch(`/api/leads/${leadId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           initialDealAmount: parseFloat(amount),
           initialDealNotes: notes
         })
@@ -888,7 +888,7 @@ function DealAmountModal({ leadId, currentAmount, currentNotes, onClose, onSucce
       const res = await fetch(`/api/leads/${leadId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           initialDealAmount: 0,
           initialDealNotes: ""
         })
@@ -913,41 +913,41 @@ function DealAmountModal({ leadId, currentAmount, currentNotes, onClose, onSucce
           <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full transition-colors"><X className="h-4 w-4" /></button>
         </div>
         <div className="p-6 space-y-4">
-           <div className="space-y-1">
-             <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Final Agreed Amount (₹)</label>
-             <input 
-               type="number" value={amount} onChange={e => setAmount(e.target.value)}
-               placeholder="Enter amount..."
-               className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-lg font-black outline-none focus:ring-4 focus:ring-slate-900/5 transition-all"
-               autoFocus
-             />
-           </div>
-           <div className="space-y-1">
-             <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Deal Notes (Optional)</label>
-             <textarea 
-               value={notes} onChange={e => setNotes(e.target.value)}
-               placeholder="e.g. Inclusive of GST, Excludes electrical work..."
-               rows={3}
-               className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-medium outline-none resize-none focus:ring-4 focus:ring-slate-900/5 transition-all"
-             />
-           </div>
-           
-           <div className="flex gap-2">
-              {currentAmount > 0 && (
-                <button 
-                  onClick={handleDelete}
-                  className="p-3 text-rose-500 hover:bg-rose-50 rounded-xl transition-all border border-rose-100"
-                >
-                  <Trash2 className="h-5 w-5" />
-                </button>
-              )}
-              <button 
-                onClick={handleSave} disabled={isSaving}
-                className="flex-1 bg-slate-900 text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-slate-900/20 disabled:opacity-50"
+          <div className="space-y-1">
+            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Final Agreed Amount (₹)</label>
+            <input
+              type="number" value={amount} onChange={e => setAmount(e.target.value)}
+              placeholder="Enter amount..."
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-lg font-black outline-none focus:ring-4 focus:ring-slate-900/5 transition-all"
+              autoFocus
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Deal Notes (Optional)</label>
+            <textarea
+              value={notes} onChange={e => setNotes(e.target.value)}
+              placeholder="e.g. Inclusive of GST, Excludes electrical work..."
+              rows={3}
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-medium outline-none resize-none focus:ring-4 focus:ring-slate-900/5 transition-all"
+            />
+          </div>
+
+          <div className="flex gap-2">
+            {currentAmount > 0 && (
+              <button
+                onClick={handleDelete}
+                className="p-3 text-rose-500 hover:bg-rose-50 rounded-xl transition-all border border-rose-100"
               >
-                {isSaving ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : "Save Deal Amount"}
+                <Trash2 className="h-5 w-5" />
               </button>
-           </div>
+            )}
+            <button
+              onClick={handleSave} disabled={isSaving}
+              className="flex-1 bg-slate-900 text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-slate-900/20 disabled:opacity-50"
+            >
+              {isSaving ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : "Save Deal Amount"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
