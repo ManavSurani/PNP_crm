@@ -67,6 +67,8 @@ model SystemSetting {
   id        String   @id @default("global")
   sessionMaxAge Int  @default(2592000) // Default 30 days in seconds
   whatsappDispatchNumber String?
+  analyticsPin String? // Hashed PIN for Business Analytics
+  isAnalyticsPinEnabled Boolean @default(false)
   updatedAt DateTime @updatedAt
 }
 

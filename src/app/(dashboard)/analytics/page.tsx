@@ -10,21 +10,24 @@ import {
   Activity, Briefcase, Calculator, Building
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import SecurityWrapper from "@/components/analytics/SecurityWrapper";
 
-export default function BusinessAnalyticsPage() {
-  const router = useRouter();
+function AnalyticsContent() {
   const [data, setData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
-  const [isSaving, setIsSaving] = useState(false);
 
   const fetchAnalytics = async () => {
     setIsLoading(true);
     try {
       const res = await fetch("/api/analytics");
       const d = await res.json();
-      setData(d);
+      if (res.ok) {
+        setData(d);
+      } else {
+        console.error("Fetch failed:", d.error);
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -45,7 +48,11 @@ export default function BusinessAnalyticsPage() {
     );
   }
 
-  if (!data) return null;
+  if (!data) return (
+    <div className="flex h-[70vh] items-center justify-center">
+      <p className="text-slate-400 text-sm font-medium">Failed to load analytics data.</p>
+    </div>
+  );
 
   const { summary, customerFinancials, activityFeed } = data;
 
@@ -230,5 +237,13 @@ export default function BusinessAnalyticsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function BusinessAnalyticsPage() {
+  return (
+    <SecurityWrapper>
+      <AnalyticsContent />
+    </SecurityWrapper>
   );
 }

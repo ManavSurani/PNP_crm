@@ -5,8 +5,9 @@ import { useSession } from "next-auth/react";
 import { 
   User, Shield, Smartphone, LogOut, Loader2, Save, 
   Key, Globe, Clock, Monitor, RefreshCcw, AlertCircle,
-  Zap, Check, Settings as SettingsIcon, Database
+  Zap, Check, Settings as SettingsIcon, Database, Lock
 } from "lucide-react";
+import PinModal from "@/components/analytics/PinModal";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
@@ -36,6 +37,15 @@ export default function SettingsPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showRestoreModal, setShowRestoreModal] = useState(false);
 
+  // Analytics PIN States
+  const [isAnalyticsPinEnabled, setIsAnalyticsPinEnabled] = useState(false);
+  const [hasPinSetup, setHasPinSetup] = useState(false);
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pinModalMode, setPinModalMode] = useState<"verify" | "setup" | "confirm">("verify");
+  const [tempPin, setTempPin] = useState("");
+  const [verifiedCurrentPin, setVerifiedCurrentPin] = useState("");
+  const [pinError, setPinError] = useState("");
+
   useEffect(() => {
     if (session?.user) {
       setProfileForm(prev => ({
@@ -62,6 +72,8 @@ export default function SettingsPage() {
       const data = await res.json();
       if (data.sessionMaxAge) setSessionTimeout(data.sessionMaxAge);
       if (data.whatsappDispatchNumber) setDispatchNumber(data.whatsappDispatchNumber);
+      setIsAnalyticsPinEnabled(data.isAnalyticsPinEnabled);
+      setHasPinSetup(!!data.analyticsPin);
     } catch (err) { console.error(err); }
   };
 
@@ -135,6 +147,88 @@ export default function SettingsPage() {
       const res = await fetch(`/api/settings/sessions?all=true`, { method: "DELETE" });
       if (res.ok) fetchSessions();
     } catch (err) { console.error(err); }
+  };
+
+  const handleTogglePinProtection = async (enabled: boolean) => {
+    if (enabled && !hasPinSetup) {
+      setPinModalMode("setup");
+      setShowPinModal(true);
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "analytics-security", isAnalyticsPinEnabled: enabled }),
+      });
+      if (res.ok) {
+        setIsAnalyticsPinEnabled(enabled);
+        setMessage({ type: "success", text: `PIN Protection ${enabled ? "enabled" : "disabled"}` });
+      }
+    } catch (err) { console.error(err); }
+    finally { setIsLoading(false); }
+  };
+
+  const handlePinModalSuccess = async (pin: string) => {
+    setPinError("");
+    
+    if (pinModalMode === "verify") {
+      // Verify current PIN before allowing change
+      setIsLoading(true);
+      try {
+        const res = await fetch("/api/analytics/verify-pin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pin }),
+        });
+        if (res.ok) {
+          setVerifiedCurrentPin(pin);
+          setPinModalMode("setup");
+        } else {
+          setPinError("Current PIN is incorrect");
+        }
+      } catch (e) { setPinError("Connection error"); }
+      finally { setIsLoading(false); }
+      return;
+    }
+
+    if (pinModalMode === "setup") {
+      setTempPin(pin);
+      setPinModalMode("confirm");
+      return;
+    }
+
+    if (pinModalMode === "confirm") {
+      if (pin !== tempPin) {
+        setPinError("PINs do not match");
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const res = await fetch("/api/settings", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            type: "analytics-security", 
+            pin, 
+            currentPin: verifiedCurrentPin 
+          }),
+        });
+        if (res.ok) {
+          setMessage({ type: "success", text: hasPinSetup ? "Security PIN updated successfully" : "Security PIN configured" });
+          setHasPinSetup(true);
+          setIsAnalyticsPinEnabled(true);
+          setShowPinModal(false);
+          setVerifiedCurrentPin("");
+        } else {
+          setPinError("Failed to save PIN");
+        }
+      } catch (e) { setPinError("Connection error"); }
+      finally { setIsLoading(false); }
+    }
   };
 
   const handleCreateBackup = async () => {
@@ -481,7 +575,52 @@ export default function SettingsPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Analytics PIN Security */}
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                  <h2 className="text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                    <Lock className="h-4 w-4 text-primary" /> Business Analytics Security
+                  </h2>
+                </div>
+                <div className="p-8 space-y-6">
+                   <div className="flex items-center justify-between p-6 bg-slate-50 rounded-xl border border-slate-100">
+                      <div className="space-y-1">
+                        <p className="text-sm font-bold text-slate-900">PIN Protection</p>
+                        <p className="text-[10px] text-slate-500 font-medium leading-relaxed max-w-xs uppercase tracking-wider">
+                          Require a 4-digit PIN to access Business Analytics.
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        {hasPinSetup && (
+                          <button 
+                            onClick={() => {
+                              setPinModalMode("verify");
+                              setShowPinModal(true);
+                            }}
+                            className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline"
+                          >
+                            Change PIN
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleTogglePinProtection(!isAnalyticsPinEnabled)}
+                          className={cn(
+                            "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+                            isAnalyticsPinEnabled ? "bg-primary" : "bg-slate-200"
+                          )}
+                        >
+                          <span className={cn(
+                            "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                            isAnalyticsPinEnabled ? "translate-x-5" : "translate-x-0"
+                          )} />
+                        </button>
+                      </div>
+                   </div>
+                </div>
+              </div>
             </div>
+
           )}
 
           {activeTab === "backup" && (
@@ -626,6 +765,22 @@ export default function SettingsPage() {
           <h2 className="text-xl font-bold text-slate-900 mt-6 tracking-tight">Restoring Backup...</h2>
           <p className="text-slate-500 text-sm mt-2">Please do not close this window.</p>
         </div>
+      )}
+
+      {showPinModal && (
+        <PinModal
+          title={pinModalMode === "verify" ? "Current Security PIN" : pinModalMode === "setup" ? "New Security PIN" : "Confirm New PIN"}
+          subtitle={pinModalMode === "verify" ? "Enter your current PIN to continue." : pinModalMode === "setup" ? "Create a 4-digit security PIN." : "Re-enter your new PIN to confirm."}
+          mode={pinModalMode}
+          onSuccess={handlePinModalSuccess}
+          onCancel={() => {
+            setShowPinModal(false);
+            setVerifiedCurrentPin("");
+            setPinError("");
+          }}
+          isLoading={isLoading}
+          error={pinError}
+        />
       )}
     </div>
   );
