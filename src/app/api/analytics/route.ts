@@ -7,7 +7,7 @@ export async function GET() {
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const [leads, globalTransactions] = await Promise.all([
+    const stats = await Promise.all([
       prisma.lead.findMany({
         where: { initialDealAmount: { gt: 0 }, isCancelled: false } as any,
         include: {
@@ -18,8 +18,15 @@ export async function GET() {
       prisma.leadTransaction.findMany({
         where: { leadId: null },
         orderBy: { date: "desc" }
+      }),
+      prisma.leadTransaction.aggregate({
+        where: { type: "EXPENSE" },
+        _sum: { amount: true }
       })
     ]);
+
+    const leads = stats[0] as any[];
+    const globalTransactions = stats[1] as any[];
 
     let totalBusinessValue = 0;
     let totalReceived = 0;
@@ -35,24 +42,31 @@ export async function GET() {
         .filter(t => t.type === "RECEIVED")
         .reduce((sum, t) => sum + t.amount, 0);
       
-      // Design Expenses (Design Expense source)
       const designCost = transactions
-        .filter(t => t.source === "DESIGN" && t.type === "EXPENSE")
+        .filter(t => t.source === "DESIGN" && t.type === "EXPENSE" && t.category !== "Adjustment")
         .reduce((sum, t) => sum + t.amount, 0);
+      
+      const projectExpenses = transactions
+        .filter(t => t.source !== "DESIGN" && t.type === "EXPENSE" && t.category !== "Adjustment")
+        .reduce((sum, t) => sum + t.amount, 0);
+      
+      const currentTotal = dealAmount + projectExpenses;
       
       // Explicit Losses (Adjustments)
       const adjustments = transactions
         .filter(t => t.type === "EXPENSE" && t.category === "Adjustment")
         .reduce((sum, t) => sum + t.amount, 0);
       
-      const remainingDue = Math.max(0, dealAmount - received);
+      const remainingDue = Math.max(0, currentTotal - received);
       
       const hasFinalPayment = transactions.some(t => 
         t.type === "RECEIVED" && t.category === "Final Payment"
       );
 
       const unpaidLoss = hasFinalPayment && remainingDue > 0 ? remainingDue : 0;
-      const lossAmount = unpaidLoss + adjustments;
+      
+      // Use the higher of the two to avoid double-counting if an adjustment was already recorded for the unpaid due
+      const lossAmount = Math.max(unpaidLoss, adjustments);
       const isLoss = lossAmount > 0;
 
       // Profit = Deal - (All Project Expenses) - (Unpaid money we won't get)
@@ -61,11 +75,11 @@ export async function GET() {
       // Status Logic
       let status = "Pending";
       if (isLoss) status = "Loss";
-      else if (received >= dealAmount && dealAmount > 0) status = "Paid";
+      else if (received >= currentTotal && currentTotal > 0) status = "Paid";
       else if (received > 0) status = "Partial";
       else status = "Pending";
-
-      if (received > dealAmount && dealAmount > 0) status = "Overpaid";
+      
+      if (received > currentTotal && currentTotal > 0) status = "Overpaid";
 
       // Aggregate
       totalBusinessValue += dealAmount;
@@ -80,7 +94,7 @@ export async function GET() {
         projectName: lead.project?.name || "N/A",
         dealAmount,
         totalExpenses: designCost,
-        currentTotal: dealAmount,
+        currentTotal,
         clientPaid: received,
         remainingDue,
         profit,
@@ -90,12 +104,16 @@ export async function GET() {
       };
     });
 
+
     const totalGlobalExpenses = globalTransactions
       .filter((t: any) => t.type === "EXPENSE")
       .reduce((sum: number, t: any) => sum + t.amount, 0);
 
     // Business Net Profit = Sum of all customer profits - Global Business Overheads
     const globalProfit = customerFinancials.reduce((sum, f) => sum + f.profit, 0) - totalGlobalExpenses;
+
+    const totalBurn = (stats[2] as any)._sum.amount || 0;
+    const efficiency = totalReceived > 0 ? ((globalProfit / totalReceived) * 100).toFixed(1) : "0";
 
 
     // Activity Feed (Simplified: last 20 transactions across all)
@@ -130,7 +148,9 @@ export async function GET() {
         totalLoss,
         totalGlobalExpenses,
         globalProfit,
-        totalDesignExpenses
+        totalDesignExpenses,
+        totalBurn,
+        efficiency
       },
       customerFinancials,
       activityFeed,

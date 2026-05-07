@@ -18,13 +18,14 @@ export async function GET(request: Request) {
           }
         }
       },
-      orderBy: { scheduledDate: "asc" },
+      orderBy: { nextCallDate: "asc" },
       select: {
         id: true,
         attemptNumber: true,
         scheduledDate: true,
         nextCallDate: true,
         nextCallTime: true,
+        isLongDistance: true,
         leadId: true,
         lead: {
           select: { 
@@ -72,7 +73,8 @@ export async function POST(request: Request) {
     const { 
       leadId, outcome, noteGiven, pickedStatus, cancelReason, 
       followUpDate, followUpTime,
-      meetingAddress, meetingDate, meetingTime, meetingNotes
+      meetingAddress, meetingDate, meetingTime, meetingNotes,
+      isLongDistance
     } = body;
 
     const result = await prisma.$transaction(async (tx) => {
@@ -165,6 +167,7 @@ export async function POST(request: Request) {
           noteGiven: noteGiven || null,
           nextCallDate: scheduledCallDate,
           nextCallTime: scheduledCallTime,
+          isLongDistance: !!isLongDistance,
           completedDate: new Date()
         }
       });
@@ -185,7 +188,8 @@ export async function POST(request: Request) {
             nextCallDate: scheduledCallDate,
             nextCallTime: scheduledCallTime,
             noteGiven: null,
-            completedDate: null
+            completedDate: null,
+            isLongDistance: !!isLongDistance
           }
         });
       }

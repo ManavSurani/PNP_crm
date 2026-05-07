@@ -55,7 +55,10 @@ export async function GET(request: Request) {
       where: {
         status: "SCHEDULED",
         lead: {
-          isCancelled: false
+          isCancelled: false,
+          status: {
+            not: "WON_ORDER"
+          }
         }
       },
       orderBy: { createdAt: "desc" },

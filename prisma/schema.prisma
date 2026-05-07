@@ -3,6 +3,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../src/generated/client"
 }
 
 datasource db {
@@ -171,6 +172,7 @@ model FollowUp {
   noteGiven       String?
   scheduledDate   DateTime    @default(now())
   completedDate   DateTime?
+  isLongDistance  Boolean     @default(false)
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 

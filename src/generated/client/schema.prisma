@@ -1,0 +1,567 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/client"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// -----------------------------------------------------------------------------
+// MODULE: Auth & Role Management
+// -----------------------------------------------------------------------------
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("SALES_EXECUTIVE") // ADMIN, MANAGER, SALES_EXECUTIVE, etc.
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // NextAuth Relations
+  accounts Account[]
+  sessions Session[]
+
+  assignedLeads Lead[]
+  executionLogs ExecutionLog[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Device tracking
+  userAgent  String?
+  ipAddress  String?
+  lastActive DateTime @default(now())
+}
+
+model SystemSetting {
+  id                     String   @id @default("global")
+  sessionMaxAge          Int      @default(2592000) // Default 30 days in seconds
+  whatsappDispatchNumber String?
+  primaryCity            String   @default("Ahmedabad")
+  analyticsPin           String? // Hashed PIN for Business Analytics
+  isAnalyticsPinEnabled  Boolean  @default(false)
+  updatedAt              DateTime @updatedAt
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+// -----------------------------------------------------------------------------
+// MODULE: Leads & Inquiry Management
+// -----------------------------------------------------------------------------
+
+model Lead {
+  id           String @id @default(uuid())
+  customerName String
+
+  contactNumber   String
+  alternateNumber String?
+  fullAddress     String?
+  inquirySource   String   @default("OTHER")
+  serviceType     String   @default("OTHER")
+  priority        String   @default("MEDIUM")
+  status          String   @default("NEW_INQUIRY")
+  assignedStaffId String?
+  assignedStaff   User?    @relation(fields: [assignedStaffId], references: [id], onDelete: SetNull)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Extra Details 
+  budgetRange        String?
+  requirementDetails String?
+  siteLocation       String?
+  landmark           String?
+  preferredVisitTime String?
+
+  // Cancellations & Reactivation
+  isCancelled      Boolean   @default(false)
+  cancelReason     String?
+  reactivatedAt    DateTime?
+  reactivationNote String?
+
+  // Relations
+  requirement       Requirement?
+  followUps         FollowUp[]
+  meetings          Meeting[]
+  quotations        Quotation[]
+  orders            Order[]
+  transactions      LeadTransaction[]
+  leadNotes         LeadNote[]
+  projectQuotations ProjectQuotation[]
+  project           Project?
+
+  // Financial System (Independent from Quotation)
+  initialDealAmount Float              @default(0)
+  initialDealNotes  String?
+  financialLogs     LeadFinancialLog[]
+
+  @@index([status])
+  @@index([isCancelled])
+  @@index([createdAt])
+  @@index([assignedStaffId])
+}
+
+model Requirement {
+  id                  String   @id @default(uuid())
+  leadId              String   @unique
+  lead                Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  propertyType        String?
+  areaSize            String?
+  numRooms            Int?
+  kitchenType         String?
+  wardrobeCount       Int?
+  tvUnitReq           Boolean  @default(false)
+  bedroomFurnitureReq Boolean  @default(false)
+  officeSetupReq      Boolean  @default(false)
+  materialPref        String?
+  finishPref          String?
+  budgetRange         String?
+  timeline            String?
+  notes               String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+// -----------------------------------------------------------------------------
+// MODULE: Call Follow-up & Notes Timeline
+// -----------------------------------------------------------------------------
+
+model FollowUp {
+  id             String    @id @default(uuid())
+  leadId         String
+  lead           Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  attemptNumber  Int       @default(1)
+  outcome        String    @default("NOT_PICKED")
+  nextCallDate   DateTime?
+  nextCallTime   String?
+  noteGiven      String?
+  scheduledDate  DateTime  @default(now())
+  completedDate  DateTime?
+  isLongDistance Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([completedDate])
+  @@index([scheduledDate])
+  @@index([leadId])
+  @@index([outcome])
+}
+
+// -----------------------------------------------------------------------------
+// MODULE: Meeting Management
+// -----------------------------------------------------------------------------
+
+model Meeting {
+  id        String   @id @default(uuid())
+  leadId    String
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  address   String
+  date      DateTime
+  time      String
+  status    String   @default("SCHEDULED")
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// -----------------------------------------------------------------------------
+// MODULE: Quotation Module
+// -----------------------------------------------------------------------------
+
+model Quotation {
+  id          String    @id @default(uuid())
+  leadId      String
+  lead        Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  quotationNo String    @unique
+  issueDate   DateTime  @default(now())
+  expiryDate  DateTime?
+
+  packageType        String @default("FULL_COMBO")
+  designCost         Float  @default(0)
+  materialCost       Float  @default(0)
+  labourCost         Float  @default(0)
+  transportCost      Float  @default(0)
+  supervisionCharges Float  @default(0)
+  siteVisitCharges   Float  @default(0)
+
+  gstPercentage Float  @default(0)
+  gstAmount     Float  @default(0)
+  discount      Float  @default(0)
+  finalTotal    Float  @default(0)
+  status        String @default("DRAFT")
+
+  workScope       String?
+  milestoneTerms  String?
+  projectTimeline String?
+
+  version Int @default(1)
+
+  items      QuotationItem[]
+  milestones QuotationMilestone[]
+  orders     Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([leadId])
+  @@index([quotationNo])
+}
+
+model QuotationItem {
+  id          String    @id @default(uuid())
+  quotationId String
+  quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  section     String    @default("GENERAL")
+  description String
+  quantity    Float     @default(1)
+  unitPrice   Float     @default(0)
+  totalPrice  Float     @default(0)
+}
+
+model QuotationMilestone {
+  id          String    @id @default(uuid())
+  quotationId String
+  quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  description String
+  percentage  Float?
+  amount      Float
+  status      String    @default("PENDING")
+  dueDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// -----------------------------------------------------------------------------
+// MODULE: Order & Production Management
+// -----------------------------------------------------------------------------
+
+model Order {
+  id     String @id @default(uuid())
+  leadId String
+  lead   Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  quotationId String?
+  quotation   Quotation? @relation(fields: [quotationId], references: [id], onDelete: SetNull)
+
+  orderNo     String @unique
+  status      String @default("DESIGN")
+  packageType String @default("FULL_COMBO")
+
+  totalAmount   Float @default(0)
+  advanceAmount Float @default(0)
+  pendingAmount Float @default(0)
+
+  startDate DateTime?
+  endDate   DateTime?
+
+  isBlocked   Boolean @default(false)
+  blockReason String?
+
+  assignments WorkerAssignment[]
+  updates     OrderUpdate[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([leadId])
+  @@index([orderNo])
+}
+
+model OrderUpdate {
+  id         String   @id @default(uuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  fromStatus String?
+  toStatus   String
+  note       String?
+  userId     String?
+  createdAt  DateTime @default(now())
+}
+
+// -----------------------------------------------------------------------------
+// MODULE: Worker & Supplier Management
+// -----------------------------------------------------------------------------
+
+model Worker {
+  id          String             @id @default(uuid())
+  name        String
+  phone       String
+  type        String             @default("CARPENTER")
+  dailyRate   Float?
+  assignments WorkerAssignment[]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+}
+
+model WorkerAssignment {
+  id        String   @id @default(uuid())
+  workerId  String
+  worker    Worker   @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status    String   @default("ASSIGNED")
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Supplier {
+  id            String            @id @default(uuid())
+  name          String
+  contactPerson String?
+  phone         String
+  gstNumber     String?
+  address       String?
+  materials     String?
+  payments      SupplierPayment[]
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+}
+
+model SupplierPayment {
+  id         String   @id @default(uuid())
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  amount     Float
+  date       DateTime @default(now())
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// -----------------------------------------------------------------------------
+// MODULE: System & Security
+// -----------------------------------------------------------------------------
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String
+  oldValue  String?
+  newValue  String?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  type      String   @default("INFO")
+  link      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model LeadTransaction {
+  id                String   @id @default(cuid())
+  leadId            String?
+  lead              Lead?    @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  type              String
+  amount            Float
+  date              DateTime
+  paidTo            String
+  category          String
+  paymentMode       String
+  source            String   @default("GENERAL") // GENERAL or DESIGN
+  isSystemGenerated Boolean  @default(false)
+  description       String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([leadId])
+  @@index([type])
+  @@index([date])
+  @@index([category])
+}
+
+model LeadNote {
+  id          String   @id @default(cuid())
+  leadId      String?
+  lead        Lead?    @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  content     String
+  isCompleted Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// -----------------------------------------------------------------------------
+// MODULE: Project-Specific Quotations (Electrical, Plumbing, etc.)
+// -----------------------------------------------------------------------------
+
+model ProjectField {
+  id         String             @id @default(uuid())
+  name       String
+  vendors    ProjectVendor[]
+  quotations ProjectQuotation[]
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+}
+
+model ProjectVendor {
+  id         String                 @id @default(uuid())
+  fieldId    String
+  field      ProjectField           @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  name       String
+  phone      String
+  quotations ProjectQuotation[]
+  contacts   ProjectVendorContact[]
+  createdAt  DateTime               @default(now())
+  updatedAt  DateTime               @updatedAt
+}
+
+model ProjectVendorContact {
+  id        String        @id @default(uuid())
+  vendorId  String
+  vendor    ProjectVendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  name      String?
+  phone     String
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([vendorId])
+}
+
+model ProjectQuotation {
+  id               String           @id @default(uuid())
+  customerId       String
+  customer         Lead             @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  fieldId          String
+  field            ProjectField     @relation(fields: [fieldId], references: [id])
+  vendorId         String
+  vendor           ProjectVendor    @relation(fields: [vendorId], references: [id])
+  amount           Float
+  priority         Int              @default(0)
+  isPriorityLocked Boolean          @default(false)
+  payments         ProjectPayment[]
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([customerId])
+  @@index([fieldId])
+  @@index([vendorId])
+}
+
+model ProjectPayment {
+  id                 String           @id @default(uuid())
+  projectQuotationId String
+  projectQuotation   ProjectQuotation @relation(fields: [projectQuotationId], references: [id], onDelete: Cascade)
+  amount             Float
+  paidOn             DateTime
+  note               String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  @@index([projectQuotationId])
+}
+
+// -----------------------------------------------------------------------------
+// MODULE: Project Progress Tracking
+// -----------------------------------------------------------------------------
+
+model Project {
+  id                  String    @id @default(uuid())
+  customerId          String    @unique
+  customer            Lead      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  name                String?
+  startedOn           DateTime  @default(now())
+  estimatedCompletion DateTime?
+  isCompleted         Boolean   @default(false)
+  completedOn         DateTime?
+  createdAt           DateTime  @default(now())
+
+  milestones    Milestone[]
+  executionLogs ExecutionLog[]
+
+  @@index([customerId])
+}
+
+model Milestone {
+  id          String    @id @default(uuid())
+  projectId   String
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sequence    Int
+  name        String
+  description String?
+  status      String    @default("pending") // pending | in_progress | delay | done
+  phase       String    @default("General") // Survey & Design | Civil & Structural | Elec & Plumbing | Finishing | General
+  progress    Int? // 0-100, used when status = in_progress
+  delayDays   Int? // used when status = delay
+  delayReason String? // used when status = delay
+  startedOn   DateTime?
+  completedOn DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([projectId])
+  @@index([sequence])
+}
+
+model ExecutionLog {
+  id        String   @id @default(uuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  logText   String
+  logType   String   @default("update") // update | delay | issue
+  loggedOn  DateTime @default(now())
+  loggedBy  String?
+  logger    User?    @relation(fields: [loggedBy], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
+  @@index([loggedOn])
+}
+
+model LeadFinancialLog {
+  id        String   @id @default(cuid())
+  leadId    String
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  action    String // DEAL_UPDATE, INCOME_ADDED, EXPENSE_ADDED, TRANSACTION_DELETED, etc.
+  details   String
+  amount    Float?
+  createdAt DateTime @default(now())
+
+  @@index([leadId])
+  @@index([createdAt])
+}

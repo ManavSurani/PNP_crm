@@ -653,7 +653,7 @@ function ModalFooter({ onClose, isSubmitting, label, disabled, color = "primary"
 }) {
   return (
     <div className="flex items-center justify-end gap-3 p-8 bg-slate-50/50 border-t border-slate-100">
-      <button type={onSubmit ? "button" : "submit"} onClick={onClose} className="text-slate-500 font-semibold text-sm hover:text-slate-900 transition-colors px-4">Cancel</button>
+      <button type={onSubmit ? "button" : "submit"} onClick={onClose} className="text-rose-500 font-semibold text-sm hover:text-rose-700 transition-colors px-4">Cancel</button>
       <button
         type={onSubmit ? "button" : "submit"}
         disabled={disabled || isSubmitting}

@@ -629,7 +629,7 @@ function CreateOrEditModal({ isOpen, lead, onClose, onSuccess }: { isOpen: boole
             <button
               type="button"
               onClick={onClose}
-              className="text-sm font-semibold text-slate-500 hover:text-rose-600 transition-colors px-4"
+              className="text-sm font-semibold text-rose-500 hover:text-rose-700 transition-colors px-4"
             >
               Cancel
             </button>

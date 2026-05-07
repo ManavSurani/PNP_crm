@@ -194,9 +194,10 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
       doc.setFillColor(...COL.headerBg);
       doc.rect(0, 0, pageW, 40, "F");
 
-      const loadImg = (url: string): Promise<HTMLImageElement> => new Promise((res) => {
+      const loadImg = (url: string): Promise<HTMLImageElement> => new Promise((res, rej) => {
         const img = new Image();
         img.onload = () => res(img);
+        img.onerror = () => rej(new Error("Image load failed: " + url));
         img.src = url;
       });
 

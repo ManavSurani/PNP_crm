@@ -350,7 +350,7 @@ function Modal({ mode, init, projectId, isProjectCompleted, onSave, onMarkProjec
               <button onClick={() => setNewSubcats([...newSubcats, ""])} style={{ marginTop: 8, background: "none", border: "none", color: "#2563EB", fontSize: 12, fontWeight: 600, cursor: "pointer", padding: 0 }}>+ Add another subcategory</button>
             </div>
             <div style={{ display: "flex", gap: 8, marginTop: 16, justifyContent: "flex-end" }}>
-              <button onClick={() => setIsAddingPhase(false)} style={{ background: "white", border: "1px solid #D1D5DB", borderRadius: 6, padding: "6px 12px", fontSize: 12, cursor: "pointer" }}>Cancel</button>
+              <button onClick={() => setIsAddingPhase(false)} style={{ background: "white", border: "1px solid #FCA5A5", color: "#EF4444", borderRadius: 6, padding: "6px 12px", fontSize: 12, cursor: "pointer" }}>Cancel</button>
               <button onClick={handleAddNewPhase} style={{ background: "#2563EB", color: "white", border: "none", borderRadius: 6, padding: "6px 12px", fontSize: 12, cursor: "pointer" }}>Save Phase</button>
             </div>
           </div>
@@ -413,7 +413,12 @@ function Modal({ mode, init, projectId, isProjectCompleted, onSave, onMarkProjec
           ) : <div></div>}
 
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={onClose} style={{ border: "1px solid #D1D5DB", background: "white", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 500, cursor: "pointer", color: "#374151" }}>Close</button>
+            <button 
+              onClick={onClose} 
+              className="border border-slate-200 bg-white rounded-lg px-4 py-2 text-sm font-semibold text-slate-600 hover:text-rose-600 hover:border-rose-200 transition-colors"
+            >
+              Close
+            </button>
             <button onClick={save} disabled={saving || isAddingPhase}
               style={{ background: "#2563EB", color: "white", border: "none", borderRadius: 8, padding: "8px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer", opacity: (saving || isAddingPhase) ? 0.7 : 1, display: "flex", alignItems: "center", gap: 6 }}>
               {saving && <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />} Save

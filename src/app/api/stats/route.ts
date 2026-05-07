@@ -7,16 +7,20 @@ export async function GET() {
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
     const stats = await Promise.all([
       prisma.lead.count(),
-      prisma.order.count({ where: { status: "COMPLETED" } }),
+      prisma.lead.count({ where: { status: "WON_ORDER" } }),
       prisma.leadTransaction.aggregate({ where: { type: "RECEIVED" }, _sum: { amount: true } }),
       prisma.leadTransaction.aggregate({ where: { type: "EXPENSE" }, _sum: { amount: true } }),
       prisma.followUp.count({
         where: {
           nextCallDate: {
-            gte: new Date(new Date().setHours(0, 0, 0, 0)),
-            lte: new Date(new Date().setHours(23, 59, 59, 999)),
+            gte: todayStart,
+            lte: todayEnd,
           },
           completedDate: null,
         },
@@ -28,15 +32,15 @@ export async function GET() {
       prisma.order.aggregate({ _sum: { totalAmount: true } }),
       prisma.followUp.count({
         where: {
-          nextCallDate: { lt: new Date(new Date().setHours(0, 0, 0, 0)) },
+          nextCallDate: { lt: todayStart },
           completedDate: null,
         },
       }),
       prisma.meeting.count({
         where: {
           date: {
-            gte: new Date(new Date().setHours(0, 0, 0, 0)),
-            lte: new Date(new Date().setHours(23, 59, 59, 999)),
+            gte: todayStart,
+            lte: todayEnd,
           },
           status: "SCHEDULED",
         },
@@ -63,7 +67,8 @@ export async function GET() {
       prisma.order.groupBy({
         by: ['packageType'],
         _count: { id: true }
-      })
+      }),
+      prisma.meeting.count(),
     ]);
 
     const topProjects = (stats[13] as any[] || []).map((o: any) => {
@@ -138,6 +143,7 @@ export async function GET() {
         meetingLeads: stats[7],
         cancelledLeads: stats[8],
         totalPending,
+        totalMeetings: stats[15],
         topProjects,
         packageStats
       },

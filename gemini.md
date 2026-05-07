@@ -207,3 +207,6 @@ A: Fixed the CRM desktop shortcut and startup reliability by resolving log file 
 
 Q: push commit statment to git hub
 A: Resolved the GitHub push failure caused by the oversized `project_code.txt` (912MB). Updated `.gitignore` to permanently exclude large diagnostic files and logs, then re-synchronized the local repository to ensure a clean, limit-compliant push to the main branch.
+
+Q: Enhance the existing Follow-Up Queue top summary cards section ... I only want to add a new “LONG DISTANCE” summary card.
+A: Implemented the 'LONG DISTANCE' tracking system for follow-ups. Added a new summary card, interactive filtering, and row badges. Updated the Prisma schema and API to persist the long-distance flag and added a manual toggle to the call-logging modals.

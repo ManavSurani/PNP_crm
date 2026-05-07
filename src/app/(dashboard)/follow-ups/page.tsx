@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import { format, isPast, isToday } from "date-fns";
 import { 
   PhoneCall, Clock, CheckCircle2, AlertCircle, Loader2, 
-  Search, Filter, ExternalLink, Calendar, ChevronRight, RotateCcw, ArrowLeft
+  Search, Filter, ExternalLink, Calendar, ChevronRight, RotateCcw, ArrowLeft,
+  Globe
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { isFollowUpToday, isFollowUpOverdue, isFollowUpUpcoming } from "@/lib/follow-up-utils";
 
 const timeToMinutes = (timeStr?: string | null) => {
   if (!timeStr) return 0;
@@ -29,6 +31,7 @@ export default function FollowUpsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
   const [sortBy, setSortBy] = useState("DATE_ASC"); // Default to nearest upcoming
+  const [showUpcomingOnly, setShowUpcomingOnly] = useState(false);
 
   const fetchFollowUps = async () => {
     setIsLoading(true);
@@ -68,7 +71,9 @@ export default function FollowUpsPage() {
     const matchesStart = !dateRange.start || (fDate && fDate >= new Date(dateRange.start));
     const matchesEnd = !dateRange.end || (fDate && fDate <= new Date(dateRange.end + "T23:59:59"));
 
-    return matchesSearch && matchesStart && matchesEnd;
+    const matchesUpcoming = !showUpcomingOnly || isFollowUpUpcoming(f.nextCallDate, f.completedDate);
+
+    return matchesSearch && matchesStart && matchesEnd && matchesUpcoming;
   }).sort((a, b) => {
     // Priority: Scheduled items first
     if (a.nextCallDate && !b.nextCallDate) return -1;
@@ -95,9 +100,9 @@ export default function FollowUpsPage() {
     return 0;
   });
 
-  const pending = followUps.filter(f => !f.completedDate);
-  const overdue = pending.filter(f => f.nextCallDate && isPast(new Date(f.nextCallDate)) && !isToday(new Date(f.nextCallDate)));
-  const today = pending.filter(f => f.nextCallDate && isToday(new Date(f.nextCallDate)));
+  const todayCount = followUps.filter(f => isFollowUpToday(f.nextCallDate, f.completedDate)).length;
+  const overdueCount = followUps.filter(f => isFollowUpOverdue(f.nextCallDate, f.completedDate)).length;
+  const upcomingCount = followUps.filter(f => isFollowUpUpcoming(f.nextCallDate, f.completedDate)).length;
 
   const getStatusBorder = (status: string) => {
     switch (status) {
@@ -130,14 +135,25 @@ export default function FollowUpsPage() {
           </div>
         </div>
 
-        <div className="relative z-10 flex gap-4">
-          <div className="px-6 py-3 rounded-xl bg-indigo-50/50 border border-indigo-100 flex flex-col items-center min-w-[110px] shadow-sm shadow-indigo-50/50">
-             <span className="text-2xl font-black text-indigo-600 leading-none">{today.length}</span>
-             <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mt-1.5">Today</span>
+        <div className="relative z-10 flex gap-3">
+          <div className="px-5 py-3 rounded-xl bg-indigo-50/50 border border-indigo-100 flex flex-col items-center min-w-[100px] shadow-sm shadow-indigo-50/50">
+             <span className="text-xl font-black text-indigo-600 leading-none">{todayCount}</span>
+             <span className="text-[9px] font-bold text-indigo-400 uppercase tracking-widest mt-1.5">Today</span>
           </div>
-          <div className="px-6 py-3 rounded-xl bg-rose-50/50 border border-rose-100 flex flex-col items-center min-w-[110px] shadow-sm shadow-rose-50/50">
-             <span className="text-2xl font-black text-rose-600 leading-none">{overdue.length}</span>
-             <span className="text-[10px] font-bold text-rose-400 uppercase tracking-widest mt-1.5">Overdue</span>
+          <div className="px-5 py-3 rounded-xl bg-rose-50/50 border border-rose-100 flex flex-col items-center min-w-[100px] shadow-sm shadow-rose-50/50">
+             <span className="text-xl font-black text-rose-600 leading-none">{overdueCount}</span>
+             <span className="text-[9px] font-bold text-rose-400 uppercase tracking-widest mt-1.5">Overdue</span>
+          </div>
+          <div className={cn(
+            "px-5 py-3 rounded-xl flex flex-col items-center min-w-[100px] shadow-sm transition-all cursor-pointer active:scale-95 border",
+            showUpcomingOnly 
+              ? "bg-amber-600 border-amber-500 shadow-amber-100" 
+              : "bg-amber-50/50 border-amber-100 shadow-amber-50/50"
+          )}
+          onClick={() => setShowUpcomingOnly(!showUpcomingOnly)}
+          >
+             <span className={cn("text-xl font-black leading-none", showUpcomingOnly ? "text-white" : "text-amber-600")}>{upcomingCount}</span>
+             <span className={cn("text-[9px] font-bold uppercase tracking-widest mt-1.5", showUpcomingOnly ? "text-amber-100" : "text-amber-400")}>UPCOMING</span>
           </div>
         </div>
       </div>
@@ -169,6 +185,7 @@ export default function FollowUpsPage() {
               setSearch("");
               setDateRange({ start: "", end: "" });
               setSortBy("DATE_ASC");
+              setShowUpcomingOnly(false);
             }}
             className="p-3 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition shadow-sm active:scale-95"
             title="Reset All"
@@ -215,6 +232,20 @@ export default function FollowUpsPage() {
                   />
                 </div>
              </div>
+             <div className="flex-1">
+                <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-tight mb-1.5 ml-1">UPCOMING</label>
+                <button 
+                  onClick={() => setShowUpcomingOnly(!showUpcomingOnly)}
+                  className={cn(
+                    "w-full rounded-lg border py-2 px-3 text-[10px] font-bold uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2",
+                    showUpcomingOnly 
+                      ? "bg-amber-600 text-white border-amber-500" 
+                      : "bg-white border-slate-100 text-slate-500 hover:bg-slate-50"
+                  )}
+                >
+                  <Globe className="h-3 w-3" /> {showUpcomingOnly ? "Upcoming Only" : "All Distances"}
+                </button>
+             </div>
           </div>
         </div>
       )}
@@ -240,8 +271,8 @@ export default function FollowUpsPage() {
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
                   {filtered.map((followUp) => {
-                    const isScheduledPast = followUp.nextCallDate && isPast(new Date(followUp.nextCallDate)) && !isToday(new Date(followUp.nextCallDate)) && !followUp.completedDate;
-                    const isScheduledToday = followUp.nextCallDate && isToday(new Date(followUp.nextCallDate)) && !followUp.completedDate;
+                    const isScheduledPast = isFollowUpOverdue(followUp.nextCallDate, followUp.completedDate);
+                    const isScheduledToday = isFollowUpToday(followUp.nextCallDate, followUp.completedDate);
 
                     return (
                       <tr 
@@ -285,6 +316,11 @@ export default function FollowUpsPage() {
                               {isScheduledToday && (
                                 <span className="inline-flex items-center gap-1 w-fit px-2 py-0.5 rounded-md bg-amber-50 text-amber-600 text-[9px] font-black uppercase tracking-widest border border-amber-100 shadow-sm shadow-amber-100/50">
                                   <Clock className="h-2.5 w-2.5" /> Scheduled Today
+                                </span>
+                              )}
+                              {isFollowUpUpcoming(followUp.nextCallDate, followUp.completedDate) && (
+                                <span className="inline-flex items-center gap-1 w-fit px-2 py-0.5 rounded-md bg-amber-50/50 text-amber-700 text-[9px] font-black uppercase tracking-widest border border-amber-100/50">
+                                  <Globe className="h-2.5 w-2.5" /> UPCOMING
                                 </span>
                               )}
                             </div>

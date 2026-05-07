@@ -6,7 +6,7 @@ import { format } from "date-fns";
 import {
   Phone, MapPin, FileText, Clock, Zap, Loader2, Pencil, X, CheckCircle2,
   PhoneMissed, Calendar, Check, RotateCcw, Ban, AlertTriangle, ListTodo, Activity, Trash2,
-  Banknote, MessageSquare, ChevronRight, ArrowLeft
+  Banknote, MessageSquare, ChevronRight, ArrowLeft, Globe
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -875,6 +875,7 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                   value={noteContent} onChange={e => setNoteContent(e.target.value)}
                 />
               </Field>
+
               <ModalFooter onClose={closeModal} isSubmitting={isSubmitting} label="Log Attempt" />
             </div>
           </form>
@@ -902,6 +903,7 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                 <textarea rows={3} className={inputCls} placeholder="Specify if there was any conflict or preference..."
                   value={noteContent} onChange={e => setNoteContent(e.target.value)} />
               </Field>
+
               <ModalFooter onClose={closeModal} isSubmitting={isSubmitting} label="Cancel Lead" />
             </div>
           </form>
@@ -1094,7 +1096,7 @@ function ModalFooter({ onClose, isSubmitting, label, disabled, onSubmit }: {
 }) {
   return (
     <div className="flex items-center justify-end gap-3 p-8 bg-slate-50/50 border-t border-slate-100">
-      <button type="button" onClick={onClose} className="text-slate-500 font-semibold text-sm hover:text-slate-900 transition-colors px-4">Cancel</button>
+      <button type="button" onClick={onClose} className="text-rose-500 font-semibold text-sm hover:text-rose-700 transition-colors px-4">Cancel</button>
       <button
         type="submit"
         disabled={disabled || isSubmitting}

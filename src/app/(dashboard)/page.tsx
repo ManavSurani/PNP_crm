@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import {
   Users, PhoneCall, TrendingUp, IndianRupee, Loader2,
-  CheckCircle2, AlertTriangle, Calendar, Zap, BarChart3, Target
+  CheckCircle2, AlertTriangle, Calendar, Zap, BarChart3, Target, MapPin
 } from "lucide-react";
 import { format } from "date-fns";
 import {
@@ -58,11 +58,9 @@ export default function Dashboard() {
 
   const KPIs = [
     { title: "Total Leads", value: metrics.totalLeads, icon: Users, color: "text-indigo-600", bg: "bg-indigo-50" },
-    { title: "Follow-ups", value: metrics.todayFollowUps, icon: PhoneCall, color: "text-amber-600", bg: "bg-amber-50" },
+    { title: "Follow-ups", value: `${metrics.todayFollowUps} Today ${metrics.overdueFollowUps > 0 ? `(${metrics.overdueFollowUps} Overdue)` : ""}`, icon: PhoneCall, color: "text-amber-600", bg: "bg-amber-50" },
     { title: "Won Orders", value: metrics.wonOrders, icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-50" },
-    { title: "Pending Due", value: `₹${(metrics.totalPending || 0).toLocaleString()}`, icon: AlertTriangle, color: "text-rose-600", bg: "bg-rose-50" },
-    { title: "Gross Revenue", value: `₹${metrics.totalRevenue.toLocaleString()}`, icon: IndianRupee, color: "text-sky-600", bg: "bg-sky-50" },
-    { title: "Net Profit", value: `₹${metrics.netProfit.toLocaleString()}`, icon: TrendingUp, color: metrics.netProfit >= 0 ? "text-emerald-600" : "text-rose-600", bg: metrics.netProfit >= 0 ? "bg-emerald-50" : "bg-rose-50" },
+    { title: "Site Visits", value: metrics.totalMeetings, icon: MapPin, color: "text-rose-600", bg: "bg-rose-50" },
   ];
 
   return (
@@ -98,7 +96,7 @@ export default function Dashboard() {
       {/* Charts & Analytics Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Bar Chart: Lead Generation */}
-        <div className="lg:col-span-2 bg-white p-8 rounded-2xl border border-slate-200 min-w-0">
+        <div className="lg:col-span-3 bg-white p-8 rounded-2xl border border-slate-200 min-w-0">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <div className="bg-primary/10 p-2 rounded-lg"><BarChart3 className="h-5 w-5 text-primary" /></div>
@@ -124,35 +122,6 @@ export default function Dashboard() {
                 <Bar dataKey="leads" name="Leads" fill="#4f46e5" radius={[4, 4, 0, 0]} maxBarSize={32} />
               </BarChart>
             </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* P&L Interactive Summary */}
-        <div className="bg-slate-900 p-8 rounded-2xl shadow-xl text-white relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-primary rounded-full blur-[100px] opacity-10 -mr-32 -mt-32" />
-          <div className="relative z-10 flex flex-col h-full font-sans">
-            <div className="flex items-center gap-3 mb-8">
-              <div className="bg-primary/20 p-2 rounded-lg border border-white/10 text-primary"><IndianRupee className="h-5 w-5" /></div>
-              <h2 className="font-semibold text-sm">Financial Health</h2>
-            </div>
-            
-            <div className="space-y-6 flex-grow">
-               <DashboardFinancialItem label="Gross Inflow" val={metrics.totalRevenue} sub="Verified Payments" />
-               <DashboardFinancialItem label="Total Burn" val={metrics.totalExpenses} sub="Material + Labour" isNegative />
-               
-               <div className="pt-6 border-t border-white/10">
-                  <p className="text-xs text-slate-400 font-medium mb-1 text-right">Net Liquidity</p>
-                  <p className={cn("text-3xl font-bold tracking-tight text-right", metrics.netProfit >= 0 ? "text-emerald-400" : "text-rose-400")}>
-                    ₹{metrics.netProfit.toLocaleString()}
-                  </p>
-                  <div className="mt-4 flex justify-end">
-                    <div className="bg-white/5 rounded-full px-3 py-1.5 border border-white/10 flex items-center gap-2">
-                       <Target className="h-3 w-3 text-primary" />
-                       <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-300">{profitMargin}% Efficiency</span>
-                    </div>
-                  </div>
-               </div>
-            </div>
           </div>
         </div>
       </div>
@@ -229,20 +198,6 @@ export default function Dashboard() {
             </div>
          </div>
       </div>
-    </div>
-  );
-}
-
-function DashboardFinancialItem({ label, val, sub, isNegative = false }: { label: string, val: number, sub: string, isNegative?: boolean }) {
-  return (
-    <div className="flex items-center justify-between">
-       <div>
-          <p className="text-[11px] text-slate-400 font-medium uppercase tracking-wider mb-0.5">{label}</p>
-          <p className="text-[10px] text-primary font-semibold opacity-70 leading-none">{sub}</p>
-       </div>
-       <p className={cn("text-lg font-bold tracking-tight", isNegative ? "text-rose-400" : "text-white")}>
-          {isNegative ? "−" : ""} ₹{val.toLocaleString()}
-       </p>
     </div>
   );
 }
