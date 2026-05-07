@@ -109,10 +109,10 @@ export async function GET() {
       .filter((t: any) => t.type === "EXPENSE")
       .reduce((sum: number, t: any) => sum + t.amount, 0);
 
-    // Business Net Profit = Sum of all customer profits - Global Business Overheads
-    const globalProfit = customerFinancials.reduce((sum, f) => sum + f.profit, 0) - totalGlobalExpenses;
-
-    const totalBurn = (stats[2] as any)._sum.amount || 0;
+    // Business Net Profit (Net Liquidity) = Gross Inflow - Total Burn (Design Costs + Realized Losses)
+    const totalBurn = totalDesignExpenses + totalLoss;
+    const globalProfit = totalReceived - totalBurn;
+    
     const efficiency = totalReceived > 0 ? ((globalProfit / totalReceived) * 100).toFixed(1) : "0";
 
 
