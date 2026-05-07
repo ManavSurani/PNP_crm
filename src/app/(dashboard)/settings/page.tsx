@@ -139,21 +139,31 @@ export default function SettingsPage() {
 
   const handleCreateBackup = async () => {
     setIsLoading(true);
+    setMessage({ type: "", text: "" });
     try {
       const response = await fetch("/api/settings/backup");
-      if (!response.ok) throw new Error("Backup failed");
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error ?? "Backup failed");
+      }
       
       const blob = await response.blob();
+      const contentDisposition = response.headers.get("Content-Disposition") ?? "";
+      const fileNameMatch = contentDisposition.match(/filename="(.+?)"/);
+      const fileName = fileNameMatch?.[1] ?? "PNP-CRM-Backup.pnpcrm";
+
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = response.headers.get("Content-Disposition")?.split("filename=")[1]?.replace(/"/g, "") || "PNP-CRM-Backup.pnpcrm";
+      a.download = fileName;
       document.body.appendChild(a);
       a.click();
       a.remove();
+      window.URL.revokeObjectURL(url);
+
       setMessage({ type: "success", text: "Backup created successfully" });
-    } catch (err) {
-      setMessage({ type: "error", text: "Failed to create backup" });
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message ?? "Failed to create backup" });
     } finally {
       setIsLoading(false);
     }
@@ -169,6 +179,7 @@ export default function SettingsPage() {
     if (!selectedFile) return;
     setIsLoading(true);
     setShowRestoreModal(false);
+    setMessage({ type: "", text: "" });
     
     const formData = new FormData();
     formData.append("file", selectedFile);
@@ -182,14 +193,15 @@ export default function SettingsPage() {
 
       if (res.ok) {
         setMessage({ type: "success", text: "Backup restored successfully. Refreshing..." });
-        setTimeout(() => window.location.reload(), 2000);
+        // Delay reload to allow Prisma to settle
+        setTimeout(() => window.location.reload(), 1500);
       } else {
         setMessage({ type: "error", text: data.error || "Restore failed" });
       }
-    } catch (err) {
-      setMessage({ type: "error", text: "Connection error during restore" });
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message ?? "Connection error during restore" });
     } finally {
-      setIsLoading(false);
+      // Don't stop loading if success, let it reload
     }
   };
 

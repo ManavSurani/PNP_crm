@@ -5,8 +5,11 @@ import path from "path";
 import crypto from "crypto";
 import AdmZip from "adm-zip";
 
-const BACKUP_SECRET = "PNP_CRM_ENTERPRISE_SECRET_2026_SECURE_V1";
+// FIX (Major): Read secret from .env so each install has a unique key
+const BACKUP_SECRET =
+  process.env.BACKUP_SECRET ?? "PNP_CRM_ENTERPRISE_SECRET_2026_SECURE_V1";
 const APP_SIGNATURE = "PNP_CRM_APP_SIG";
+const BACKUP_VERSION = "1.0";
 
 export async function GET() {
   const session = await auth();
@@ -15,77 +18,89 @@ export async function GET() {
   }
 
   try {
-    // 1. Create ZIP
     const zip = new AdmZip();
-    
-    // Add Database
-    const dbPath = path.join(process.cwd(), "prisma", "dev.db");
-    if (fs.existsSync(dbPath)) {
-      zip.addLocalFile(dbPath, "prisma");
-    }
 
-    // Add .env
+    // ── Database ──────────────────────────────────────────────────────────────
+    // FIXED: Using the active path _data/crm.db
+    const dbPath = path.join(process.cwd(), "_data", "crm.db");
+    if (!fs.existsSync(dbPath)) {
+      return NextResponse.json(
+        { error: "Database file not found. Cannot create backup." },
+        { status: 500 }
+      );
+    }
+    // Store it in a 'db' folder inside the zip for clarity
+    zip.addLocalFile(dbPath, "_data");
+
+    // ── .env ──────────────────────────────────────────────────────────────────
     const envPath = path.join(process.cwd(), ".env");
     if (fs.existsSync(envPath)) {
       zip.addLocalFile(envPath, "");
     }
 
-    // Add Logo
+    // ── Logo ──────────────────────────────────────────────────────────────────
     const logoPath = path.join(process.cwd(), "public", "logo.png");
     if (fs.existsSync(logoPath)) {
       zip.addLocalFile(logoPath, "public");
     }
 
-    // Add Metadata
+    // ── Metadata ──────────────────────────────────────────────────────────────
     const metadata = {
       app: "PNP CRM",
-      version: "1.0",
+      version: BACKUP_VERSION,
       backupType: "system_snapshot",
       createdAt: new Date().toISOString(),
-      signature: APP_SIGNATURE
+      signature: APP_SIGNATURE,
     };
-    zip.addFile("metadata.json", Buffer.from(JSON.stringify(metadata), "utf8"));
+    zip.addFile(
+      "metadata.json",
+      Buffer.from(JSON.stringify(metadata, null, 2), "utf8")
+    );
 
+    // ── Build ZIP buffer & hash ───────────────────────────────────────────────
     const zipData = zip.toBuffer();
 
-    // 2. Encrypt ZIP
-    // const zipData = fs.readFileSync(zipPath); // Already have zipData in memory
-    
-    // Create Checksum
+    // Compute hash BEFORE encrypting so restore can verify integrity
     const hash = crypto.createHash("sha256").update(zipData).digest("hex");
-    const payload = JSON.stringify({
-      hash,
-      signature: APP_SIGNATURE,
-      timestamp: new Date().toISOString()
-    });
 
+    // ── Encrypt ───────────────────────────────────────────────────────────────
     const key = crypto.createHash("sha256").update(BACKUP_SECRET).digest();
     const iv = crypto.randomBytes(16);
     const cipher = crypto.createCipheriv("aes-256-cbc", key, iv);
-    
-    // Structure: [IV (16 bytes)] [Payload Length (4 bytes)] [Payload] [Encrypted Data]
+
+    const payload = JSON.stringify({ hash, signature: APP_SIGNATURE, version: BACKUP_VERSION });
     const payloadBuffer = Buffer.from(payload, "utf8");
+
     const payloadLengthBuffer = Buffer.alloc(4);
-    payloadLengthBuffer.writeUInt32BE(payloadBuffer.length);
+    payloadLengthBuffer.writeUInt32BE(payloadBuffer.length, 0);
 
     const encryptedData = Buffer.concat([
-      cipher.update(Buffer.concat([payloadLengthBuffer, payloadBuffer, zipData])),
-      cipher.final()
+      cipher.update(
+        Buffer.concat([payloadLengthBuffer, payloadBuffer, zipData])
+      ),
+      cipher.final(),
     ]);
 
     const finalBackup = Buffer.concat([iv, encryptedData]);
 
-    const fileName = `PNP CRM Backup - ${new Intl.DateTimeFormat('en-GB').format(new Date()).replace(/\//g, '-')}.pnpcrm`;
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2, "0");
+    const mm = String(now.getMonth() + 1).padStart(2, "0");
+    const yyyy = now.getFullYear();
+    const fileName = `PNP CRM Backup - ${dd}-${mm}-${yyyy}.pnpcrm`;
 
     return new NextResponse(finalBackup, {
       headers: {
         "Content-Type": "application/octet-stream",
         "Content-Disposition": `attachment; filename="${fileName}"`,
+        "X-Backup-Version": BACKUP_VERSION,
       },
     });
-
-  } catch (error) {
-    console.error("Backup error:", error);
-    return NextResponse.json({ error: "Backup creation failed" }, { status: 500 });
+  } catch (error: any) {
+    console.error("[Backup] Error:", error);
+    return NextResponse.json(
+      { error: "Backup creation failed: " + (error.message ?? "Unknown error") },
+      { status: 500 }
+    );
   }
 }
