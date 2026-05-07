@@ -25,7 +25,8 @@ import {
   Trash2,
   MoreVertical,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  FileDown
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -75,6 +76,9 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
 
   // Deal Amount Modal
   const [showDealModal, setShowDealModal] = useState(false);
+
+  // PDF Export State
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -136,6 +140,216 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
     }
   };
 
+  const handleExportPDF = async () => {
+    if (!customer) return;
+    setIsExportingPDF(true);
+
+    try {
+      const { default: jsPDF } = await import("jspdf");
+      const { default: autoTable } = await import("jspdf-autotable");
+
+      const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pageW = 210;
+      const margin = 16;
+      const contentW = pageW - margin * 2;
+
+      // --- BUG 1 & 2 FIX: Manual Indian Currency Formatter (Safe for jsPDF) ---
+      const fmt = (n: number) => {
+        const sign = n < 0 ? "-" : "";
+        const s = Math.abs(Math.round(n)).toString();
+        let result = s.length > 3 ? s.slice(-3) : s;
+        let remaining = s.slice(0, s.length - 3);
+        while (remaining.length > 2) {
+          result = remaining.slice(-2) + "," + result;
+          remaining = remaining.slice(0, remaining.length - 2);
+        }
+        if (remaining.length > 0) result = remaining + "," + result;
+        return sign + "Rs." + result;
+      };
+
+      const today = new Date();
+      const exportDateLabel = format(today, "dd MMM yyyy");
+      const fileName = `${customer.customerName.replace(/\s+/g, "_")}_Ledger_${format(today, "ddMMMyyyy")}.pdf`;
+
+      const COL = {
+        headerBg: [15, 23, 42] as [number, number, number],
+        headerText: [255, 255, 255] as [number, number, number],
+        accent: [99, 102, 241] as [number, number, number],
+        sectionBg: [248, 250, 252] as [number, number, number],
+        border: [226, 232, 240] as [number, number, number],
+        muted: [100, 116, 139] as [number, number, number],
+        body: [30, 41, 59] as [number, number, number],
+        green: [5, 150, 105] as [number, number, number],
+        red: [220, 38, 38] as [number, number, number],
+        amber: [217, 119, 6] as [number, number, number],
+      };
+
+      const rule = (y: number) => {
+        doc.setDrawColor(...COL.border);
+        doc.setLineWidth(0.3);
+        doc.line(margin, y, pageW - margin, y);
+      };
+
+      // --- BUG 5 FIX: Reduced Header Bar Height (28mm instead of 42mm) ---
+      doc.setFillColor(...COL.headerBg);
+      doc.rect(0, 0, pageW, 28, "F");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(...COL.headerText);
+      doc.text("PNP CRM", margin, 11);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(148, 163, 184);
+      doc.text("FINANCIAL LEDGER REPORT", pageW - margin, 11, { align: "right" });
+
+      doc.setFillColor(...COL.accent);
+      doc.rect(0, 28, pageW, 1.5, "F");
+
+      doc.setFillColor(...COL.sectionBg);
+      doc.rect(0, 29.5, pageW, 14, "F"); // Reduced height (14mm)
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(...COL.body);
+      doc.text(`Client: ${customer.customerName}`, margin, 36);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(...COL.muted);
+      doc.text(`Project: ${customer.project?.name || "Standard Project"}`, margin, 40);
+      doc.text(`Generated: ${exportDateLabel}`, pageW - margin, 40, { align: "right" });
+
+      let curY = 52; // Adjusted starting Y
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.setTextColor(...COL.accent);
+      doc.text("PROJECT SUMMARY", margin, curY);
+      curY += 4; rule(curY); curY += 5;
+
+      const summaryItems = [
+        { label: "Initial Deal", value: fmt(initialDeal), color: COL.muted },
+        { label: "Total Expenses", value: fmt(totalExpense), color: COL.red },
+        { label: "Current Total", value: fmt(currentTotal), color: COL.body },
+        { label: "Client Paid", value: fmt(totalReceived), color: COL.green },
+        { label: "Remaining Due", value: fmt(remainingDue), color: remainingDue > 0 ? COL.amber : COL.green },
+      ];
+
+      const cellW = contentW / summaryItems.length;
+      summaryItems.forEach((item, i) => {
+        const cx = margin + i * cellW;
+        doc.setFillColor(...COL.sectionBg);
+        doc.roundedRect(cx, curY, cellW - 2, 18, 2, 2, "F");
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(6.5);
+        doc.setTextColor(...COL.muted);
+        doc.text(item.label, cx + (cellW - 2) / 2, curY + 5.5, { align: "center" });
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8.5);
+        doc.setTextColor(...item.color);
+        doc.text(item.value, cx + (cellW - 2) / 2, curY + 13, { align: "center" });
+      });
+
+      curY += 24;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.setTextColor(...COL.accent);
+      doc.text("PROJECT EXPENSES", margin, curY);
+      curY += 4; rule(curY); curY += 3;
+
+      // --- BUG 6 & 7 FIX: Standard ASCII characters and 4-digit years ---
+      const expenseRows = [...filteredExpense].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map(t => [
+        format(new Date(t.date), "dd MMM yyyy"),
+        t.paidTo || "-",
+        t.description || "-",
+        t.paymentMode || "-",
+        fmt(t.amount),
+      ]);
+
+      autoTable(doc, {
+        startY: curY,
+        head: [["Date", "Vendor / Paid To", "Description / Note", "Payment Mode", "Amount"]],
+        body: expenseRows.length > 0 ? expenseRows : [["-", "No expenses recorded", "", "", ""]],
+        foot: [["", "", "", "TOTAL EXPENSES", fmt(totalExpense)]],
+        margin: { left: margin, right: margin },
+        styles: { fontSize: 7.5, textColor: COL.body, cellPadding: 3 },
+        headStyles: { fillColor: COL.headerBg, textColor: COL.headerText },
+        footStyles: { fillColor: COL.sectionBg, textColor: COL.red, fontStyle: "bold" },
+        alternateRowStyles: { fillColor: [249, 250, 251] },
+      });
+
+      curY = (doc as any).lastAutoTable.finalY + 8;
+
+      // --- BUG 3 FIX: Aggressive page break threshold (200mm) ---
+      if (curY > 200) { doc.addPage(); curY = 16; }
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.setTextColor(...COL.accent);
+      doc.text("CLIENT PAYMENTS", margin, curY);
+      curY += 4; rule(curY); curY += 3;
+
+      const incomeRows = [...filteredIncome].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map(t => [
+        format(new Date(t.date), "dd MMM yyyy"),
+        t.category || "Payment",
+        t.description || "-",
+        t.paymentMode || "-",
+        fmt(t.amount),
+      ]);
+
+      autoTable(doc, {
+        startY: curY,
+        head: [["Date", "Payment Type", "Description", "Payment Mode", "Amount"]],
+        body: incomeRows.length > 0 ? incomeRows : [["-", "No payments recorded", "", "", ""]],
+        foot: [["", "", "", "TOTAL RECEIVED", fmt(totalReceived)]],
+        margin: { left: margin, right: margin },
+        styles: { fontSize: 7.5, textColor: COL.body, cellPadding: 3 },
+        headStyles: { fillColor: COL.headerBg, textColor: COL.headerText },
+        footStyles: { fillColor: COL.sectionBg, textColor: COL.green, fontStyle: "bold" },
+        alternateRowStyles: { fillColor: [249, 250, 251] },
+      });
+
+      curY = (doc as any).lastAutoTable.finalY + 8;
+      
+      // FINAL SUMMARY BOX
+      if (curY > 200) { doc.addPage(); curY = 16; }
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.setTextColor(...COL.accent);
+      doc.text("FINAL SUMMARY", margin, curY);
+      curY += 4; rule(curY); curY += 5;
+
+      const boxH = 45;
+      doc.setFillColor(...COL.sectionBg);
+      doc.roundedRect(margin, curY, contentW, boxH, 3, 3, "F");
+      
+      let ry = curY + 10;
+      const row = (label: string, val: string, c: [number, number, number], bold = false) => {
+        doc.setFont("helvetica", bold ? "bold" : "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(...COL.muted);
+        doc.text(label, margin + 8, ry);
+        doc.setTextColor(...c);
+        doc.text(val, pageW - margin - 8, ry, { align: "right" });
+        ry += 8;
+      };
+
+      row("Initial Deal Value", fmt(initialDeal), COL.body);
+      row("Add: Project Expenses", fmt(totalExpense), COL.red);
+      row("Current Project Total", fmt(currentTotal), COL.body, true);
+      row("Less: Client Payments", fmt(totalReceived), COL.green);
+      
+      doc.setDrawColor(...COL.border);
+      doc.line(margin + 8, ry - 4, pageW - margin - 8, ry - 4);
+
+      row("Remaining Due Amount", fmt(remainingDue), remainingDue > 0 ? COL.amber : COL.green, true);
+
+      doc.save(fileName);
+    } catch (err) {
+      console.error("[ExportPDF] Error:", err);
+    } finally {
+      setIsExportingPDF(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex h-[80vh] items-center justify-center">
@@ -151,15 +365,19 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
       
       {/* --- COMPACT STICKY SUMMARY HEADER --- */}
       <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-3 shadow-sm">
-        <div className="max-w-[1600px] mx-auto flex items-center justify-between gap-4">
+        <div className="max-w-[1600px] mx-auto grid grid-cols-[auto_1fr_auto] items-center gap-4">
+          
+          {/* LEFT: Back + Customer Info */}
           <div className="flex items-center gap-4">
             <Link href={`/customers/${id}`} className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-400">
               <ArrowLeft className="h-4 w-4" />
             </Link>
             <div>
               <h1 className="text-sm font-black text-slate-900 tracking-tight flex items-center gap-2">
-                {customer.customerName}
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest px-2 py-0.5 bg-slate-100 rounded">Ledger</span>
+                {customer.customerName}{" "}
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest px-2 py-0.5 bg-slate-100 rounded">
+                  Ledger
+                </span>
               </h1>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
                 {customer.project?.name || "Standard Project"}
@@ -167,24 +385,54 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
             </div>
           </div>
 
-          <div className="hidden lg:flex flex-1 items-center justify-center gap-1">
-             <SummaryWidget label="Initial Deal" value={initialDeal} color="text-slate-500" />
-             <div className="h-8 w-px bg-slate-200 mx-2" />
-             <SummaryWidget label="Expenses" value={totalExpense} color="text-rose-600" prefix="+" />
-             <div className="h-8 w-px bg-slate-200 mx-2" />
-             <SummaryWidget label="Current Total" value={currentTotal} color="text-slate-900" isBold />
-             <div className="h-8 w-px bg-slate-200 mx-2" />
-             <SummaryWidget label="Client Paid" value={totalReceived} color="text-emerald-600" />
-             <div className="h-8 w-px bg-slate-200 mx-2" />
-             <SummaryWidget label="Remaining Due" value={remainingDue} color={remainingDue > 0 ? "text-amber-600" : "text-emerald-600"} highlight={remainingDue > 0} />
+          {/* CENTER: Summary widgets — perfectly centered via Grid */}
+          <div className="hidden lg:flex items-center justify-center gap-1">
+            <SummaryWidget label="Initial Deal"  value={initialDeal}    color="text-slate-500" />
+            <div className="h-8 w-px bg-slate-200 mx-2" />
+            <SummaryWidget label="Expenses"      value={totalExpense}   color="text-rose-600" prefix="+" />
+            <div className="h-8 w-px bg-slate-200 mx-2" />
+            <SummaryWidget label="Current Total" value={currentTotal}   color="text-slate-900" isBold />
+            <div className="h-8 w-px bg-slate-200 mx-2" />
+            <SummaryWidget label="Client Paid"   value={totalReceived}  color="text-emerald-600" />
+            <div className="h-8 w-px bg-slate-200 mx-2" />
+            <SummaryWidget
+              label="Remaining Due"
+              value={remainingDue}
+              color={remainingDue > 0 ? "text-amber-600" : "text-emerald-600"}
+              highlight={remainingDue > 0}
+            />
           </div>
 
-          <div className="flex items-center gap-2">
-            <button onClick={() => { setModalType("RECEIVED"); setEditingTransaction(null); setShowTransModal(true); }} className="h-9 px-4 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-emerald-700 transition-all shadow-md shadow-emerald-600/10 flex items-center gap-2">
+          {/* RIGHT: Action buttons — fixed group */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={() => { setModalType("RECEIVED"); setEditingTransaction(null); setShowTransModal(true); }}
+              className="h-9 px-4 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-emerald-700 transition-all shadow-md flex items-center gap-2"
+            >
               <Plus className="h-3 w-3" /> Income
             </button>
-            <button onClick={() => { setModalType("EXPENSE"); setEditingTransaction(null); setShowTransModal(true); }} className="h-9 px-4 bg-rose-600 text-white text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-rose-700 transition-all shadow-md shadow-rose-600/10 flex items-center gap-2">
+            <button
+              onClick={() => { setModalType("EXPENSE"); setEditingTransaction(null); setShowTransModal(true); }}
+              className="h-9 px-4 bg-rose-600 text-white text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-rose-700 transition-all shadow-md flex items-center gap-2"
+            >
               <Plus className="h-3 w-3" /> Expense
+            </button>
+            <button
+              onClick={handleExportPDF}
+              disabled={isExportingPDF}
+              className="h-9 px-4 bg-white text-slate-700 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-slate-50 transition-all border border-slate-200 flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {isExportingPDF ? (
+                <>
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <FileDown className="h-3 w-3" />
+                  Export PDF
+                </>
+              )}
             </button>
           </div>
         </div>
