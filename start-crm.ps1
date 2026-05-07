@@ -10,8 +10,14 @@ $LogFile = Join-Path $AppRoot "server_status.txt"
 $NpmLogFile = Join-Path $AppRoot "server_log.txt"
 $ErrFile = Join-Path $AppRoot "server_error.txt"
 
-# 1. Ensure Data Directory exists
+# 1. Ensure Data Directory and Dependencies exist
 if (-not (Test-Path $DataDir)) { New-Item -ItemType Directory -Path $DataDir -Force | Out-Null }
+
+if (-not (Test-Path (Join-Path $AppRoot "node_modules"))) {
+    Write-Host "First-time setup: Installing dependencies. This may take 1-2 minutes..." -ForegroundColor Cyan
+    Start-Process -FilePath $NpmCmd -ArgumentList 'install' -WorkingDirectory $AppRoot -Wait -WindowStyle Hidden
+    Start-Process -FilePath $NpmCmd -ArgumentList 'exec', 'prisma', 'generate' -WorkingDirectory $AppRoot -Wait -WindowStyle Hidden
+}
 
 # 2. Aggressive Cleanup
 function Stop-CrmProcesses {
