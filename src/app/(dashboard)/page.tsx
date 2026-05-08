@@ -59,7 +59,8 @@ export default function Dashboard() {
   const KPIs = [
     { title: "Total Leads", value: metrics.totalLeads, icon: Users, color: "text-indigo-600", bg: "bg-indigo-50" },
     { title: "Follow-ups", value: null, icon: PhoneCall, color: "text-amber-600", bg: "bg-amber-50" },
-    { title: "Won Orders", value: metrics.wonOrders, icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-50" },
+    { title: "Won Orders", value: metrics.wonOrders, icon: Target, color: "text-emerald-600", bg: "bg-emerald-50" },
+    { title: "Completed Projects", value: metrics.completedProjects, icon: CheckCircle2, color: "text-teal-600", bg: "bg-teal-50" },
     { title: "Site Visits", value: metrics.totalMeetings, icon: MapPin, color: "text-slate-600", bg: "bg-slate-100" },
     { title: "New Inquiries", value: metrics.newLeads, icon: MessageSquare, color: "text-sky-600", bg: "bg-sky-50" },
     { title: "Canceled Archive", value: metrics.canceledArchive, icon: Trash2, color: "text-rose-600", bg: "bg-rose-50" },
@@ -83,7 +84,7 @@ export default function Dashboard() {
       </div>
 
       {/* KPI Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
         {KPIs.map((kpi, idx) => (
           <div key={idx} className="bg-white p-5 rounded-xl border border-slate-200 hover:border-primary/30 hover:shadow-sm transition-all group min-h-[140px] flex flex-col justify-between">
             <div>

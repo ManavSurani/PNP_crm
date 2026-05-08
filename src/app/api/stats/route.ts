@@ -14,7 +14,9 @@ export async function GET() {
 
     const stats = await Promise.all([
       prisma.lead.count(),
-      prisma.lead.count({ where: { status: "WON_ORDER", isCancelled: false } }),
+      prisma.lead.count({ where: { status: "WON_ORDER", isCancelled: false, 
+        // @ts-ignore
+        isProjectCompleted: false } }),
       prisma.leadTransaction.aggregate({ where: { type: "RECEIVED" }, _sum: { amount: true } }),
       prisma.leadTransaction.aggregate({ where: { type: "EXPENSE" }, _sum: { amount: true } }),
       prisma.followUp.count({
@@ -84,6 +86,10 @@ export async function GET() {
       prisma.order.count({ where: { status: "CANCELLED" } }),
       prisma.auditLog.count({ where: { action: "WIPE_DATA", entity: "Lead" } }),
       prisma.auditLog.count({ where: { action: "WIPE_DATA", entity: "Order" } }),
+      // [21] NEW: Completed Projects
+      prisma.lead.count({ where: { status: "WON_ORDER", isCancelled: false, 
+        // @ts-ignore
+        isProjectCompleted: true } }),
     ]);
 
     const topProjects = (stats[13] as any[] || []).map((o: any) => {
@@ -159,6 +165,7 @@ export async function GET() {
         meetingLeads: stats[7],
         cancelledLeads: stats[8],
         canceledArchive: stats[8] + stats[17] + stats[18] + stats[19],
+        completedProjects: stats[20],
         totalPending,
         totalMeetings: stats[15],
         topProjects,
