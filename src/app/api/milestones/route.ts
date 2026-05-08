@@ -36,6 +36,31 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // PROJECT COMPLETION LOGIC
+    if (phase === "Project Completed") {
+      // 1. Update project itself
+      await prisma.project.update({
+        where: { id: project_id },
+        data: { 
+          isCompleted: true,
+          completedOn: completedOn ? new Date(completedOn) : today 
+        }
+      });
+
+      // 2. Update linked Lead/Customer
+      const project = await prisma.project.findUnique({
+        where: { id: project_id },
+        select: { customerId: true }
+      });
+      
+      if (project?.customerId) {
+        await prisma.lead.update({
+          where: { id: project.customerId },
+          data: { isProjectCompleted: true }
+        });
+      }
+    }
+
     const allMilestones = await prisma.milestone.findMany({
       where: { projectId: project_id },
       orderBy: { sequence: "asc" },

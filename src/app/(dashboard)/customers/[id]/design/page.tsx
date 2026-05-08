@@ -38,6 +38,7 @@ type Customer = {
   initialDealNotes: string | null;
   project?: { name: string | null } | null;
   transactions: Transaction[];
+  isProjectCompleted?: boolean;
 }
 
 export default function DesignExpensesPage({ params }: { params: Promise<{ id: string }> }) {
@@ -140,7 +141,14 @@ export default function DesignExpensesPage({ params }: { params: Promise<{ id: s
              </div>
              <button 
               onClick={() => { setEditingTransaction(null); setShowTransModal(true); }}
-              className="h-9 px-4 bg-rose-600 text-white rounded-lg flex items-center gap-2 text-[10px] font-black shadow-lg shadow-rose-600/20 hover:bg-rose-700 transition-all uppercase tracking-widest"
+              disabled={customer.isProjectCompleted}
+              className={cn(
+                "h-9 px-4 text-white rounded-lg flex items-center gap-2 text-[10px] font-black shadow-lg transition-all uppercase tracking-widest group relative",
+                customer.isProjectCompleted 
+                  ? "bg-rose-600/40 cursor-not-allowed grayscale-[0.5]" 
+                  : "bg-rose-600 shadow-rose-600/20 hover:bg-rose-700"
+              )}
+              title={customer.isProjectCompleted ? "Project completed — design costs locked" : ""}
              >
                 <Plus className="h-4 w-4" /> Add Design Cost
              </button>

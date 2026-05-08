@@ -12,7 +12,7 @@ export async function GET(request: Request) {
         status: "WON_ORDER",
         isCancelled: false,
         // @ts-ignore - newly added
-        isProjectCompleted: false
+        isProjectCompleted: true
       },
       orderBy: {
         updatedAt: "desc"
@@ -22,15 +22,14 @@ export async function GET(request: Request) {
           select: { name: true }
         },
         project: {
-          // @ts-ignore - name field exists in schema but IDE lag
-          select: { id: true, name: true }
+          select: { id: true, name: true, completedOn: true }
         }
       }
     });
 
     return NextResponse.json(customers);
   } catch (error) {
-    console.error("[CUSTOMERS_GET]", error);
+    console.error("[CUSTOMERS_COMPLETED_GET]", error);
     return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }

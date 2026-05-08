@@ -50,6 +50,10 @@ export async function GET(
         initialDealNotes: true,
         isCancelled: true,
         cancelReason: true,
+        // @ts-ignore - newly added
+        isFinanciallyClosed: true,
+        // @ts-ignore - newly added
+        isProjectCompleted: true,
       }
     });
 

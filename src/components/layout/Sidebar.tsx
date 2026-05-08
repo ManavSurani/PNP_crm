@@ -17,7 +17,8 @@ import {
   Trash2,
   Layers,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  FolderCheck
 } from "lucide-react";
 import BrandLogo from "./BrandLogo";
 import { cn } from "@/lib/utils";
@@ -36,6 +37,7 @@ const groups = [
     title: "CUSTOMERS",
     items: [
       { name: "Customer Directory", href: "/customers", icon: Briefcase },
+      { name: "Complete Projects", href: "/customers/completed", icon: FolderCheck },
       { name: "Vendor Directory", href: "/suppliers", icon: Truck },
       { name: "Work Fields", href: "/fields", icon: Layers },
     ]
@@ -110,7 +112,13 @@ export default function Sidebar() {
                 {isExpanded && (
                   <div className="space-y-1 animate-in slide-in-from-top-1 duration-200">
                     {group.items.map((item) => {
-                      const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+                      // Fix: Use longest match to prevent multiple active items (e.g., /customers vs /customers/completed)
+                      const allMatches = groups.flatMap(g => g.items).filter(i => 
+                        pathname === i.href || (i.href !== "/" && pathname.startsWith(i.href + "/")) || (i.href !== "/" && pathname === i.href)
+                      );
+                      const bestMatch = allMatches.sort((a, b) => b.href.length - a.href.length)[0];
+                      const isActive = item.href === bestMatch?.href || pathname === item.href;
+
                       return (
                         <Link
                           key={item.name}

@@ -276,11 +276,6 @@ function Modal({ mode, init, projectId, isProjectCompleted, onSave, onMarkProjec
   const todayStr = new Date().toISOString().split('T')[0];
 
   const save = async () => {
-    if (phase === "Project Completed") {
-      await markProjectDone();
-      onClose();
-      return;
-    }
     if (!subcategory.trim()) { setErr("Subcategory is required."); return; }
     if (sdate > todayStr) { setErr("Future dates are not allowed."); return; }
     setSaving(true);
@@ -487,7 +482,13 @@ export default function ProgressPage({ params }: { params: Promise<{ id: string 
     if (!project) return;
     if (modalMode === "add") {
       const r = await fetch("/api/milestones", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ project_id: project.id, ...data }) });
-      if (r.ok) { const d = await r.json(); setMilestones(d.milestones); }
+      if (r.ok) { 
+        const d = await r.json(); 
+        setMilestones(d.milestones);
+        if (data.phase === "Project Completed") {
+          setProject(p => p ? { ...p, isCompleted: true } : p);
+        }
+      }
     } else if (modalMs) {
       const r = await fetch(`/api/milestones/${modalMs.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
       if (r.ok) { const d = await r.json(); setMilestones(d.milestones); }

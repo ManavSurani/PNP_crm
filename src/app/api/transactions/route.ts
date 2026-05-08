@@ -95,6 +95,15 @@ export async function POST(req: NextRequest) {
       });
 
       if (lead) {
+        // NEW: Financially Close the project
+        await prisma.lead.update({
+          where: { id: leadId },
+          data: { 
+            // @ts-ignore - newly added
+            isFinanciallyClosed: true 
+          }
+        });
+
         // @ts-ignore
         const initialDeal = lead.initialDealAmount || 0;
         const allTransactions = lead.transactions;
@@ -240,6 +249,15 @@ export async function PUT(req: NextRequest) {
         });
 
         if (lead) {
+          // NEW: Financially Close the project
+          await prisma.lead.update({
+            where: { id: existing.leadId },
+            data: { 
+            // @ts-ignore - newly added
+            isFinanciallyClosed: true 
+          }
+          });
+
           // @ts-ignore
           const initialDeal = lead.initialDealAmount || 0;
           const allTransactions = lead.transactions;

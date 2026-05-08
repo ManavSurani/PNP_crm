@@ -108,9 +108,11 @@ model Lead {
   landmark          String?
   preferredVisitTime String?
 
-  // Cancellations & Reactivation
+  // Lifecycle & Completion States
   isCancelled       Boolean   @default(false)
   cancelReason      String?
+  isFinanciallyClosed Boolean @default(false)
+  isProjectCompleted  Boolean @default(false)
   reactivatedAt     DateTime?
   reactivationNote  String?
 

@@ -58,6 +58,7 @@ type Customer = {
   initialDealNotes: string | null;
   project?: { name: string | null } | null;
   transactions: Transaction[];
+  isFinanciallyClosed?: boolean;
 }
 
 export default function FinancialsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -448,15 +449,33 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
 
           {/* RIGHT: Action buttons — fixed group */}
           <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0 flex-nowrap">
+            {customer.isFinanciallyClosed && (
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-lg mr-2">
+                <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                <span className="text-[9px] font-black text-emerald-700 uppercase tracking-widest">Financially Closed</span>
+              </div>
+            )}
             <button
               onClick={() => { setModalType("RECEIVED"); setEditingTransaction(null); setShowTransModal(true); }}
-              className="h-9 px-2.5 md:px-4 bg-emerald-600 text-white text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-emerald-700 transition-all shadow-md flex items-center gap-1.5 md:gap-2 whitespace-nowrap"
+              disabled={customer.isFinanciallyClosed}
+              className={cn(
+                "h-9 px-2.5 md:px-4 text-white text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-lg transition-all shadow-md flex items-center gap-1.5 md:gap-2 whitespace-nowrap",
+                customer.isFinanciallyClosed 
+                  ? "bg-emerald-600/40 cursor-not-allowed grayscale-[0.5]" 
+                  : "bg-emerald-600 hover:bg-emerald-700"
+              )}
             >
               <Plus className="h-3 w-3" /> Income
             </button>
             <button
               onClick={() => { setModalType("EXPENSE"); setEditingTransaction(null); setShowTransModal(true); }}
-              className="h-9 px-2.5 md:px-4 bg-rose-600 text-white text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-rose-700 transition-all shadow-md flex items-center gap-1.5 md:gap-2 whitespace-nowrap"
+              disabled={customer.isFinanciallyClosed}
+              className={cn(
+                "h-9 px-2.5 md:px-4 text-white text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-lg transition-all shadow-md flex items-center gap-1.5 md:gap-2 whitespace-nowrap",
+                customer.isFinanciallyClosed 
+                  ? "bg-rose-600/40 cursor-not-allowed grayscale-[0.5]" 
+                  : "bg-rose-600 hover:bg-rose-700"
+              )}
             >
               <Plus className="h-3 w-3" /> Expense
             </button>

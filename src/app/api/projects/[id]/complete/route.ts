@@ -26,6 +26,17 @@ export async function POST(
       data: { isCompleted: true, completedOn: today },
     });
 
+    // Mark linked lead complete
+    if (project.customerId) {
+      await prisma.lead.update({
+        where: { id: project.customerId },
+        data: { 
+        // @ts-ignore - newly added
+        isProjectCompleted: true 
+      }
+      });
+    }
+
     const milestones = await prisma.milestone.findMany({
       where: { projectId: id },
       orderBy: { sequence: "asc" },
