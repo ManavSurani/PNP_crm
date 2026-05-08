@@ -68,7 +68,6 @@ model SystemSetting {
   id                     String   @id @default("global")
   sessionMaxAge          Int      @default(2592000) // Default 30 days in seconds
   whatsappDispatchNumber String?
-  primaryCity            String   @default("Ahmedabad")
   analyticsPin           String? // Hashed PIN for Business Analytics
   isAnalyticsPinEnabled  Boolean  @default(false)
   updatedAt              DateTime @updatedAt
@@ -91,6 +90,7 @@ model Lead {
   customerName String
 
   contactNumber   String
+  normalizedPhone String? // Digit-only version for duplicate detection
   alternateNumber String?
   fullAddress     String?
   inquirySource   String   @default("OTHER")

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { startOfDay, endOfDay } from "date-fns";
 
 export async function GET() {
   try {
@@ -8,12 +9,12 @@ export async function GET() {
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    const todayStart = startOfDay(now);
+    const todayEnd = endOfDay(now);
 
     const stats = await Promise.all([
       prisma.lead.count(),
-      prisma.lead.count({ where: { status: "WON_ORDER" } }),
+      prisma.lead.count({ where: { status: "WON_ORDER", isCancelled: false } }),
       prisma.leadTransaction.aggregate({ where: { type: "RECEIVED" }, _sum: { amount: true } }),
       prisma.leadTransaction.aggregate({ where: { type: "EXPENSE" }, _sum: { amount: true } }),
       prisma.followUp.count({
@@ -23,17 +24,19 @@ export async function GET() {
             lte: todayEnd,
           },
           completedDate: null,
+          lead: { isCancelled: false, status: { not: "WON_ORDER" } }
         },
       }),
-      prisma.lead.count({ where: { status: "NEW_INQUIRY" } }),
-      prisma.lead.count({ where: { status: "FOLLOW_UP" } }),
-      prisma.lead.count({ where: { status: "MEETING_SCHEDULED" } }),
-      prisma.lead.count({ where: { status: "CANCELLED" } }),
+      prisma.lead.count({ where: { status: "NEW_INQUIRY", isCancelled: false } }),
+      prisma.lead.count({ where: { status: "FOLLOW_UP", isCancelled: false } }),
+      prisma.lead.count({ where: { status: "MEETING_SCHEDULED", isCancelled: false } }),
+      prisma.lead.count({ where: { isCancelled: true } }),
       prisma.order.aggregate({ _sum: { totalAmount: true } }),
       prisma.followUp.count({
         where: {
           nextCallDate: { lt: todayStart },
           completedDate: null,
+          lead: { isCancelled: false, status: { not: "WON_ORDER" } }
         },
       }),
       prisma.meeting.count({
@@ -43,11 +46,13 @@ export async function GET() {
             lte: todayEnd,
           },
           status: "SCHEDULED",
+          lead: { isCancelled: false }
         },
       }),
       prisma.lead.count({ 
         where: { 
-          status: { in: ["FOLLOW_UP", "MEETING_SCHEDULED"] }
+          status: { in: ["FOLLOW_UP", "MEETING_SCHEDULED"] },
+          isCancelled: false
         } 
       }),
       // Most Profitable Projects - Unified via Lead Transactions
@@ -69,6 +74,16 @@ export async function GET() {
         _count: { id: true }
       }),
       prisma.meeting.count(),
+      prisma.followUp.count({
+        where: {
+          nextCallDate: { gt: todayEnd },
+          completedDate: null,
+          lead: { isCancelled: false, status: { not: "WON_ORDER" } }
+        },
+      }),
+      prisma.order.count({ where: { status: "CANCELLED" } }),
+      prisma.auditLog.count({ where: { action: "WIPE_DATA", entity: "Lead" } }),
+      prisma.auditLog.count({ where: { action: "WIPE_DATA", entity: "Order" } }),
     ]);
 
     const topProjects = (stats[13] as any[] || []).map((o: any) => {
@@ -129,19 +144,21 @@ export async function GET() {
 
     return NextResponse.json({
       metrics: {
-        totalLeads: stats[0],
+        totalLeads: stats[0] + stats[18],
         wonOrders: stats[1],
         totalRevenue,
         totalExpenses,
         netProfit,
         todayFollowUps: stats[4],
         overdueFollowUps: stats[10],
+        upcomingFollowUps: stats[16],
         todayMeetings: stats[11],
         interestedLeads: stats[12],
         newLeads: stats[5],
         followUpLeads: stats[6],
         meetingLeads: stats[7],
         cancelledLeads: stats[8],
+        canceledArchive: stats[8] + stats[17] + stats[18] + stats[19],
         totalPending,
         totalMeetings: stats[15],
         topProjects,

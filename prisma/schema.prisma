@@ -3,7 +3,6 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/client"
 }
 
 datasource db {
@@ -90,6 +89,7 @@ model Lead {
   customerName    String
 
   contactNumber   String
+  normalizedPhone String?       // Digit-only version for duplicate detection
   alternateNumber String?
   fullAddress     String?
   inquirySource   String        @default("OTHER")

@@ -1,7 +1,8 @@
 "use client";
 
 import { signOut, useSession } from "next-auth/react";
-import { Bell, Search, User as UserIcon, LogOut } from "lucide-react";
+import { Search, User as UserIcon, LogOut } from "lucide-react";
+import NotificationBell from "./NotificationBell";
 
 export default function Topbar() {
   const { data: session } = useSession();
@@ -29,10 +30,7 @@ export default function Topbar() {
           />
         </form>
         <div className="flex items-center gap-x-4 lg:gap-x-6">
-          <button type="button" className="-m-2.5 p-2.5 text-slate-400 hover:text-slate-500">
-            <span className="sr-only">View notifications</span>
-            <Bell className="h-6 w-6" aria-hidden="true" />
-          </button>
+          <NotificationBell />
 
           {/* Separator */}
           <div className="hidden lg:block lg:h-6 lg:w-px lg:bg-slate-200" aria-hidden="true" />

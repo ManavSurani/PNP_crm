@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import {
   Users, PhoneCall, TrendingUp, IndianRupee, Loader2,
-  CheckCircle2, AlertTriangle, Calendar, Zap, BarChart3, Target, MapPin
+  CheckCircle2, AlertTriangle, Calendar, Zap, BarChart3, Target, MapPin, Trash2, MessageSquare
 } from "lucide-react";
 import { format } from "date-fns";
 import {
@@ -58,9 +58,11 @@ export default function Dashboard() {
 
   const KPIs = [
     { title: "Total Leads", value: metrics.totalLeads, icon: Users, color: "text-indigo-600", bg: "bg-indigo-50" },
-    { title: "Follow-ups", value: `${metrics.todayFollowUps} Today ${metrics.overdueFollowUps > 0 ? `(${metrics.overdueFollowUps} Overdue)` : ""}`, icon: PhoneCall, color: "text-amber-600", bg: "bg-amber-50" },
+    { title: "Follow-ups", value: null, icon: PhoneCall, color: "text-amber-600", bg: "bg-amber-50" },
     { title: "Won Orders", value: metrics.wonOrders, icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-50" },
-    { title: "Site Visits", value: metrics.totalMeetings, icon: MapPin, color: "text-rose-600", bg: "bg-rose-50" },
+    { title: "Site Visits", value: metrics.totalMeetings, icon: MapPin, color: "text-slate-600", bg: "bg-slate-100" },
+    { title: "New Inquiries", value: metrics.newLeads, icon: MessageSquare, color: "text-sky-600", bg: "bg-sky-50" },
+    { title: "Canceled Archive", value: metrics.canceledArchive, icon: Trash2, color: "text-rose-600", bg: "bg-rose-50" },
   ];
 
   return (
@@ -83,12 +85,34 @@ export default function Dashboard() {
       {/* KPI Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {KPIs.map((kpi, idx) => (
-          <div key={idx} className="bg-white p-5 rounded-xl border border-slate-200 hover:border-primary/30 hover:shadow-sm transition-all group">
-            <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center mb-4 transition-transform", kpi.bg, kpi.color)}>
-              <kpi.icon className="h-5 w-5" />
+          <div key={idx} className="bg-white p-5 rounded-xl border border-slate-200 hover:border-primary/30 hover:shadow-sm transition-all group min-h-[140px] flex flex-col justify-between">
+            <div>
+               <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center mb-4 transition-transform group-hover:scale-105", kpi.bg, kpi.color)}>
+                 <kpi.icon className="h-5 w-5" />
+               </div>
+               <p className="text-xs font-bold text-slate-500 uppercase tracking-tight">{kpi.title}</p>
             </div>
-            <p className="text-xs font-medium text-slate-500">{kpi.title}</p>
-            <p className="text-xl font-semibold text-slate-900 mt-1">{kpi.value}</p>
+            
+            {kpi.title === "Follow-ups" ? (
+              <div className="grid grid-cols-3 mt-auto pt-3 border-t border-slate-100/50 -mx-2">
+                <div className="flex flex-col items-center border-r border-slate-100 last:border-0 px-1">
+                  <span className="text-[11px] font-black text-indigo-600 leading-none">{metrics.todayFollowUps}</span>
+                  <span className="text-[7px] font-bold text-indigo-400 uppercase tracking-tighter mt-1">Today</span>
+                </div>
+                <div className="flex flex-col items-center border-r border-slate-100 last:border-0 px-1">
+                  <span className={cn("text-[11px] font-black leading-none", metrics.overdueFollowUps > 0 ? "text-rose-600" : "text-slate-400")}>
+                    {metrics.overdueFollowUps}
+                  </span>
+                  <span className="text-[7px] font-bold text-rose-400 uppercase tracking-tighter mt-1">Overdue</span>
+                </div>
+                <div className="flex flex-col items-center px-1">
+                  <span className="text-[11px] font-black text-amber-600 leading-none">{metrics.upcomingFollowUps}</span>
+                  <span className="text-[7px] font-bold text-amber-400 uppercase tracking-widest sm:tracking-tighter mt-1 scale-90 sm:scale-100 origin-center">Upcoming</span>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xl font-bold text-slate-900 mt-1">{kpi.value}</p>
+            )}
           </div>
         ))}
       </div>

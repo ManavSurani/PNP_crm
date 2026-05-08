@@ -43,6 +43,7 @@ export default function LeadsPage() {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [editLead, setEditLead] = useState<Lead | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [permanentDeleteId, setPermanentDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchLeads = async () => {
@@ -88,14 +89,17 @@ export default function LeadsPage() {
     }
   };
 
-  const handleDelete = async () => {
-    if (!deleteId) return;
+  const handleDelete = async (permanent = false) => {
+    const id = permanent ? permanentDeleteId : deleteId;
+    if (!id) return;
     setIsDeleting(true);
     try {
-      const res = await fetch(`/api/leads/${deleteId}`, { method: "DELETE" });
+      const url = `/api/leads/${id}${permanent ? '?permanent=true' : ''}`;
+      const res = await fetch(url, { method: "DELETE" });
       if (res.ok) {
         fetchLeads();
         setDeleteId(null);
+        setPermanentDeleteId(null);
       }
     } catch (e) {
       console.error(e);
@@ -405,9 +409,15 @@ export default function LeadsPage() {
                                    <div className="h-px bg-slate-100 my-1" />
                                    <button 
                                      onClick={() => { setDeleteId(lead.id); setOpenMenuId(null); }}
+                                     className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold hover:bg-slate-50 text-slate-600 rounded-lg transition-colors text-left"
+                                   >
+                                     <RotateCcw className="h-3.5 w-3.5 text-slate-400" /> Archive Lead
+                                   </button>
+                                   <button 
+                                     onClick={() => { setPermanentDeleteId(lead.id); setOpenMenuId(null); }}
                                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold hover:bg-rose-50 text-rose-600 rounded-lg transition-colors text-left"
                                    >
-                                     <Trash2 className="h-3.5 w-3.5" /> Delete
+                                     <Trash2 className="h-3.5 w-3.5" /> Delete Lead
                                    </button>
                                  </div>
                                </div>
@@ -443,10 +453,25 @@ export default function LeadsPage() {
         isOpen={!!deleteId}
         isLoading={isDeleting}
         onClose={() => setDeleteId(null)}
-        onConfirm={handleDelete}
+        onConfirm={() => handleDelete(false)}
+      />
+
+      <PermanentDeleteModal
+        isOpen={!!permanentDeleteId}
+        isLoading={isDeleting}
+        onClose={() => setPermanentDeleteId(null)}
+        onConfirm={() => handleDelete(true)}
       />
     </div>
   );
+}
+
+interface DuplicateMatch {
+  id: string;
+  name: string;
+  location: string;
+  status: string;
+  serviceType: string;
 }
 
 function CreateOrEditModal({ isOpen, lead, onClose, onSuccess }: { isOpen: boolean, lead: Lead | null, onClose: () => void, onSuccess: () => void }) {
@@ -460,6 +485,11 @@ function CreateOrEditModal({ isOpen, lead, onClose, onSuccess }: { isOpen: boole
     serviceType: "Interior Design",
     inquirySource: "WHATSAPP"
   });
+
+  // Duplicate detection states
+  const [duplicates, setDuplicates] = useState<DuplicateMatch[]>([]);
+  const [isCheckingDuplicate, setIsCheckingDuplicate] = useState(false);
+  const [hasConfirmedDuplicate, setHasConfirmedDuplicate] = useState(false);
 
   useEffect(() => {
     if (lead) {
@@ -481,6 +511,38 @@ function CreateOrEditModal({ isOpen, lead, onClose, onSuccess }: { isOpen: boole
       });
     }
   }, [lead, isOpen]);
+
+  // Handle duplicate check
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      // Only check for new leads, or if the number actually changed
+      if (formData.contactNumber.length >= 10 && !lead) {
+        setIsCheckingDuplicate(true);
+        try {
+          const res = await fetch(`/api/leads/check-duplicate?phone=${formData.contactNumber}`);
+          const rawData = await res.json();
+          const matchesList: DuplicateMatch[] = rawData?.matches || [];
+          // Filter out the current lead if we're editing (though !lead prevents this)
+          const filtered = (matchesList as any[]).filter((m: any) => {
+            const mid = (m as any).id;
+            const lid = (lead as any)?.id;
+            return mid !== lid;
+          });
+          setDuplicates(filtered);
+          if (filtered.length === 0) setHasConfirmedDuplicate(false);
+        } catch (e) {
+          console.error(e);
+        } finally {
+          setIsCheckingDuplicate(false);
+        }
+      } else {
+        setDuplicates([]);
+        setHasConfirmedDuplicate(false);
+      }
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [formData.contactNumber, lead]);
 
   if (!isOpen) return null;
 
@@ -555,7 +617,56 @@ function CreateOrEditModal({ isOpen, lead, onClose, onSuccess }: { isOpen: boole
                       if (val.length <= 10) setFormData({...formData, contactNumber: val});
                     }}
                   />
+                  {isCheckingDuplicate && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" />
+                    </div>
+                  )}
                 </div>
+
+                {duplicates.length > 0 && (
+                  <div className="mt-3 p-4 bg-amber-50/40 border border-amber-200/50 rounded-xl animate-in fade-in slide-in-from-top-1 duration-300">
+                    <div className="flex items-center gap-2 mb-3">
+                      <AlertTriangle className="h-3 w-3 text-amber-600" />
+                      <p className="text-[9px] font-bold text-amber-800 uppercase tracking-widest">Record Already Exists</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      {duplicates.map(d => (
+                        <div key={d.id} className="flex items-center justify-between gap-4 bg-white/80 p-2.5 rounded-lg border border-amber-100/50 shadow-[0_2px_8px_-4px_rgba(180,83,9,0.1)] transition-all hover:border-amber-200">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[10px] text-amber-900 font-bold leading-none truncate">{d.location}</p>
+                            <p className="text-[9px] text-amber-600/80 font-medium mt-1 truncate">
+                              {d.name} <span className="mx-1 text-amber-300">•</span> {d.serviceType}
+                            </p>
+                          </div>
+                          <button 
+                            type="button"
+                            onClick={() => router.push(`/leads/${d.id}`)}
+                            className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 bg-amber-600 text-white text-[9px] font-bold rounded-md hover:bg-amber-700 transition-all active:scale-95 shadow-sm shadow-amber-200/50"
+                          >
+                            Open <ChevronRight className="h-2.5 w-2.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <div className="mt-4 pt-3 border-t border-amber-200/30 flex items-center gap-2.5 ml-0.5">
+                      <div className="relative flex items-center">
+                        <input 
+                          type="checkbox" 
+                          id="confirm-duplicate"
+                          className="h-3.5 w-3.5 rounded border-amber-300 text-amber-600 focus:ring-amber-500/20 transition-all cursor-pointer"
+                          checked={hasConfirmedDuplicate}
+                          onChange={e => setHasConfirmedDuplicate(e.target.checked)}
+                        />
+                      </div>
+                      <label htmlFor="confirm-duplicate" className="text-[10px] font-bold text-amber-700/80 cursor-pointer select-none leading-none">
+                        I understand, create duplicate lead anyway
+                      </label>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -645,8 +756,8 @@ function CreateOrEditModal({ isOpen, lead, onClose, onSuccess }: { isOpen: boole
 
             <button
               type="submit"
-              disabled={isLoading}
-              className="rounded-lg bg-indigo-600 px-8 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95 flex items-center gap-2 disabled:opacity-50 border border-indigo-500/20"
+              disabled={isLoading || (duplicates.length > 0 && !hasConfirmedDuplicate)}
+              className="rounded-lg bg-indigo-600 px-8 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95 flex items-center gap-2 disabled:opacity-50 border border-indigo-500/20 disabled:grayscale disabled:cursor-not-allowed"
             >
               {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <span className="flex items-center gap-2">{lead ? "Save Changes" : "Create Lead"} <Check className="h-4 w-4" /></span>}
             </button>
@@ -666,9 +777,9 @@ function DeleteConfirmationModal({ isOpen, isLoading, onClose, onConfirm }: { is
           <div className="bg-rose-50 h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-5">
             <AlertTriangle className="h-8 w-8 text-rose-500" />
           </div>
-          <h3 className="text-xl font-semibold text-slate-900">Delete Lead</h3>
+          <h3 className="text-xl font-semibold text-slate-900">Archive Lead</h3>
           <p className="mt-2 text-slate-500 font-medium leading-relaxed px-4 text-sm">
-            Are you sure you want to delete this lead? This action cannot be undone.
+            Are you sure you want to remove this lead? It will be moved to the <span className="text-slate-900 font-bold">Canceled Archive</span> for safety. You can permanently delete it from there later.
           </p>
           <div className="mt-8 flex flex-col gap-2">
              <button 
@@ -677,7 +788,48 @@ function DeleteConfirmationModal({ isOpen, isLoading, onClose, onConfirm }: { is
                className="w-full bg-rose-600 hover:bg-rose-700 py-3 rounded-lg text-white font-semibold text-sm transition-all active:scale-95 flex items-center justify-center gap-2"
              >
                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-               Delete Record
+               Move to Archive
+             </button>
+             <button 
+               onClick={onClose}
+               className="w-full bg-slate-50 hover:bg-slate-100 py-3 rounded-lg text-slate-600 font-semibold text-sm transition-colors"
+             >
+               Cancel
+             </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+function PermanentDeleteModal({ isOpen, isLoading, onClose, onConfirm }: { isOpen: boolean, isLoading: boolean, onClose: () => void, onConfirm: () => void }) {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/20 backdrop-blur-sm animate-in fade-in duration-300">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 animate-in zoom-in-95">
+        <div className="p-8 text-center">
+          <div className="bg-rose-50 h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-5">
+            <Trash2 className="h-8 w-8 text-rose-500" />
+          </div>
+          <h3 className="text-xl font-semibold text-slate-900">Delete Lead Permanently?</h3>
+          <p className="mt-2 text-slate-500 font-medium leading-relaxed px-4 text-sm text-left">
+            This action cannot be undone. The lead will be permanently removed from:
+          </p>
+          <ul className="mt-3 text-slate-500 text-xs font-semibold space-y-1.5 text-left px-4 list-disc list-inside">
+            <li>Lead Pipeline</li>
+            <li>Follow-Ups</li>
+            <li>Site Visits</li>
+            <li>Analytics</li>
+            <li>Customer History</li>
+          </ul>
+          <div className="mt-8 flex flex-col gap-2">
+             <button 
+               disabled={isLoading} 
+               onClick={onConfirm}
+               className="w-full bg-rose-600 hover:bg-rose-700 py-3 rounded-lg text-white font-semibold text-sm transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-rose-100"
+             >
+               {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+               Permanently Delete
              </button>
              <button 
                onClick={onClose}

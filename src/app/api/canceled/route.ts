@@ -47,18 +47,54 @@ export async function DELETE(request: Request) {
     const type = searchParams.get("type"); // "leads" or "orders"
 
     if (type === "leads") {
-      await prisma.lead.deleteMany({
+      // Find IDs to log
+      const leadsToWipe = await prisma.lead.findMany({
         where: {
           OR: [
             { status: "CANCELLED" },
             { isCancelled: true }
           ]
-        }
+        },
+        select: { id: true }
       });
+
+      if (leadsToWipe.length > 0) {
+        await prisma.lead.deleteMany({
+          where: { id: { in: leadsToWipe.map(l => l.id) } }
+        });
+
+        // Create log entries for analytics
+        await prisma.auditLog.createMany({
+          data: leadsToWipe.map(l => ({
+            action: "WIPE_DATA",
+            entity: "Lead",
+            entityId: l.id,
+            oldValue: "CANCELLED",
+            userId: session.user.id
+          }))
+        });
+      }
     } else if (type === "orders") {
-      await prisma.order.deleteMany({
-        where: { status: "CANCELLED" }
+      const ordersToWipe = await prisma.order.findMany({
+        where: { status: "CANCELLED" },
+        select: { id: true }
       });
+
+      if (ordersToWipe.length > 0) {
+        await prisma.order.deleteMany({
+          where: { id: { in: ordersToWipe.map(o => o.id) } }
+        });
+
+        await prisma.auditLog.createMany({
+          data: ordersToWipe.map(o => ({
+            action: "WIPE_DATA",
+            entity: "Order",
+            entityId: o.id,
+            oldValue: "CANCELLED",
+            userId: session.user.id
+          }))
+        });
+      }
     }
 
     return new NextResponse(null, { status: 204 });

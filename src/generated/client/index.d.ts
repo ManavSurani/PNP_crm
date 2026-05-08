@@ -7509,7 +7509,6 @@ export namespace Prisma {
     id: string | null
     sessionMaxAge: number | null
     whatsappDispatchNumber: string | null
-    primaryCity: string | null
     analyticsPin: string | null
     isAnalyticsPinEnabled: boolean | null
     updatedAt: Date | null
@@ -7519,7 +7518,6 @@ export namespace Prisma {
     id: string | null
     sessionMaxAge: number | null
     whatsappDispatchNumber: string | null
-    primaryCity: string | null
     analyticsPin: string | null
     isAnalyticsPinEnabled: boolean | null
     updatedAt: Date | null
@@ -7529,7 +7527,6 @@ export namespace Prisma {
     id: number
     sessionMaxAge: number
     whatsappDispatchNumber: number
-    primaryCity: number
     analyticsPin: number
     isAnalyticsPinEnabled: number
     updatedAt: number
@@ -7549,7 +7546,6 @@ export namespace Prisma {
     id?: true
     sessionMaxAge?: true
     whatsappDispatchNumber?: true
-    primaryCity?: true
     analyticsPin?: true
     isAnalyticsPinEnabled?: true
     updatedAt?: true
@@ -7559,7 +7555,6 @@ export namespace Prisma {
     id?: true
     sessionMaxAge?: true
     whatsappDispatchNumber?: true
-    primaryCity?: true
     analyticsPin?: true
     isAnalyticsPinEnabled?: true
     updatedAt?: true
@@ -7569,7 +7564,6 @@ export namespace Prisma {
     id?: true
     sessionMaxAge?: true
     whatsappDispatchNumber?: true
-    primaryCity?: true
     analyticsPin?: true
     isAnalyticsPinEnabled?: true
     updatedAt?: true
@@ -7666,7 +7660,6 @@ export namespace Prisma {
     id: string
     sessionMaxAge: number
     whatsappDispatchNumber: string | null
-    primaryCity: string
     analyticsPin: string | null
     isAnalyticsPinEnabled: boolean
     updatedAt: Date
@@ -7695,7 +7688,6 @@ export namespace Prisma {
     id?: boolean
     sessionMaxAge?: boolean
     whatsappDispatchNumber?: boolean
-    primaryCity?: boolean
     analyticsPin?: boolean
     isAnalyticsPinEnabled?: boolean
     updatedAt?: boolean
@@ -7705,7 +7697,6 @@ export namespace Prisma {
     id?: boolean
     sessionMaxAge?: boolean
     whatsappDispatchNumber?: boolean
-    primaryCity?: boolean
     analyticsPin?: boolean
     isAnalyticsPinEnabled?: boolean
     updatedAt?: boolean
@@ -7715,7 +7706,6 @@ export namespace Prisma {
     id?: boolean
     sessionMaxAge?: boolean
     whatsappDispatchNumber?: boolean
-    primaryCity?: boolean
     analyticsPin?: boolean
     isAnalyticsPinEnabled?: boolean
     updatedAt?: boolean
@@ -7725,13 +7715,12 @@ export namespace Prisma {
     id?: boolean
     sessionMaxAge?: boolean
     whatsappDispatchNumber?: boolean
-    primaryCity?: boolean
     analyticsPin?: boolean
     isAnalyticsPinEnabled?: boolean
     updatedAt?: boolean
   }
 
-  export type SystemSettingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "sessionMaxAge" | "whatsappDispatchNumber" | "primaryCity" | "analyticsPin" | "isAnalyticsPinEnabled" | "updatedAt", ExtArgs["result"]["systemSetting"]>
+  export type SystemSettingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "sessionMaxAge" | "whatsappDispatchNumber" | "analyticsPin" | "isAnalyticsPinEnabled" | "updatedAt", ExtArgs["result"]["systemSetting"]>
 
   export type $SystemSettingPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "SystemSetting"
@@ -7740,7 +7729,6 @@ export namespace Prisma {
       id: string
       sessionMaxAge: number
       whatsappDispatchNumber: string | null
-      primaryCity: string
       analyticsPin: string | null
       isAnalyticsPinEnabled: boolean
       updatedAt: Date
@@ -8170,7 +8158,6 @@ export namespace Prisma {
     readonly id: FieldRef<"SystemSetting", 'String'>
     readonly sessionMaxAge: FieldRef<"SystemSetting", 'Int'>
     readonly whatsappDispatchNumber: FieldRef<"SystemSetting", 'String'>
-    readonly primaryCity: FieldRef<"SystemSetting", 'String'>
     readonly analyticsPin: FieldRef<"SystemSetting", 'String'>
     readonly isAnalyticsPinEnabled: FieldRef<"SystemSetting", 'Boolean'>
     readonly updatedAt: FieldRef<"SystemSetting", 'DateTime'>
@@ -9555,6 +9542,7 @@ export namespace Prisma {
     id: string | null
     customerName: string | null
     contactNumber: string | null
+    normalizedPhone: string | null
     alternateNumber: string | null
     fullAddress: string | null
     inquirySource: string | null
@@ -9581,6 +9569,7 @@ export namespace Prisma {
     id: string | null
     customerName: string | null
     contactNumber: string | null
+    normalizedPhone: string | null
     alternateNumber: string | null
     fullAddress: string | null
     inquirySource: string | null
@@ -9607,6 +9596,7 @@ export namespace Prisma {
     id: number
     customerName: number
     contactNumber: number
+    normalizedPhone: number
     alternateNumber: number
     fullAddress: number
     inquirySource: number
@@ -9643,6 +9633,7 @@ export namespace Prisma {
     id?: true
     customerName?: true
     contactNumber?: true
+    normalizedPhone?: true
     alternateNumber?: true
     fullAddress?: true
     inquirySource?: true
@@ -9669,6 +9660,7 @@ export namespace Prisma {
     id?: true
     customerName?: true
     contactNumber?: true
+    normalizedPhone?: true
     alternateNumber?: true
     fullAddress?: true
     inquirySource?: true
@@ -9695,6 +9687,7 @@ export namespace Prisma {
     id?: true
     customerName?: true
     contactNumber?: true
+    normalizedPhone?: true
     alternateNumber?: true
     fullAddress?: true
     inquirySource?: true
@@ -9808,6 +9801,7 @@ export namespace Prisma {
     id: string
     customerName: string
     contactNumber: string
+    normalizedPhone: string | null
     alternateNumber: string | null
     fullAddress: string | null
     inquirySource: string
@@ -9853,6 +9847,7 @@ export namespace Prisma {
     id?: boolean
     customerName?: boolean
     contactNumber?: boolean
+    normalizedPhone?: boolean
     alternateNumber?: boolean
     fullAddress?: boolean
     inquirySource?: boolean
@@ -9891,6 +9886,7 @@ export namespace Prisma {
     id?: boolean
     customerName?: boolean
     contactNumber?: boolean
+    normalizedPhone?: boolean
     alternateNumber?: boolean
     fullAddress?: boolean
     inquirySource?: boolean
@@ -9918,6 +9914,7 @@ export namespace Prisma {
     id?: boolean
     customerName?: boolean
     contactNumber?: boolean
+    normalizedPhone?: boolean
     alternateNumber?: boolean
     fullAddress?: boolean
     inquirySource?: boolean
@@ -9945,6 +9942,7 @@ export namespace Prisma {
     id?: boolean
     customerName?: boolean
     contactNumber?: boolean
+    normalizedPhone?: boolean
     alternateNumber?: boolean
     fullAddress?: boolean
     inquirySource?: boolean
@@ -9967,7 +9965,7 @@ export namespace Prisma {
     initialDealNotes?: boolean
   }
 
-  export type LeadOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "customerName" | "contactNumber" | "alternateNumber" | "fullAddress" | "inquirySource" | "serviceType" | "priority" | "status" | "assignedStaffId" | "createdAt" | "updatedAt" | "budgetRange" | "requirementDetails" | "siteLocation" | "landmark" | "preferredVisitTime" | "isCancelled" | "cancelReason" | "reactivatedAt" | "reactivationNote" | "initialDealAmount" | "initialDealNotes", ExtArgs["result"]["lead"]>
+  export type LeadOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "customerName" | "contactNumber" | "normalizedPhone" | "alternateNumber" | "fullAddress" | "inquirySource" | "serviceType" | "priority" | "status" | "assignedStaffId" | "createdAt" | "updatedAt" | "budgetRange" | "requirementDetails" | "siteLocation" | "landmark" | "preferredVisitTime" | "isCancelled" | "cancelReason" | "reactivatedAt" | "reactivationNote" | "initialDealAmount" | "initialDealNotes", ExtArgs["result"]["lead"]>
   export type LeadInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     assignedStaff?: boolean | Lead$assignedStaffArgs<ExtArgs>
     requirement?: boolean | Lead$requirementArgs<ExtArgs>
@@ -10008,6 +10006,7 @@ export namespace Prisma {
       id: string
       customerName: string
       contactNumber: string
+      normalizedPhone: string | null
       alternateNumber: string | null
       fullAddress: string | null
       inquirySource: string
@@ -10465,6 +10464,7 @@ export namespace Prisma {
     readonly id: FieldRef<"Lead", 'String'>
     readonly customerName: FieldRef<"Lead", 'String'>
     readonly contactNumber: FieldRef<"Lead", 'String'>
+    readonly normalizedPhone: FieldRef<"Lead", 'String'>
     readonly alternateNumber: FieldRef<"Lead", 'String'>
     readonly fullAddress: FieldRef<"Lead", 'String'>
     readonly inquirySource: FieldRef<"Lead", 'String'>
@@ -39858,7 +39858,6 @@ export namespace Prisma {
     id: 'id',
     sessionMaxAge: 'sessionMaxAge',
     whatsappDispatchNumber: 'whatsappDispatchNumber',
-    primaryCity: 'primaryCity',
     analyticsPin: 'analyticsPin',
     isAnalyticsPinEnabled: 'isAnalyticsPinEnabled',
     updatedAt: 'updatedAt'
@@ -39882,6 +39881,7 @@ export namespace Prisma {
     id: 'id',
     customerName: 'customerName',
     contactNumber: 'contactNumber',
+    normalizedPhone: 'normalizedPhone',
     alternateNumber: 'alternateNumber',
     fullAddress: 'fullAddress',
     inquirySource: 'inquirySource',
@@ -40587,7 +40587,6 @@ export namespace Prisma {
     id?: StringFilter<"SystemSetting"> | string
     sessionMaxAge?: IntFilter<"SystemSetting"> | number
     whatsappDispatchNumber?: StringNullableFilter<"SystemSetting"> | string | null
-    primaryCity?: StringFilter<"SystemSetting"> | string
     analyticsPin?: StringNullableFilter<"SystemSetting"> | string | null
     isAnalyticsPinEnabled?: BoolFilter<"SystemSetting"> | boolean
     updatedAt?: DateTimeFilter<"SystemSetting"> | Date | string
@@ -40597,7 +40596,6 @@ export namespace Prisma {
     id?: SortOrder
     sessionMaxAge?: SortOrder
     whatsappDispatchNumber?: SortOrderInput | SortOrder
-    primaryCity?: SortOrder
     analyticsPin?: SortOrderInput | SortOrder
     isAnalyticsPinEnabled?: SortOrder
     updatedAt?: SortOrder
@@ -40610,7 +40608,6 @@ export namespace Prisma {
     NOT?: SystemSettingWhereInput | SystemSettingWhereInput[]
     sessionMaxAge?: IntFilter<"SystemSetting"> | number
     whatsappDispatchNumber?: StringNullableFilter<"SystemSetting"> | string | null
-    primaryCity?: StringFilter<"SystemSetting"> | string
     analyticsPin?: StringNullableFilter<"SystemSetting"> | string | null
     isAnalyticsPinEnabled?: BoolFilter<"SystemSetting"> | boolean
     updatedAt?: DateTimeFilter<"SystemSetting"> | Date | string
@@ -40620,7 +40617,6 @@ export namespace Prisma {
     id?: SortOrder
     sessionMaxAge?: SortOrder
     whatsappDispatchNumber?: SortOrderInput | SortOrder
-    primaryCity?: SortOrder
     analyticsPin?: SortOrderInput | SortOrder
     isAnalyticsPinEnabled?: SortOrder
     updatedAt?: SortOrder
@@ -40638,7 +40634,6 @@ export namespace Prisma {
     id?: StringWithAggregatesFilter<"SystemSetting"> | string
     sessionMaxAge?: IntWithAggregatesFilter<"SystemSetting"> | number
     whatsappDispatchNumber?: StringNullableWithAggregatesFilter<"SystemSetting"> | string | null
-    primaryCity?: StringWithAggregatesFilter<"SystemSetting"> | string
     analyticsPin?: StringNullableWithAggregatesFilter<"SystemSetting"> | string | null
     isAnalyticsPinEnabled?: BoolWithAggregatesFilter<"SystemSetting"> | boolean
     updatedAt?: DateTimeWithAggregatesFilter<"SystemSetting"> | Date | string
@@ -40703,6 +40698,7 @@ export namespace Prisma {
     id?: StringFilter<"Lead"> | string
     customerName?: StringFilter<"Lead"> | string
     contactNumber?: StringFilter<"Lead"> | string
+    normalizedPhone?: StringNullableFilter<"Lead"> | string | null
     alternateNumber?: StringNullableFilter<"Lead"> | string | null
     fullAddress?: StringNullableFilter<"Lead"> | string | null
     inquirySource?: StringFilter<"Lead"> | string
@@ -40740,6 +40736,7 @@ export namespace Prisma {
     id?: SortOrder
     customerName?: SortOrder
     contactNumber?: SortOrder
+    normalizedPhone?: SortOrderInput | SortOrder
     alternateNumber?: SortOrderInput | SortOrder
     fullAddress?: SortOrderInput | SortOrder
     inquirySource?: SortOrder
@@ -40780,6 +40777,7 @@ export namespace Prisma {
     NOT?: LeadWhereInput | LeadWhereInput[]
     customerName?: StringFilter<"Lead"> | string
     contactNumber?: StringFilter<"Lead"> | string
+    normalizedPhone?: StringNullableFilter<"Lead"> | string | null
     alternateNumber?: StringNullableFilter<"Lead"> | string | null
     fullAddress?: StringNullableFilter<"Lead"> | string | null
     inquirySource?: StringFilter<"Lead"> | string
@@ -40817,6 +40815,7 @@ export namespace Prisma {
     id?: SortOrder
     customerName?: SortOrder
     contactNumber?: SortOrder
+    normalizedPhone?: SortOrderInput | SortOrder
     alternateNumber?: SortOrderInput | SortOrder
     fullAddress?: SortOrderInput | SortOrder
     inquirySource?: SortOrder
@@ -40851,6 +40850,7 @@ export namespace Prisma {
     id?: StringWithAggregatesFilter<"Lead"> | string
     customerName?: StringWithAggregatesFilter<"Lead"> | string
     contactNumber?: StringWithAggregatesFilter<"Lead"> | string
+    normalizedPhone?: StringNullableWithAggregatesFilter<"Lead"> | string | null
     alternateNumber?: StringNullableWithAggregatesFilter<"Lead"> | string | null
     fullAddress?: StringNullableWithAggregatesFilter<"Lead"> | string | null
     inquirySource?: StringWithAggregatesFilter<"Lead"> | string
@@ -43114,7 +43114,6 @@ export namespace Prisma {
     id?: string
     sessionMaxAge?: number
     whatsappDispatchNumber?: string | null
-    primaryCity?: string
     analyticsPin?: string | null
     isAnalyticsPinEnabled?: boolean
     updatedAt?: Date | string
@@ -43124,7 +43123,6 @@ export namespace Prisma {
     id?: string
     sessionMaxAge?: number
     whatsappDispatchNumber?: string | null
-    primaryCity?: string
     analyticsPin?: string | null
     isAnalyticsPinEnabled?: boolean
     updatedAt?: Date | string
@@ -43134,7 +43132,6 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     sessionMaxAge?: IntFieldUpdateOperationsInput | number
     whatsappDispatchNumber?: NullableStringFieldUpdateOperationsInput | string | null
-    primaryCity?: StringFieldUpdateOperationsInput | string
     analyticsPin?: NullableStringFieldUpdateOperationsInput | string | null
     isAnalyticsPinEnabled?: BoolFieldUpdateOperationsInput | boolean
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -43144,7 +43141,6 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     sessionMaxAge?: IntFieldUpdateOperationsInput | number
     whatsappDispatchNumber?: NullableStringFieldUpdateOperationsInput | string | null
-    primaryCity?: StringFieldUpdateOperationsInput | string
     analyticsPin?: NullableStringFieldUpdateOperationsInput | string | null
     isAnalyticsPinEnabled?: BoolFieldUpdateOperationsInput | boolean
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -43154,7 +43150,6 @@ export namespace Prisma {
     id?: string
     sessionMaxAge?: number
     whatsappDispatchNumber?: string | null
-    primaryCity?: string
     analyticsPin?: string | null
     isAnalyticsPinEnabled?: boolean
     updatedAt?: Date | string
@@ -43164,7 +43159,6 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     sessionMaxAge?: IntFieldUpdateOperationsInput | number
     whatsappDispatchNumber?: NullableStringFieldUpdateOperationsInput | string | null
-    primaryCity?: StringFieldUpdateOperationsInput | string
     analyticsPin?: NullableStringFieldUpdateOperationsInput | string | null
     isAnalyticsPinEnabled?: BoolFieldUpdateOperationsInput | boolean
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -43174,7 +43168,6 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     sessionMaxAge?: IntFieldUpdateOperationsInput | number
     whatsappDispatchNumber?: NullableStringFieldUpdateOperationsInput | string | null
-    primaryCity?: StringFieldUpdateOperationsInput | string
     analyticsPin?: NullableStringFieldUpdateOperationsInput | string | null
     isAnalyticsPinEnabled?: BoolFieldUpdateOperationsInput | boolean
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -43240,6 +43233,7 @@ export namespace Prisma {
     id?: string
     customerName: string
     contactNumber: string
+    normalizedPhone?: string | null
     alternateNumber?: string | null
     fullAddress?: string | null
     inquirySource?: string
@@ -43276,6 +43270,7 @@ export namespace Prisma {
     id?: string
     customerName: string
     contactNumber: string
+    normalizedPhone?: string | null
     alternateNumber?: string | null
     fullAddress?: string | null
     inquirySource?: string
@@ -43312,6 +43307,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     customerName?: StringFieldUpdateOperationsInput | string
     contactNumber?: StringFieldUpdateOperationsInput | string
+    normalizedPhone?: NullableStringFieldUpdateOperationsInput | string | null
     alternateNumber?: NullableStringFieldUpdateOperationsInput | string | null
     fullAddress?: NullableStringFieldUpdateOperationsInput | string | null
     inquirySource?: StringFieldUpdateOperationsInput | string
@@ -43348,6 +43344,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     customerName?: StringFieldUpdateOperationsInput | string
     contactNumber?: StringFieldUpdateOperationsInput | string
+    normalizedPhone?: NullableStringFieldUpdateOperationsInput | string | null
     alternateNumber?: NullableStringFieldUpdateOperationsInput | string | null
     fullAddress?: NullableStringFieldUpdateOperationsInput | string | null
     inquirySource?: StringFieldUpdateOperationsInput | string
@@ -43384,6 +43381,7 @@ export namespace Prisma {
     id?: string
     customerName: string
     contactNumber: string
+    normalizedPhone?: string | null
     alternateNumber?: string | null
     fullAddress?: string | null
     inquirySource?: string
@@ -43410,6 +43408,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     customerName?: StringFieldUpdateOperationsInput | string
     contactNumber?: StringFieldUpdateOperationsInput | string
+    normalizedPhone?: NullableStringFieldUpdateOperationsInput | string | null
     alternateNumber?: NullableStringFieldUpdateOperationsInput | string | null
     fullAddress?: NullableStringFieldUpdateOperationsInput | string | null
     inquirySource?: StringFieldUpdateOperationsInput | string
@@ -43435,6 +43434,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     customerName?: StringFieldUpdateOperationsInput | string
     contactNumber?: StringFieldUpdateOperationsInput | string
+    normalizedPhone?: NullableStringFieldUpdateOperationsInput | string | null
     alternateNumber?: NullableStringFieldUpdateOperationsInput | string | null
     fullAddress?: NullableStringFieldUpdateOperationsInput | string | null
     inquirySource?: StringFieldUpdateOperationsInput | string
@@ -45939,7 +45939,6 @@ export namespace Prisma {
     id?: SortOrder
     sessionMaxAge?: SortOrder
     whatsappDispatchNumber?: SortOrder
-    primaryCity?: SortOrder
     analyticsPin?: SortOrder
     isAnalyticsPinEnabled?: SortOrder
     updatedAt?: SortOrder
@@ -45953,7 +45952,6 @@ export namespace Prisma {
     id?: SortOrder
     sessionMaxAge?: SortOrder
     whatsappDispatchNumber?: SortOrder
-    primaryCity?: SortOrder
     analyticsPin?: SortOrder
     isAnalyticsPinEnabled?: SortOrder
     updatedAt?: SortOrder
@@ -45963,7 +45961,6 @@ export namespace Prisma {
     id?: SortOrder
     sessionMaxAge?: SortOrder
     whatsappDispatchNumber?: SortOrder
-    primaryCity?: SortOrder
     analyticsPin?: SortOrder
     isAnalyticsPinEnabled?: SortOrder
     updatedAt?: SortOrder
@@ -46142,6 +46139,7 @@ export namespace Prisma {
     id?: SortOrder
     customerName?: SortOrder
     contactNumber?: SortOrder
+    normalizedPhone?: SortOrder
     alternateNumber?: SortOrder
     fullAddress?: SortOrder
     inquirySource?: SortOrder
@@ -46172,6 +46170,7 @@ export namespace Prisma {
     id?: SortOrder
     customerName?: SortOrder
     contactNumber?: SortOrder
+    normalizedPhone?: SortOrder
     alternateNumber?: SortOrder
     fullAddress?: SortOrder
     inquirySource?: SortOrder
@@ -46198,6 +46197,7 @@ export namespace Prisma {
     id?: SortOrder
     customerName?: SortOrder
     contactNumber?: SortOrder
+    normalizedPhone?: SortOrder
     alternateNumber?: SortOrder
     fullAddress?: SortOrder
     inquirySource?: SortOrder
@@ -49400,6 +49400,7 @@ export namespace Prisma {
     id?: string
     customerName: string
     contactNumber: string
+    normalizedPhone?: string | null
     alternateNumber?: string | null
     fullAddress?: string | null
     inquirySource?: string
@@ -49435,6 +49436,7 @@ export namespace Prisma {
     id?: string
     customerName: string
     contactNumber: string
+    normalizedPhone?: string | null
     alternateNumber?: string | null
     fullAddress?: string | null
     inquirySource?: string
@@ -49588,6 +49590,7 @@ export namespace Prisma {
     id?: StringFilter<"Lead"> | string
     customerName?: StringFilter<"Lead"> | string
     contactNumber?: StringFilter<"Lead"> | string
+    normalizedPhone?: StringNullableFilter<"Lead"> | string | null
     alternateNumber?: StringNullableFilter<"Lead"> | string | null
     fullAddress?: StringNullableFilter<"Lead"> | string | null
     inquirySource?: StringFilter<"Lead"> | string
@@ -50574,6 +50577,7 @@ export namespace Prisma {
     id?: string
     customerName: string
     contactNumber: string
+    normalizedPhone?: string | null
     alternateNumber?: string | null
     fullAddress?: string | null
     inquirySource?: string
@@ -50609,6 +50613,7 @@ export namespace Prisma {
     id?: string
     customerName: string
     contactNumber: string
+    normalizedPhone?: string | null
     alternateNumber?: string | null
     fullAddress?: string | null
     inquirySource?: string
@@ -50660,6 +50665,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     customerName?: StringFieldUpdateOperationsInput | string
     contactNumber?: StringFieldUpdateOperationsInput | string
+    normalizedPhone?: NullableStringFieldUpdateOperationsInput | string | null
     alternateNumber?: NullableStringFieldUpdateOperationsInput | string | null
     fullAddress?: NullableStringFieldUpdateOperationsInput | string | null
     inquirySource?: StringFieldUpdateOperationsInput | string
@@ -50695,6 +50701,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     customerName?: StringFieldUpdateOperationsInput | string
     contactNumber?: StringFieldUpdateOperationsInput | string
+    normalizedPhone?: NullableStringFieldUpdateOperationsInput | string | null
     alternateNumber?: NullableStringFieldUpdateOperationsInput | string | null
     fullAddress?: NullableStringFieldUpdateOperationsInput | string | null
     inquirySource?: StringFieldUpdateOperationsInput | string
@@ -50730,6 +50737,7 @@ export namespace Prisma {
     id?: string
     customerName: string
     contactNumber: string
+    normalizedPhone?: string | null
     alternateNumber?: string | null
     fullAddress?: string | null
     inquirySource?: string
@@ -50765,6 +50773,7 @@ export namespace Prisma {
     id?: string
     customerName: string
     contactNumber: string
+    normalizedPhone?: string | null
     alternateNumber?: string | null
     fullAddress?: string | null
     inquirySource?: string
@@ -50816,6 +50825,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     customerName?: StringFieldUpdateOperationsInput | string
     contactNumber?: StringFieldUpdateOperationsInput | string
+    normalizedPhone?: NullableStringFieldUpdateOperationsInput | string | null
     alternateNumber?: NullableStringFieldUpdateOperationsInput | string | null
     fullAddress?: NullableStringFieldUpdateOperationsInput | string | null
     inquirySource?: StringFieldUpdateOperationsInput | string
@@ -50851,6 +50861,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     customerName?: StringFieldUpdateOperationsInput | string
     contactNumber?: StringFieldUpdateOperationsInput | string
+    normalizedPhone?: NullableStringFieldUpdateOperationsInput | string | null
     alternateNumber?: NullableStringFieldUpdateOperationsInput | string | null
     fullAddress?: NullableStringFieldUpdateOperationsInput | string | null
     inquirySource?: StringFieldUpdateOperationsInput | string
@@ -50886,6 +50897,7 @@ export namespace Prisma {
     id?: string
     customerName: string
     contactNumber: string
+    normalizedPhone?: string | null
     alternateNumber?: string | null
     fullAddress?: string | null
     inquirySource?: string
@@ -50921,6 +50933,7 @@ export namespace Prisma {
     id?: string
     customerName: string
     contactNumber: string
+    normalizedPhone?: string | null
     alternateNumber?: string | null
     fullAddress?: string | null
     inquirySource?: string
@@ -50972,6 +50985,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     customerName?: StringFieldUpdateOperationsInput | string
     contactNumber?: StringFieldUpdateOperationsInput | string
+    normalizedPhone?: NullableStringFieldUpdateOperationsInput | string | null
     alternateNumber?: NullableStringFieldUpdateOperationsInput | string | null
     fullAddress?: NullableStringFieldUpdateOperationsInput | string | null
     inquirySource?: StringFieldUpdateOperationsInput | string
@@ -51007,6 +51021,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     customerName?: StringFieldUpdateOperationsInput | string
     contactNumber?: StringFieldUpdateOperationsInput | string
+    normalizedPhone?: NullableStringFieldUpdateOperationsInput | string | null
     alternateNumber?: NullableStringFieldUpdateOperationsInput | string | null
     fullAddress?: NullableStringFieldUpdateOperationsInput | string | null
     inquirySource?: StringFieldUpdateOperationsInput | string
@@ -51042,6 +51057,7 @@ export namespace Prisma {
     id?: string
     customerName: string
     contactNumber: string
+    normalizedPhone?: string | null
     alternateNumber?: string | null
     fullAddress?: string | null
     inquirySource?: string
@@ -51077,6 +51093,7 @@ export namespace Prisma {
     id?: string
     customerName: string
     contactNumber: string
+    normalizedPhone?: string | null
     alternateNumber?: string | null
     fullAddress?: string | null
     inquirySource?: string
@@ -51233,6 +51250,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     customerName?: StringFieldUpdateOperationsInput | string
     contactNumber?: StringFieldUpdateOperationsInput | string
+    normalizedPhone?: NullableStringFieldUpdateOperationsInput | string | null
     alternateNumber?: NullableStringFieldUpdateOperationsInput | string | null
     fullAddress?: NullableStringFieldUpdateOperationsInput | string | null
     inquirySource?: StringFieldUpdateOperationsInput | string
@@ -51268,6 +51286,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     customerName?: StringFieldUpdateOperationsInput | string
     contactNumber?: StringFieldUpdateOperationsInput | string
+    normalizedPhone?: NullableStringFieldUpdateOperationsInput | string | null
     alternateNumber?: NullableStringFieldUpdateOperationsInput | string | null
     fullAddress?: NullableStringFieldUpdateOperationsInput | string | null
     inquirySource?: StringFieldUpdateOperationsInput | string
@@ -51635,6 +51654,7 @@ export namespace Prisma {
     id?: string
     customerName: string
     contactNumber: string
+    normalizedPhone?: string | null
     alternateNumber?: string | null
     fullAddress?: string | null
     inquirySource?: string
@@ -51670,6 +51690,7 @@ export namespace Prisma {
     id?: string
     customerName: string
     contactNumber: string
+    normalizedPhone?: string | null
     alternateNumber?: string | null
     fullAddress?: string | null
     inquirySource?: string
@@ -51836,6 +51857,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     customerName?: StringFieldUpdateOperationsInput | string
     contactNumber?: StringFieldUpdateOperationsInput | string
+    normalizedPhone?: NullableStringFieldUpdateOperationsInput | string | null
     alternateNumber?: NullableStringFieldUpdateOperationsInput | string | null
     fullAddress?: NullableStringFieldUpdateOperationsInput | string | null
     inquirySource?: StringFieldUpdateOperationsInput | string
@@ -51871,6 +51893,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     customerName?: StringFieldUpdateOperationsInput | string
     contactNumber?: StringFieldUpdateOperationsInput | string
+    normalizedPhone?: NullableStringFieldUpdateOperationsInput | string | null
     alternateNumber?: NullableStringFieldUpdateOperationsInput | string | null
     fullAddress?: NullableStringFieldUpdateOperationsInput | string | null
     inquirySource?: StringFieldUpdateOperationsInput | string
@@ -52434,6 +52457,7 @@ export namespace Prisma {
     id?: string
     customerName: string
     contactNumber: string
+    normalizedPhone?: string | null
     alternateNumber?: string | null
     fullAddress?: string | null
     inquirySource?: string
@@ -52469,6 +52493,7 @@ export namespace Prisma {
     id?: string
     customerName: string
     contactNumber: string
+    normalizedPhone?: string | null
     alternateNumber?: string | null
     fullAddress?: string | null
     inquirySource?: string
@@ -52520,6 +52545,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     customerName?: StringFieldUpdateOperationsInput | string
     contactNumber?: StringFieldUpdateOperationsInput | string
+    normalizedPhone?: NullableStringFieldUpdateOperationsInput | string | null
     alternateNumber?: NullableStringFieldUpdateOperationsInput | string | null
     fullAddress?: NullableStringFieldUpdateOperationsInput | string | null
     inquirySource?: StringFieldUpdateOperationsInput | string
@@ -52555,6 +52581,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     customerName?: StringFieldUpdateOperationsInput | string
     contactNumber?: StringFieldUpdateOperationsInput | string
+    normalizedPhone?: NullableStringFieldUpdateOperationsInput | string | null
     alternateNumber?: NullableStringFieldUpdateOperationsInput | string | null
     fullAddress?: NullableStringFieldUpdateOperationsInput | string | null
     inquirySource?: StringFieldUpdateOperationsInput | string
@@ -52590,6 +52617,7 @@ export namespace Prisma {
     id?: string
     customerName: string
     contactNumber: string
+    normalizedPhone?: string | null
     alternateNumber?: string | null
     fullAddress?: string | null
     inquirySource?: string
@@ -52625,6 +52653,7 @@ export namespace Prisma {
     id?: string
     customerName: string
     contactNumber: string
+    normalizedPhone?: string | null
     alternateNumber?: string | null
     fullAddress?: string | null
     inquirySource?: string
@@ -52676,6 +52705,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     customerName?: StringFieldUpdateOperationsInput | string
     contactNumber?: StringFieldUpdateOperationsInput | string
+    normalizedPhone?: NullableStringFieldUpdateOperationsInput | string | null
     alternateNumber?: NullableStringFieldUpdateOperationsInput | string | null
     fullAddress?: NullableStringFieldUpdateOperationsInput | string | null
     inquirySource?: StringFieldUpdateOperationsInput | string
@@ -52711,6 +52741,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     customerName?: StringFieldUpdateOperationsInput | string
     contactNumber?: StringFieldUpdateOperationsInput | string
+    normalizedPhone?: NullableStringFieldUpdateOperationsInput | string | null
     alternateNumber?: NullableStringFieldUpdateOperationsInput | string | null
     fullAddress?: NullableStringFieldUpdateOperationsInput | string | null
     inquirySource?: StringFieldUpdateOperationsInput | string
@@ -53058,6 +53089,7 @@ export namespace Prisma {
     id?: string
     customerName: string
     contactNumber: string
+    normalizedPhone?: string | null
     alternateNumber?: string | null
     fullAddress?: string | null
     inquirySource?: string
@@ -53093,6 +53125,7 @@ export namespace Prisma {
     id?: string
     customerName: string
     contactNumber: string
+    normalizedPhone?: string | null
     alternateNumber?: string | null
     fullAddress?: string | null
     inquirySource?: string
@@ -53217,6 +53250,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     customerName?: StringFieldUpdateOperationsInput | string
     contactNumber?: StringFieldUpdateOperationsInput | string
+    normalizedPhone?: NullableStringFieldUpdateOperationsInput | string | null
     alternateNumber?: NullableStringFieldUpdateOperationsInput | string | null
     fullAddress?: NullableStringFieldUpdateOperationsInput | string | null
     inquirySource?: StringFieldUpdateOperationsInput | string
@@ -53252,6 +53286,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     customerName?: StringFieldUpdateOperationsInput | string
     contactNumber?: StringFieldUpdateOperationsInput | string
+    normalizedPhone?: NullableStringFieldUpdateOperationsInput | string | null
     alternateNumber?: NullableStringFieldUpdateOperationsInput | string | null
     fullAddress?: NullableStringFieldUpdateOperationsInput | string | null
     inquirySource?: StringFieldUpdateOperationsInput | string
@@ -53438,6 +53473,7 @@ export namespace Prisma {
     id?: string
     customerName: string
     contactNumber: string
+    normalizedPhone?: string | null
     alternateNumber?: string | null
     fullAddress?: string | null
     inquirySource?: string
@@ -53473,6 +53509,7 @@ export namespace Prisma {
     id?: string
     customerName: string
     contactNumber: string
+    normalizedPhone?: string | null
     alternateNumber?: string | null
     fullAddress?: string | null
     inquirySource?: string
@@ -53590,6 +53627,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     customerName?: StringFieldUpdateOperationsInput | string
     contactNumber?: StringFieldUpdateOperationsInput | string
+    normalizedPhone?: NullableStringFieldUpdateOperationsInput | string | null
     alternateNumber?: NullableStringFieldUpdateOperationsInput | string | null
     fullAddress?: NullableStringFieldUpdateOperationsInput | string | null
     inquirySource?: StringFieldUpdateOperationsInput | string
@@ -53625,6 +53663,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     customerName?: StringFieldUpdateOperationsInput | string
     contactNumber?: StringFieldUpdateOperationsInput | string
+    normalizedPhone?: NullableStringFieldUpdateOperationsInput | string | null
     alternateNumber?: NullableStringFieldUpdateOperationsInput | string | null
     fullAddress?: NullableStringFieldUpdateOperationsInput | string | null
     inquirySource?: StringFieldUpdateOperationsInput | string
@@ -53907,6 +53946,7 @@ export namespace Prisma {
     id?: string
     customerName: string
     contactNumber: string
+    normalizedPhone?: string | null
     alternateNumber?: string | null
     fullAddress?: string | null
     inquirySource?: string
@@ -53942,6 +53982,7 @@ export namespace Prisma {
     id?: string
     customerName: string
     contactNumber: string
+    normalizedPhone?: string | null
     alternateNumber?: string | null
     fullAddress?: string | null
     inquirySource?: string
@@ -53993,6 +54034,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     customerName?: StringFieldUpdateOperationsInput | string
     contactNumber?: StringFieldUpdateOperationsInput | string
+    normalizedPhone?: NullableStringFieldUpdateOperationsInput | string | null
     alternateNumber?: NullableStringFieldUpdateOperationsInput | string | null
     fullAddress?: NullableStringFieldUpdateOperationsInput | string | null
     inquirySource?: StringFieldUpdateOperationsInput | string
@@ -54028,6 +54070,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     customerName?: StringFieldUpdateOperationsInput | string
     contactNumber?: StringFieldUpdateOperationsInput | string
+    normalizedPhone?: NullableStringFieldUpdateOperationsInput | string | null
     alternateNumber?: NullableStringFieldUpdateOperationsInput | string | null
     fullAddress?: NullableStringFieldUpdateOperationsInput | string | null
     inquirySource?: StringFieldUpdateOperationsInput | string
@@ -54086,6 +54129,7 @@ export namespace Prisma {
     id?: string
     customerName: string
     contactNumber: string
+    normalizedPhone?: string | null
     alternateNumber?: string | null
     fullAddress?: string | null
     inquirySource?: string
@@ -54189,6 +54233,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     customerName?: StringFieldUpdateOperationsInput | string
     contactNumber?: StringFieldUpdateOperationsInput | string
+    normalizedPhone?: NullableStringFieldUpdateOperationsInput | string | null
     alternateNumber?: NullableStringFieldUpdateOperationsInput | string | null
     fullAddress?: NullableStringFieldUpdateOperationsInput | string | null
     inquirySource?: StringFieldUpdateOperationsInput | string
@@ -54224,6 +54269,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     customerName?: StringFieldUpdateOperationsInput | string
     contactNumber?: StringFieldUpdateOperationsInput | string
+    normalizedPhone?: NullableStringFieldUpdateOperationsInput | string | null
     alternateNumber?: NullableStringFieldUpdateOperationsInput | string | null
     fullAddress?: NullableStringFieldUpdateOperationsInput | string | null
     inquirySource?: StringFieldUpdateOperationsInput | string
@@ -54259,6 +54305,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     customerName?: StringFieldUpdateOperationsInput | string
     contactNumber?: StringFieldUpdateOperationsInput | string
+    normalizedPhone?: NullableStringFieldUpdateOperationsInput | string | null
     alternateNumber?: NullableStringFieldUpdateOperationsInput | string | null
     fullAddress?: NullableStringFieldUpdateOperationsInput | string | null
     inquirySource?: StringFieldUpdateOperationsInput | string

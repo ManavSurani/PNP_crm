@@ -84,7 +84,18 @@ export async function PUT(
 
     const updateData: any = {};
     if (customerName !== undefined) updateData.customerName = customerName;
-    if (contactNumber !== undefined) updateData.contactNumber = contactNumber;
+    if (contactNumber !== undefined) {
+      updateData.contactNumber = contactNumber.replace(/\D/g, "");
+      
+      // Standardized normalization for duplicate detection
+      let normalized = updateData.contactNumber;
+      if (normalized.length === 12 && normalized.startsWith("91")) {
+        normalized = normalized.slice(2);
+      } else if (normalized.length > 10) {
+        normalized = normalized.slice(-10);
+      }
+      updateData.normalizedPhone = normalized;
+    }
     if (alternateNumber !== undefined) updateData.alternateNumber = alternateNumber;
     if (fullAddress !== undefined) updateData.fullAddress = fullAddress;
     if (landmark !== undefined) updateData.landmark = landmark;
@@ -165,19 +176,65 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const { searchParams } = new URL(request.url);
+  const isPermanent = searchParams.get("permanent") === "true";
+
   try {
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (!canDelete(session.user.role))
       return NextResponse.json({ error: "Forbidden: Insufficient role" }, { status: 403 });
 
-    await prisma.lead.delete({
-      where: { id }
+    // Check if the lead exists
+    const lead = await prisma.lead.findUnique({
+      where: { id },
+      select: { id: true, isCancelled: true }
     });
 
-    return new NextResponse(null, { status: 204 });
+    if (!lead) {
+      return NextResponse.json({ error: "Lead not found" }, { status: 404 });
+    }
+
+    if (isPermanent) {
+      // MODE 1: TOTAL ERASURE (No History, No Analytics)
+      await prisma.lead.delete({
+        where: { id }
+      });
+      return new NextResponse(null, { status: 204 });
+    }
+
+    if (lead.isCancelled) {
+      // MODE 2: WIPE FROM ARCHIVE (Keep History via AuditLog)
+      await prisma.lead.delete({
+        where: { id }
+      });
+
+      // Log the wipe for business analytics history
+      await prisma.auditLog.create({
+        data: {
+          action: "WIPE_DATA",
+          entity: "Lead",
+          entityId: id,
+          oldValue: "CANCELLED",
+          userId: session.user.id
+        }
+      });
+
+      return new NextResponse(null, { status: 204 });
+    } else {
+      // MODE 3: SOFT ARCHIVAL (Move to Archive)
+      await prisma.lead.update({
+        where: { id },
+        data: {
+          isCancelled: true,
+          status: "CANCELLED",
+          cancelReason: "Lead Archived from Pipeline"
+        }
+      });
+      return NextResponse.json({ message: "Lead moved to archive" });
+    }
   } catch (error) {
     console.error("[LEAD_DELETE]", error);
-    return NextResponse.json({ error: "Failed to delete lead" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to process lead deletion" }, { status: 500 });
   }
 }

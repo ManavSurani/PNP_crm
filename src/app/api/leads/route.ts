@@ -71,15 +71,24 @@ export async function POST(request: Request) {
     } = body;
 
     const cleanContact = contactNumber ? contactNumber.replace(/\D/g, "") : "";
-    if (cleanContact.length !== 10) {
-      return NextResponse.json({ error: "Valid 10-digit phone number is required" }, { status: 400 });
+    if (cleanContact.length < 10) {
+      return NextResponse.json({ error: "Valid phone number is required" }, { status: 400 });
     }
     const cleanAlt = alternateNumber ? alternateNumber.replace(/\D/g, "") : null;
+
+    // Standardized normalization for duplicate detection
+    let normalizedPhone = cleanContact;
+    if (cleanContact.length === 12 && cleanContact.startsWith("91")) {
+      normalizedPhone = cleanContact.slice(2);
+    } else if (cleanContact.length > 10) {
+      normalizedPhone = cleanContact.slice(-10);
+    }
 
     const lead = await prisma.lead.create({
       data: {
         customerName: customerName || "",
         contactNumber: cleanContact,
+        normalizedPhone: normalizedPhone,
         alternateNumber: cleanAlt,
         fullAddress: fullAddress || null,
         inquirySource: inquirySource || "OTHER",

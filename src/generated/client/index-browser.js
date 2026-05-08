@@ -157,7 +157,6 @@ exports.Prisma.SystemSettingScalarFieldEnum = {
   id: 'id',
   sessionMaxAge: 'sessionMaxAge',
   whatsappDispatchNumber: 'whatsappDispatchNumber',
-  primaryCity: 'primaryCity',
   analyticsPin: 'analyticsPin',
   isAnalyticsPinEnabled: 'isAnalyticsPinEnabled',
   updatedAt: 'updatedAt'
@@ -175,6 +174,7 @@ exports.Prisma.LeadScalarFieldEnum = {
   id: 'id',
   customerName: 'customerName',
   contactNumber: 'contactNumber',
+  normalizedPhone: 'normalizedPhone',
   alternateNumber: 'alternateNumber',
   fullAddress: 'fullAddress',
   inquirySource: 'inquirySource',
