@@ -413,96 +413,119 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
   return (
     <div className="min-h-screen bg-slate-50/30">
 
-      {/* --- COMPACT STICKY SUMMARY HEADER --- */}
+      {/* --- COMPACT STICKY SUMMARY HEADER (Smart Adaptive Priority) --- */}
       <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200 px-4 md:px-6 py-3 shadow-sm">
-        <div className="max-w-[1600px] mx-auto flex items-center justify-between gap-4">
+        <div className="max-w-[1600px] mx-auto flex items-center gap-3">
 
-          {/* LEFT: Back + Customer Info */}
-          <div className="flex items-center gap-3 flex-shrink-0">
-            <Link href={`/customers/${id}`} className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-400">
+          {/* ── LEFT: Identity block ── */}
+          <div className="flex items-center gap-2 min-w-0 flex-shrink">
+            <Link href={`/customers/${id}`} className="shrink-0 p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-400">
               <ArrowLeft className="h-4 w-4" />
             </Link>
-            <div>
-              <h1 className="text-sm font-black text-slate-900 tracking-tight flex items-center gap-2">
-                {customer.customerName}{" "}
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest px-2 py-0.5 bg-slate-100 rounded">
+            <div className="min-w-0 flex flex-col justify-center">
+              <div className="flex items-center gap-1.5">
+                <h1 className="text-sm font-black text-slate-900 tracking-tight truncate">
+                  {customer.customerName}
+                </h1>
+                <span className="shrink-0 text-[9px] text-slate-400 font-bold uppercase tracking-widest px-1.5 py-0.5 bg-slate-100 rounded whitespace-nowrap">
                   Ledger
                 </span>
-              </h1>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+              </div>
+              {/* Priority 6: subtitle hides first */}
+              <p className="hidden 2xl:block text-[9px] font-bold text-slate-400 uppercase tracking-tighter truncate opacity-80">
                 {customer.project?.name || "Standard Project"}
               </p>
             </div>
           </div>
 
-          {/* CENTER: Summary widgets — perfectly centered */}
-          <div className="hidden xl:flex items-center justify-center gap-1 flex-1">
-            <SummaryWidget label="Initial Deal" value={initialDeal} color="text-slate-500" />
-            <div className="h-8 w-px bg-slate-200 mx-2" />
+          {/* ── CENTER: Summary widgets — flex-1 so they claim all available space ── */}
+          <div className="hidden lg:flex items-center justify-center flex-1 min-w-0 gap-0 overflow-hidden">
+            <SummaryWidget label="Deal" value={initialDeal} color="text-slate-500" />
+            <div className="h-6 w-px bg-slate-200 mx-1 xl:mx-2 shrink-0" />
             <SummaryWidget label="Expenses" value={totalExpense} color="text-rose-600" prefix="+" />
-            <div className="h-8 w-px bg-slate-200 mx-2" />
-            <SummaryWidget label="Current Total" value={currentTotal} color="text-slate-900" isBold />
-            <div className="h-8 w-px bg-slate-200 mx-2" />
-            <SummaryWidget label="Client Paid" value={totalReceived} color="text-emerald-600" />
-            <div className="h-8 w-px bg-slate-200 mx-2" />
+            <div className="h-6 w-px bg-slate-200 mx-1 xl:mx-2 shrink-0" />
+            <SummaryWidget label="Total" value={currentTotal} color="text-slate-900" isBold />
+            <div className="h-6 w-px bg-slate-200 mx-1 xl:mx-2 shrink-0" />
+            <SummaryWidget label="Paid" value={totalReceived} color="text-emerald-600" />
+            <div className="h-6 w-px bg-slate-200 mx-1 xl:mx-2 shrink-0" />
             <SummaryWidget
-              label="Remaining Due"
+              label="Due"
               value={remainingDue}
               color={remainingDue > 0 ? "text-amber-600" : "text-emerald-600"}
               highlight={remainingDue > 0}
             />
           </div>
 
-          {/* RIGHT: Action buttons — fixed group */}
-          <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0 flex-nowrap">
+          {/* ── RIGHT: Action buttons — adaptive priority labels ── */}
+          <div className="flex items-center gap-1.5 flex-shrink-0 flex-nowrap ml-auto">
+
+            {/* Financially Closed badge — only on large screens */}
             {customer.isFinanciallyClosed && (
-              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-lg mr-2">
+              <div className="hidden 2xl:flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-lg">
                 <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                <span className="text-[9px] font-black text-emerald-700 uppercase tracking-widest">Financially Closed</span>
+                <span className="text-[9px] font-black text-emerald-700 uppercase tracking-widest whitespace-nowrap">Closed</span>
               </div>
             )}
+
+            {/* INCOME button — P2: full, P4: icon only */}
             <button
               onClick={() => { setModalType("RECEIVED"); setEditingTransaction(null); setShowTransModal(true); }}
               disabled={customer.isFinanciallyClosed}
               className={cn(
-                "h-9 px-2.5 md:px-4 text-white text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-lg transition-all shadow-md flex items-center gap-1.5 md:gap-2 whitespace-nowrap",
-                customer.isFinanciallyClosed 
-                  ? "bg-emerald-600/40 cursor-not-allowed grayscale-[0.5]" 
+                "h-9 text-white text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-lg transition-all shadow-md flex items-center whitespace-nowrap",
+                "px-2.5 gap-1.5",
+                customer.isFinanciallyClosed
+                  ? "bg-emerald-600/40 cursor-not-allowed grayscale-[0.5]"
                   : "bg-emerald-600 hover:bg-emerald-700"
               )}
+              title="Add Income"
             >
-              <Plus className="h-3 w-3" /> Income
+              <Plus className="h-3 w-3 shrink-0" />
+              {/* Full label on xl+, icon-only below lg */}
+              <span className="hidden xl:inline">Income</span>
             </button>
+
+            {/* EXPENSE button — P2: full, P4: icon only */}
             <button
               onClick={() => { setModalType("EXPENSE"); setEditingTransaction(null); setShowTransModal(true); }}
               disabled={customer.isFinanciallyClosed}
               className={cn(
-                "h-9 px-2.5 md:px-4 text-white text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-lg transition-all shadow-md flex items-center gap-1.5 md:gap-2 whitespace-nowrap",
-                customer.isFinanciallyClosed 
-                  ? "bg-rose-600/40 cursor-not-allowed grayscale-[0.5]" 
+                "h-9 text-white text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-lg transition-all shadow-md flex items-center whitespace-nowrap",
+                "px-2.5 gap-1.5",
+                customer.isFinanciallyClosed
+                  ? "bg-rose-600/40 cursor-not-allowed grayscale-[0.5]"
                   : "bg-rose-600 hover:bg-rose-700"
               )}
+              title="Add Expense"
             >
-              <Plus className="h-3 w-3" /> Expense
+              <Plus className="h-3 w-3 shrink-0" />
+              {/* Full label on xl+, icon-only below lg */}
+              <span className="hidden xl:inline">Expense</span>
             </button>
+
+            {/* EXPORT button — P3: "Export PDF" → "Export" → icon */}
             <button
               onClick={handleExportPDF}
               disabled={isExportingPDF}
-              className="h-9 px-2.5 md:px-4 bg-white text-slate-700 text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-slate-50 transition-all border border-slate-200 flex items-center gap-1.5 md:gap-2 disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap shadow-sm"
+              className="h-9 px-2.5 bg-white text-slate-700 text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-slate-50 transition-all border border-slate-200 flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap shadow-sm"
+              title="Export PDF"
             >
               {isExportingPDF ? (
                 <>
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  Generating...
+                  <Loader2 className="h-3 w-3 animate-spin shrink-0" />
+                  <span className="hidden sm:inline">Generating...</span>
                 </>
               ) : (
                 <>
-                  <FileDown className="h-3 w-3" />
-                  Export PDF
+                  <FileDown className="h-3 w-3 shrink-0" />
+                  {/* P3: "Export PDF" on 2xl, "Export" on xl-2xl, icon-only below xl */}
+                  <span className="hidden xl:inline">Export</span>
+                  <span className="hidden 2xl:inline"> PDF</span>
                 </>
               )}
             </button>
           </div>
+
         </div>
       </div>
 
