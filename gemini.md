@@ -190,17 +190,17 @@ A: Resolved backend and frontend errors in the Project Progress module:
 Q: Update the CRM project carefully and ONLY remove the standalone dashboard-level modules/pages listed below while keeping ALL Customer Hub internal modules fully functional and untouched.
 A: Streamlined the CRM by removing 5 standalone dashboard modules (Orders, Payments, Workers, Expenses, Quotations) and their corresponding sidebar links. Conducted a comprehensive API safety audit to ensure no dependencies for the Customer Hub were affected. Verified system integrity with a successful TypeScript compiler check (0 errors).
 
-
 Q: here today indicater is not working so check again
 A: Fixed the Project Progress " Today\ indicator by implementing real-time state updates (auto-refreshing every minute) and adding a visual axis marker (red triangle) for better situational awareness on the Gantt timeline. Synchronised time-to-pixel mapping to ensure perfect alignment with current local time.
 
+Q: clean data from each table other then admin table this project
+A: Successfully cleaned the CRM database by removing all records from 29 operational tables (Leads, Projects, Financials, etc.) while preserving the Super Admin account and global system settings.
 
-Q: Update the Business Analytics page logic so that all  Profit calculations come ONLY from the Design Expenses module profit values.
+Q: Update the Business Analytics page logic so that all Profit calculations come ONLY from the Design Expenses module profit values.
 A: Refactored the Business Analytics dashboard to use a project-centric profit model. Per-customer profit is now read directly from the \Design Expenses\ logic (Initial Deal - Design-source expenses). Global \Business Net Profit\ is now calculated as a clean sum of all customer remaining profits, eliminating redundant subtractions and ensuring 100% financial synchronization across the CRM.
 
 Q: $IconPath = Join-Path $AppFolder "public\Gemini_Generated_Image_5m69l15m69l15m69.png" i change my icon here so what should i do
 A: I fixed the "blank icon" by converting the Gemini PNG to a 256x256 ICO format. I also hardened the execution shortcut by using absolute system paths for `wscript.exe` and `powershell.exe`, and improved the startup script to detect both Chrome and Edge with a fallback to the system default browser.
-
 
 Q: check short cut because this is not working
 A: Fixed the CRM desktop shortcut and startup reliability by resolving log file lock conflicts and hardening process cleanup. Reverted the app's internal logo (login/sidebar) to the original PNP branding while preserving the new crm_icon.ico for the desktop shortcut.
@@ -210,3 +210,10 @@ A: Resolved the GitHub push failure caused by the oversized `project_code.txt` (
 
 Q: Enhance the existing Follow-Up Queue top summary cards section ... I only want to add a new “LONG DISTANCE” summary card.
 A: Implemented the 'LONG DISTANCE' tracking system for follow-ups. Added a new summary card, interactive filtering, and row badges. Updated the Prisma schema and API to persist the long-distance flag and added a manual toggle to the call-logging modals.
+Q: Modify the existing Interested Leads page in PNP CRM ... replace the current multi-card statistics area with a single compact summary badge
+A: Streamlined the Interested Leads UI by replacing the legacy 4-card statistics section with a compact, themed "Total Interested" badge in the header, mirroring the Customer Directory design language.
+
+Q: Interested Leads Card Action Buttons + WhatsApp Message Update ... Remove the call button completely ... Replace the current message icon with an actual WhatsApp logo ... Update the WhatsApp prefilled message
+A: Enhanced the Interested Leads card actions by removing the redundant call button and upgrading the message icon to the official WhatsApp logo. Implemented a professional, emoji-free business inquiry template for all outbound WhatsApp communications.
+Q: Remove Priority Badge from Interested Leads Cards ... update the Interested Leads lead card design by removing the priority badge section completely
+A: Minimized the Interested Leads card design by removing all visual priority badges (High, Medium, etc.). This change streamlines the interface while preserving the underlying data and existing lead card functionality.
