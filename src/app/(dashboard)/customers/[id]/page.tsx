@@ -135,7 +135,11 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
         </Link>
         
         <div className="flex items-center gap-2 text-[10px] font-black tracking-[0.2em] uppercase">
-          <Link href="/customers" className="text-slate-300 hover:text-slate-500 transition-colors">Customer Directory</Link>
+          {customer?.isProjectCompleted ? (
+            <Link href="/customers/completed" className="text-blue-400 hover:text-blue-500 transition-colors">Complete Projects</Link>
+          ) : (
+            <Link href="/customers" className="text-slate-300 hover:text-slate-500 transition-colors">Customer Directory</Link>
+          )}
           <ChevronRight className="h-3 w-3 text-slate-200" /> 
           <span className="text-slate-900">{customer?.customerName?.toUpperCase()}</span>
         </div>

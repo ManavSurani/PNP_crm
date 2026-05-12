@@ -303,7 +303,11 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
         </button>
 
         <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 tracking-widest uppercase">
-          <Link href="/leads" className="hover:text-emerald-600 transition-colors text-indigo-400/80">Lead Pipeline</Link>
+          {lead.isCancelled ? (
+            <Link href="/canceled" className="hover:text-rose-600 transition-colors text-rose-400/80">Canceled Archive</Link>
+          ) : (
+            <Link href="/leads" className="hover:text-emerald-600 transition-colors text-indigo-400/80">Lead Pipeline</Link>
+          )}
           <ChevronRight className="h-3 w-3 text-slate-300" /> 
           <span className="text-slate-900 font-black">Details</span>
         </div>
