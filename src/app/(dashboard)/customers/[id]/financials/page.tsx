@@ -143,6 +143,7 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
 
   const handleExportPDF = async () => {
     if (!customer) return;
+
     setIsExportingPDF(true);
 
     try {
@@ -380,6 +381,11 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
       row("Add: Project Expenses", fmt(totalExpense), COL.red);
       row("Current Project Total", fmt(currentTotal), COL.body, true);
       row("Less: Client Payments", fmt(totalReceived), COL.green);
+
+      doc.setDrawColor(...COL.border);
+      doc.line(margin + 8, ry - 4, pageW - margin - 8, ry - 4);
+
+      row("Remaining Due Amount", fmt(remainingDue), remainingDue > 0 ? COL.amber : COL.green, true);
 
       doc.setDrawColor(...COL.border);
       doc.line(margin + 8, ry - 4, pageW - margin - 8, ry - 4);
@@ -714,6 +720,7 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
     </div>
   );
 }
+
 
 function SummaryWidget({ label, value, color, isBold = false, prefix = "", highlight = false }: any) {
   return (
