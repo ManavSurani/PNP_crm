@@ -222,3 +222,6 @@ A: Built a comprehensive Global Smart Search system that allows users to find le
 
 Q: Global Search Smart Navigation Upgrade for PNP CRM ... clicking a search result automatically opens the correct destination page ...
 A: Perfected the Global Smart Search navigation logic with context-aware routing. Results now intelligently redirect to specific detail profiles (Lead Details, Customer Hub, or Archive) without 404s. Implemented dynamic breadcrumbs (e.g., 'Canceled Archive > Details') to maintain search context and ensure a premium, enterprise-grade navigation experience across all CRM modules.
+
+Q: Project Progress Timeline Card Text Structure Update ... Show Phase name as main heading and Subcategory as smaller subtitle ...
+A: Refined the Project Progress milestone typography. Updated the Gantt timeline to display the Phase Name (e.g., 'AC Piping') as the primary bold heading and the Subcategory Name as a secondary subtitle. Implemented a simplified single-title layout for the 'Project Completed' milestone to enhance visual clarity and professional hierarchy across the project timeline.

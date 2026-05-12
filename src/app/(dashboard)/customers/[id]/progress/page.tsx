@@ -191,11 +191,20 @@ function GanttSVG({ milestones, onEdit }: { milestones: MS[]; onEdit: (m: MS) =>
                 <rect x={rx} y={cy} width={CARD_W} height={CARD_H} rx={8} fill={col.fill} stroke={col.stroke} strokeWidth={isDone ? 1 : 1.5}
                   style={{ filter: isHov ? "drop-shadow(0 4px 6px rgba(0,0,0,0.1))" : "drop-shadow(0 1px 2px rgba(0,0,0,0.05))" }} />
 
-                <text x={rx + 8} y={cy + 16} fontSize={10} fontWeight={700} fill={col.text}>
-                  {m.name.length > 18 ? m.name.substring(0, 18) + "..." : m.name}
-                </text>
-
-                <text x={rx + 8} y={cy + 28} fontSize={9} fontWeight={600} fill={col.text} opacity={0.8}>{STATUS_LBL[m.status]}</text>
+                {m.phase === "Project Completed" ? (
+                  <text x={rx + 8} y={cy + 28} fontSize={10} fontWeight={700} fill={col.text}>
+                    Project Completed
+                  </text>
+                ) : (
+                  <>
+                    <text x={rx + 8} y={cy + 16} fontSize={10} fontWeight={700} fill={col.text}>
+                      {m.phase.length > 18 ? m.phase.substring(0, 18) + "..." : m.phase}
+                    </text>
+                    <text x={rx + 8} y={cy + 28} fontSize={9} fontWeight={500} fill={col.text} opacity={0.7}>
+                      {m.name.length > 20 ? m.name.substring(0, 20) + "..." : m.name}
+                    </text>
+                  </>
+                )}
 
                 {m.status === "in_progress" && (
                   <>
