@@ -31,6 +31,7 @@ export default function SettingsPage() {
 
   // System States (WhatsApp Dispatch)
   const [dispatchNumber, setDispatchNumber] = useState("");
+  const [originalDispatchNumber, setOriginalDispatchNumber] = useState("");
   const [isSaved, setIsSaved] = useState(false);
 
   // Backup & Restore States
@@ -71,7 +72,10 @@ export default function SettingsPage() {
       const res = await fetch("/api/settings");
       const data = await res.json();
       if (data.sessionMaxAge) setSessionTimeout(data.sessionMaxAge);
-      if (data.whatsappDispatchNumber) setDispatchNumber(data.whatsappDispatchNumber);
+      if (data.whatsappDispatchNumber) {
+        setDispatchNumber(data.whatsappDispatchNumber);
+        setOriginalDispatchNumber(data.whatsappDispatchNumber);
+      }
       setIsAnalyticsPinEnabled(data.isAnalyticsPinEnabled);
       setHasPinSetup(!!data.analyticsPin);
     } catch (err) { console.error(err); }
@@ -127,6 +131,7 @@ export default function SettingsPage() {
         body: JSON.stringify({ type: "system", whatsappDispatchNumber: dispatchNumber }),
       });
       if (res.ok) {
+        setOriginalDispatchNumber(dispatchNumber);
         setIsSaved(true);
         setTimeout(() => setIsSaved(false), 2000);
       }
@@ -446,20 +451,25 @@ export default function SettingsPage() {
                         placeholder="e.g. 8799544606"
                         className="flex-1 px-4 py-3 bg-white rounded-xl border border-slate-200 text-sm font-semibold focus:border-primary outline-none transition-all"
                         value={dispatchNumber}
-                        onChange={(e) => setDispatchNumber(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                        onChange={(e) => {
+                          setDispatchNumber(e.target.value.replace(/\D/g, "").slice(0, 10));
+                        }}
                       />
-                      <button 
-                        onClick={handleSystemSave}
-                        className={cn(
-                          "px-6 py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-sm border",
-                          isSaved 
-                            ? "bg-emerald-50 text-emerald-600 border-emerald-200" 
-                            : "bg-indigo-600 text-white border-indigo-500 hover:bg-indigo-700 active:scale-95"
-                        )}
-                      >
-                        {isSaved ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
-                        {isSaved ? "Saved" : "Save Changes"}
-                      </button>
+                      {dispatchNumber === originalDispatchNumber && originalDispatchNumber !== "" ? (
+                        <div className="px-6 py-3 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-xl flex items-center justify-center gap-2 shadow-sm animate-in zoom-in-95 duration-200">
+                          <Check className="h-4 w-4" />
+                          <span className="text-xs font-bold uppercase tracking-wider">Saved</span>
+                        </div>
+                      ) : (
+                        <button 
+                          onClick={handleSystemSave}
+                          disabled={isLoading || (originalDispatchNumber !== "" && dispatchNumber === originalDispatchNumber)}
+                          className="px-6 py-3 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 active:scale-95 transition-all shadow-md shadow-indigo-100 border border-indigo-500 disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                          {isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                          {originalDispatchNumber === "" ? "Save" : "Save Changes"}
+                        </button>
+                      )}
                     </div>
                     <div className="mt-3 p-3 bg-amber-50 border border-amber-100 rounded-lg space-y-1.5">
                       <p className="text-[10px] text-amber-800 font-bold uppercase tracking-wider">How this number is used</p>
