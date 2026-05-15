@@ -63,16 +63,20 @@ export async function GET(request: Request) {
     leads.forEach(lead => {
       let location = "Lead Pipeline";
       let href = `/leads/${lead.id}`;
+      let type = "LEAD";
 
       if (lead.isCancelled) {
         location = "Canceled Archive";
-        href = `/leads/${lead.id}`; // Navigates to the specific record detail
+        href = `/leads/${lead.id}`;
+        type = "CANCELED";
       } else if (lead.isProjectCompleted) {
         location = "Complete Projects";
         href = `/customers/${lead.id}`;
+        type = "CUSTOMER";
       } else if (lead.status === "WON_ORDER") {
         location = "Customer Hub";
         href = `/customers/${lead.id}`;
+        type = "CUSTOMER";
       } else if (lead.status === "FOLLOW_UP") {
         location = "Interested Leads";
         href = `/leads/${lead.id}`;
@@ -83,7 +87,7 @@ export async function GET(request: Request) {
 
       results.push({
         id: lead.id,
-        type: "LEAD",
+        type: type,
         title: lead.project?.name || lead.customerName,
         subtitle: lead.serviceType.replace(/_/g, " "),
         phone: lead.contactNumber,

@@ -84,6 +84,11 @@ export async function POST(request: Request) {
       normalizedPhone = cleanContact.slice(-10);
     }
 
+    const staffId = assignedStaffId || session.user.id;
+    
+    // Verify user exists before connecting to avoid FK errors
+    const userExists = await prisma.user.findUnique({ where: { id: staffId } });
+
     const lead = await prisma.lead.create({
       data: {
         customerName: customerName || "",
@@ -94,7 +99,7 @@ export async function POST(request: Request) {
         inquirySource: inquirySource || "OTHER",
         serviceType: serviceType || "OTHER",
         priority: priority || "MEDIUM",
-        assignedStaff: { connect: { id: assignedStaffId || session.user.id } },
+        assignedStaff: userExists ? { connect: { id: staffId } } : undefined,
         status: "NEW_INQUIRY",
         landmark: landmark || null,
         requirementDetails: requirementDetails || null,
@@ -104,11 +109,12 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(lead);
-  } catch (error) {
+  } catch (error: any) {
     console.error("[LEADS_POST_ERROR]", error);
     return NextResponse.json({ 
       error: "Failed to create lead", 
-      details: "A database error occurred." 
+      details: error.message || "A database error occurred.",
+      code: error.code
     }, { status: 500 });
   }
 }

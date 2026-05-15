@@ -86,76 +86,71 @@ export async function POST(req: NextRequest) {
       }
     });
 
-    // AUTO-TRANSFER LOGIC: FINAL PAYMENT
-    if (type === "RECEIVED" && category === "Final Payment") {
-      // 1. Fetch lead and all current transactions to calculate remaining due
+    // --- UNIFIED FINANCIAL SYNC LOGIC ---
+    const hasFinal = await prisma.leadTransaction.findFirst({
+      where: { leadId, category: "Final Payment" }
+    });
+    
+    await prisma.lead.update({
+      where: { id: leadId },
+      data: { isFinanciallyClosed: !!hasFinal }
+    });
+
+    if (!hasFinal) {
+      const existingAdj = await prisma.leadTransaction.findFirst({
+        where: { leadId, category: "Adjustment", isSystemGenerated: true, source: "DESIGN" }
+      });
+      if (existingAdj) {
+        await prisma.leadTransaction.delete({ where: { id: existingAdj.id } });
+        // @ts-ignore
+        await prisma.leadFinancialLog.create({
+          data: { leadId, action: "AUTO_EXPENSE_DELETED", details: "System adjustment removed (Project reopened)" }
+        });
+      }
+    } else {
       const lead = await prisma.lead.findUnique({
         where: { id: leadId },
         include: { transactions: true }
       });
-
       if (lead) {
-        // NEW: Financially Close the project
-        await prisma.lead.update({
-          where: { id: leadId },
-          data: { 
-            // @ts-ignore - newly added
-            isFinanciallyClosed: true 
-          }
-        });
-
         // @ts-ignore
         const initialDeal = lead.initialDealAmount || 0;
-        const allTransactions = lead.transactions;
-        
-        const totalReceived = allTransactions.filter(t => t.type === "RECEIVED").reduce((sum, t) => sum + t.amount, 0);
+        const totalReceived = lead.transactions.filter(t => t.type === "RECEIVED").reduce((sum, t) => sum + t.amount, 0);
         // @ts-ignore
-        const totalGeneralExpenses = allTransactions.filter(t => t.type === "EXPENSE" && t.source !== "DESIGN").reduce((sum, t) => sum + t.amount, 0);
-        
-        // Correct Formula for Client Due: (Deal + Expenses) - Paid
+        const totalGeneralExpenses = lead.transactions.filter(t => t.type === "EXPENSE" && t.source !== "DESIGN").reduce((sum, t) => sum + t.amount, 0);
         const remainingDue = (initialDeal + totalGeneralExpenses) - totalReceived;
 
-        if (remainingDue > 0) {
-          // Check for existing auto-transfer to prevent duplicates
-          const existingAuto = await prisma.leadTransaction.findFirst({
-            where: {
-              leadId,
-              category: "Adjustment",
-              // @ts-ignore
-              isSystemGenerated: true
-            }
-          });
+        const existingAdj = await prisma.leadTransaction.findFirst({
+          where: { leadId, category: "Adjustment", isSystemGenerated: true, source: "DESIGN" }
+        });
 
-          if (!existingAuto) {
-            // 2. Create the auto-generated expense in DESIGN module
+        if (remainingDue > 0) {
+          if (!existingAdj) {
             await prisma.leadTransaction.create({
               data: {
-                leadId,
-                type: "EXPENSE",
-                amount: remainingDue,
-                date: new Date(),
-                paidTo: "Design Module",
-                category: "Adjustment",
-                paymentMode: "SYSTEM",
+                leadId, type: "EXPENSE", amount: remainingDue, date: new Date(),
+                paidTo: "Design Module", category: "Adjustment", paymentMode: "SYSTEM",
                 description: "Auto transferred from Final Payment remaining due",
                 // @ts-ignore
-                source: "DESIGN",
-                // @ts-ignore
-                isSystemGenerated: true
+                source: "DESIGN", isSystemGenerated: true
               }
             });
-
-            // 3. Log the auto-transfer event
             // @ts-ignore
             await prisma.leadFinancialLog.create({
-              data: {
-                leadId,
-                action: "AUTO_EXPENSE_GENERATED",
-                details: `Remaining due auto-adjusted — ₹${remainingDue.toLocaleString()}`,
-                amount: remainingDue
-              }
+              data: { leadId, action: "AUTO_EXPENSE_GENERATED", details: `Remaining due auto-adjusted — ₹${remainingDue.toLocaleString()}`, amount: remainingDue }
+            });
+          } else if (existingAdj.amount !== remainingDue) {
+            await prisma.leadTransaction.update({
+              where: { id: existingAdj.id },
+              data: { amount: remainingDue }
+            });
+            // @ts-ignore
+            await prisma.leadFinancialLog.create({
+              data: { leadId, action: "AUTO_EXPENSE_UPDATED", details: `System adjustment updated — ₹${remainingDue.toLocaleString()}`, amount: remainingDue }
             });
           }
+        } else if (existingAdj) {
+          await prisma.leadTransaction.delete({ where: { id: existingAdj.id } });
         }
       }
     }
@@ -180,7 +175,6 @@ export async function DELETE(req: NextRequest) {
 
     await prisma.leadTransaction.delete({ where: { id } });
 
-    // Log financial event
     if (existing.leadId) {
       // @ts-ignore
       await prisma.leadFinancialLog.create({
@@ -191,6 +185,29 @@ export async function DELETE(req: NextRequest) {
           amount: existing.amount
         }
       });
+
+      // --- UNIFIED FINANCIAL SYNC LOGIC ---
+      const hasFinal = await prisma.leadTransaction.findFirst({
+        where: { leadId: existing.leadId, category: "Final Payment" }
+      });
+      
+      await prisma.lead.update({
+        where: { id: existing.leadId },
+        data: { isFinanciallyClosed: !!hasFinal }
+      });
+
+      if (!hasFinal) {
+        const existingAdj = await prisma.leadTransaction.findFirst({
+          where: { leadId: existing.leadId, category: "Adjustment", isSystemGenerated: true, source: "DESIGN" }
+        });
+        if (existingAdj) {
+          await prisma.leadTransaction.delete({ where: { id: existingAdj.id } });
+          // @ts-ignore
+          await prisma.leadFinancialLog.create({
+            data: { leadId: existing.leadId, action: "AUTO_EXPENSE_DELETED", details: "System adjustment removed (Project reopened)" }
+          });
+        }
+      }
     }
 
     return new NextResponse(null, { status: 204 });
@@ -241,70 +258,71 @@ export async function PUT(req: NextRequest) {
         }
       });
 
-      // AUTO-TRANSFER LOGIC IN PUT (Same as POST)
-      if (updated.type === "RECEIVED" && updated.category === "Final Payment") {
+      // --- UNIFIED FINANCIAL SYNC LOGIC ---
+      const hasFinal = await prisma.leadTransaction.findFirst({
+        where: { leadId: existing.leadId, category: "Final Payment" }
+      });
+      
+      await prisma.lead.update({
+        where: { id: existing.leadId },
+        data: { isFinanciallyClosed: !!hasFinal }
+      });
+
+      if (!hasFinal) {
+        const existingAdj = await prisma.leadTransaction.findFirst({
+          where: { leadId: existing.leadId, category: "Adjustment", isSystemGenerated: true, source: "DESIGN" }
+        });
+        if (existingAdj) {
+          await prisma.leadTransaction.delete({ where: { id: existingAdj.id } });
+          // @ts-ignore
+          await prisma.leadFinancialLog.create({
+            data: { leadId: existing.leadId, action: "AUTO_EXPENSE_DELETED", details: "System adjustment removed (Project reopened)" }
+          });
+        }
+      } else {
         const lead = await prisma.lead.findUnique({
           where: { id: existing.leadId },
           include: { transactions: true }
         });
-
         if (lead) {
-          // NEW: Financially Close the project
-          await prisma.lead.update({
-            where: { id: existing.leadId },
-            data: { 
-            // @ts-ignore - newly added
-            isFinanciallyClosed: true 
-          }
-          });
-
           // @ts-ignore
           const initialDeal = lead.initialDealAmount || 0;
-          const allTransactions = lead.transactions;
-          const totalReceived = allTransactions.filter(t => t.type === "RECEIVED").reduce((sum, t) => sum + t.amount, 0);
+          const totalReceived = lead.transactions.filter(t => t.type === "RECEIVED").reduce((sum, t) => sum + t.amount, 0);
           // @ts-ignore
-          const totalGeneralExpenses = allTransactions.filter(t => t.type === "EXPENSE" && t.source !== "DESIGN").reduce((sum, t) => sum + t.amount, 0);
-          
+          const totalGeneralExpenses = lead.transactions.filter(t => t.type === "EXPENSE" && t.source !== "DESIGN").reduce((sum, t) => sum + t.amount, 0);
           const remainingDue = (initialDeal + totalGeneralExpenses) - totalReceived;
 
-          if (remainingDue > 0) {
-            const existingAuto = await prisma.leadTransaction.findFirst({
-              where: {
-                leadId: existing.leadId,
-                category: "Adjustment",
-                // @ts-ignore
-                isSystemGenerated: true
-              }
-            });
+          const existingAdj = await prisma.leadTransaction.findFirst({
+            where: { leadId: existing.leadId, category: "Adjustment", isSystemGenerated: true, source: "DESIGN" }
+          });
 
-            if (!existingAuto) {
+          if (remainingDue > 0) {
+            if (!existingAdj) {
               await prisma.leadTransaction.create({
                 data: {
-                  leadId: existing.leadId,
-                  type: "EXPENSE",
-                  amount: remainingDue,
-                  date: new Date(),
-                  paidTo: "Design Module",
-                  category: "Adjustment",
-                  paymentMode: "SYSTEM",
+                  leadId: existing.leadId, type: "EXPENSE", amount: remainingDue, date: new Date(),
+                  paidTo: "Design Module", category: "Adjustment", paymentMode: "SYSTEM",
                   description: "Auto transferred from Final Payment remaining due (via Edit)",
                   // @ts-ignore
-                  source: "DESIGN",
-                  // @ts-ignore
-                  isSystemGenerated: true
+                  source: "DESIGN", isSystemGenerated: true
                 }
               });
-
               // @ts-ignore
               await prisma.leadFinancialLog.create({
-                data: {
-                  leadId: existing.leadId,
-                  action: "AUTO_EXPENSE_GENERATED",
-                  details: `Remaining due auto-adjusted — ₹${remainingDue.toLocaleString()}`,
-                  amount: remainingDue
-                }
+                data: { leadId: existing.leadId, action: "AUTO_EXPENSE_GENERATED", details: `Remaining due auto-adjusted — ₹${remainingDue.toLocaleString()}`, amount: remainingDue }
+              });
+            } else if (existingAdj.amount !== remainingDue) {
+              await prisma.leadTransaction.update({
+                where: { id: existingAdj.id },
+                data: { amount: remainingDue }
+              });
+              // @ts-ignore
+              await prisma.leadFinancialLog.create({
+                data: { leadId: existing.leadId, action: "AUTO_EXPENSE_UPDATED", details: `System adjustment updated — ₹${remainingDue.toLocaleString()}`, amount: remainingDue }
               });
             }
+          } else if (existingAdj) {
+            await prisma.leadTransaction.delete({ where: { id: existingAdj.id } });
           }
         }
       }

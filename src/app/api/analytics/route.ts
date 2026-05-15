@@ -74,10 +74,18 @@ export async function GET() {
 
       // Status Logic
       let status = "Pending";
-      if (isLoss) status = "Loss";
-      else if (received >= currentTotal && currentTotal > 0) status = "Paid";
-      else if (received > 0) status = "Partial";
-      else status = "Pending";
+      if (profit < 0) {
+        status = "Loss";
+      } else if (received >= currentTotal && currentTotal > 0) {
+        status = "Paid";
+      } else if (hasFinalPayment) {
+        // If settled with final payment and profit is positive, mark as Paid
+        status = "Paid";
+      } else if (received > 0) {
+        status = "Partial";
+      } else {
+        status = "Pending";
+      }
       
       if (received > currentTotal && currentTotal > 0) status = "Overpaid";
 

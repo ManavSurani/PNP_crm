@@ -1,5 +1,5 @@
 "use client";
-import { use, useState, useEffect } from "react";
+import { use, useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { ChevronRight, Plus, X, Loader2, CheckCircle2, ArrowLeft } from "lucide-react";
 
@@ -241,9 +241,11 @@ function GanttSVG({ milestones, onEdit }: { milestones: MS[]; onEdit: (m: MS) =>
   );
 }
 
-function Modal({ mode, init, projectId, isProjectCompleted, onSave, onMarkProjectDone, onDelete, onClose }: {
+function Modal({ mode, init, projectId, isProjectCompleted, existingMilestones = [], hasFinalPayment, onSave, onMarkProjectDone, onDelete, onClose }: {
   mode: "add" | "edit"; init?: MS | null; projectId: string;
   isProjectCompleted?: boolean;
+  existingMilestones?: MS[];
+  hasFinalPayment: boolean;
   onSave: (d: any) => Promise<void>; onMarkProjectDone: () => Promise<void>;
   onDelete: (id: string) => Promise<void>; onClose: () => void;
 }) {
@@ -262,10 +264,31 @@ function Modal({ mode, init, projectId, isProjectCompleted, onSave, onMarkProjec
 
   const [phaseData, setPhaseData] = useState<Record<string, string[]>>(INITIAL_PHASE_DATA);
 
-  const initPhase = init?.phase && phaseData[init.phase] ? init.phase : Object.keys(phaseData)[0];
+  const availablePhaseData = useMemo(() => {
+    // We only filter in "add" mode to prevent duplicate creation
+    // In "edit" mode, we show all so the current selection is visible
+    if (mode === "edit") return phaseData;
+
+    const result: Record<string, string[]> = {};
+    Object.entries(phaseData).forEach(([p, subs]) => {
+      const filteredSubs = subs.filter(s => {
+        // Hide if this subcategory (s) already exists in this project under this phase (p)
+        const alreadyExists = existingMilestones.some(m => m.phase === p && m.name === s);
+        return !alreadyExists;
+      });
+      if (filteredSubs.length > 0) {
+        result[p] = filteredSubs;
+      }
+    });
+    return result;
+  }, [phaseData, existingMilestones, mode]);
+
+  const initPhase = init?.phase && availablePhaseData[init.phase] 
+    ? init.phase 
+    : Object.keys(availablePhaseData)[0];
   const [phase, setPhase] = useState<string>(initPhase);
 
-  const initSub = init?.name || (phaseData[initPhase]?.[0] || "");
+  const initSub = init?.name || (availablePhaseData[initPhase]?.[0] || "");
   const [subcategory, setSubcategory] = useState<string>(initSub);
 
   const [sdate, setSdate] = useState(init?.startedOn ? new Date(init.startedOn).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
@@ -277,16 +300,23 @@ function Modal({ mode, init, projectId, isProjectCompleted, onSave, onMarkProjec
   const [newSubcats, setNewSubcats] = useState<string[]>([""]);
 
   useEffect(() => {
-    if (!isAddingPhase && phaseData[phase]) {
-      setSubcategory(phaseData[phase][0] || "");
+    if (!isAddingPhase && availablePhaseData[phase]) {
+      setSubcategory(availablePhaseData[phase][0] || "");
     }
-  }, [phase, isAddingPhase, phaseData]);
+  }, [phase, isAddingPhase, availablePhaseData]);
 
   const todayStr = new Date().toISOString().split('T')[0];
 
   const save = async () => {
     if (!subcategory.trim()) { setErr("Subcategory is required."); return; }
     if (sdate > todayStr) { setErr("Future dates are not allowed."); return; }
+
+    // Validation: Block "Project Completed" if no Final Payment is found
+    if (phase === "Project Completed" && !hasFinalPayment) {
+      setErr("⚠️ Final Payment Required: Please record the final payment in the Financial section before marking the project as completed.");
+      return;
+    }
+
     setSaving(true);
     await onSave({
       name: subcategory.trim(),
@@ -302,7 +332,15 @@ function Modal({ mode, init, projectId, isProjectCompleted, onSave, onMarkProjec
     setSaving(false);
   };
 
-  const markProjectDone = async () => { setSaving(true); await onMarkProjectDone(); setSaving(false); };
+  const markProjectDone = async () => { 
+    if (!hasFinalPayment) {
+      setErr("⚠️ Final Payment Required: Please record the final payment in the Financial section before marking the project as completed.");
+      return;
+    }
+    setSaving(true); 
+    await onMarkProjectDone(); 
+    setSaving(false); 
+  };
   const del = async () => { if (init) { setSaving(true); await onDelete(init.id); setSaving(false); } };
 
   const handleAddNewPhase = () => {
@@ -310,7 +348,8 @@ function Modal({ mode, init, projectId, isProjectCompleted, onSave, onMarkProjec
     const validSubs = newSubcats.filter(s => s.trim() !== "");
     if (validSubs.length === 0) { setErr("At least one subcategory is required"); return; }
 
-    setPhaseData(prev => ({ ...prev, [newPhaseName.trim()]: validSubs }));
+    const updatedData = { ...phaseData, [newPhaseName.trim()]: validSubs };
+    setPhaseData(updatedData);
     setPhase(newPhaseName.trim());
     setSubcategory(validSubs[0]);
     setIsAddingPhase(false);
@@ -367,7 +406,11 @@ function Modal({ mode, init, projectId, isProjectCompleted, onSave, onMarkProjec
               </div>
               <select value={phase} onChange={e => { setPhase(e.target.value); setErr(""); }}
                 style={{ width: "100%", marginTop: 4, border: "1px solid #D1D5DB", borderRadius: 8, padding: "8px 10px", fontSize: 13, outline: "none", boxSizing: "border-box" }}>
-                {Object.keys(phaseData).map(p => <option key={p} value={p}>{p}</option>)}
+                {Object.keys(availablePhaseData).length === 0 ? (
+                  <option disabled>All phases completed</option>
+                ) : (
+                  Object.keys(availablePhaseData).map(p => <option key={p} value={p}>{p}</option>)
+                )}
               </select>
             </div>
 
@@ -376,9 +419,9 @@ function Modal({ mode, init, projectId, isProjectCompleted, onSave, onMarkProjec
                 <div>
                   <label style={{ fontSize: 11, fontWeight: 600, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>Subcategory</label>
                   <select value={subcategory} onChange={e => { setSubcategory(e.target.value); setErr(""); }}
-                    disabled={!phase || !phaseData[phase]}
-                    style={{ width: "100%", marginTop: 4, border: "1px solid #D1D5DB", borderRadius: 8, padding: "8px 10px", fontSize: 13, outline: "none", boxSizing: "border-box", background: (!phase || !phaseData[phase]) ? "#F3F4F6" : "white" }}>
-                    {phaseData[phase]?.map(s => <option key={s} value={s}>{s}</option>)}
+                    disabled={!phase || !availablePhaseData[phase]}
+                    style={{ width: "100%", marginTop: 4, border: "1px solid #D1D5DB", borderRadius: 8, padding: "8px 10px", fontSize: 13, outline: "none", boxSizing: "border-box", background: (!phase || !availablePhaseData[phase]) ? "#F3F4F6" : "white" }}>
+                    {availablePhaseData[phase]?.map((s: string) => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
               </div>
@@ -423,8 +466,8 @@ function Modal({ mode, init, projectId, isProjectCompleted, onSave, onMarkProjec
             >
               Close
             </button>
-            <button onClick={save} disabled={saving || isAddingPhase}
-              style={{ background: "#2563EB", color: "white", border: "none", borderRadius: 8, padding: "8px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer", opacity: (saving || isAddingPhase) ? 0.7 : 1, display: "flex", alignItems: "center", gap: 6 }}>
+            <button onClick={save} disabled={saving || isAddingPhase || Object.keys(availablePhaseData).length === 0}
+              style={{ background: "#2563EB", color: "white", border: "none", borderRadius: 8, padding: "8px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer", opacity: (saving || isAddingPhase || Object.keys(availablePhaseData).length === 0) ? 0.7 : 1, display: "flex", alignItems: "center", gap: 6 }}>
               {saving && <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />} Save
             </button>
           </div>
@@ -440,6 +483,7 @@ export default function ProgressPage({ params }: { params: Promise<{ id: string 
   const [customer, setCustomer] = useState<any>(null);
   const [project, setProject] = useState<Project | null>(null);
   const [milestones, setMilestones] = useState<MS[]>([]);
+  const [hasFinalPayment, setHasFinalPayment] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState<"add" | "edit">("add");
@@ -448,9 +492,18 @@ export default function ProgressPage({ params }: { params: Promise<{ id: string 
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const [cr, pr] = await Promise.all([fetch(`/api/leads/${id}`), fetch(`/api/projects?customer_id=${id}`)]);
+      const [cr, pr, tr] = await Promise.all([
+        fetch(`/api/leads/${id}`), 
+        fetch(`/api/projects?customer_id=${id}`),
+        fetch(`/api/transactions?leadId=${id}`)
+      ]);
       if (cr.ok) setCustomer(await cr.json());
       if (pr.ok) { const p = await pr.json(); if (p) { setProject(p); setMilestones(p.milestones || []); } }
+      if (tr.ok) {
+        const trans = await tr.json();
+        const finalFound = trans.some((t: any) => t.category === "Final Payment");
+        setHasFinalPayment(finalFound);
+      }
       setLoading(false);
     })();
   }, [id]);
@@ -594,7 +647,7 @@ export default function ProgressPage({ params }: { params: Promise<{ id: string 
         )}
       </div>
 
-      {showModal && <Modal mode={modalMode} init={modalMs} projectId={project.id} isProjectCompleted={project.isCompleted} onSave={handleSave} onMarkProjectDone={handleProjectComplete} onDelete={handleDelete} onClose={() => setShowModal(false)} />}
+      {showModal && <Modal mode={modalMode} init={modalMs} projectId={project.id} existingMilestones={milestones} hasFinalPayment={hasFinalPayment} isProjectCompleted={project.isCompleted} onSave={handleSave} onMarkProjectDone={handleProjectComplete} onDelete={handleDelete} onClose={() => setShowModal(false)} />}
     </div>
   );
 }

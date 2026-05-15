@@ -77,8 +77,8 @@ export default function CustomersPage() {
   }).sort((a, b) => {
     const aName = a.project?.name || a.customerName;
     const bName = b.project?.name || b.customerName;
-    if (sortBy === "NEWEST") return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    if (sortBy === "OLDEST") return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    if (sortBy === "NEWEST") return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    if (sortBy === "OLDEST") return new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
     if (sortBy === "PROJECT_FIRST") {
       if (a.project?.name && !b.project?.name) return -1;
       if (!a.project?.name && b.project?.name) return 1;

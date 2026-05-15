@@ -602,7 +602,9 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
                             <td className="px-4 py-2">
                               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button onClick={() => { setEditingTransaction(t); setModalType("RECEIVED"); setShowTransModal(true); }} className="p-1 text-slate-400 hover:text-slate-900"><Pencil className="h-3 w-3" /></button>
-                                <button onClick={() => handleDeleteTransaction(t.id)} className="p-1 text-slate-400 hover:text-rose-600"><Trash2 className="h-3 w-3" /></button>
+                                {t.category !== "Final Payment" && (
+                                  <button onClick={() => handleDeleteTransaction(t.id)} className="p-1 text-slate-400 hover:text-rose-600"><Trash2 className="h-3 w-3" /></button>
+                                )}
                               </div>
                             </td>
                           </tr>
@@ -648,7 +650,9 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
                             <td className="px-4 py-2">
                               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button onClick={() => { setEditingTransaction(t); setModalType("EXPENSE"); setShowTransModal(true); }} className="p-1 text-slate-400 hover:text-slate-900"><Pencil className="h-3 w-3" /></button>
-                                <button onClick={() => handleDeleteTransaction(t.id)} className="p-1 text-slate-400 hover:text-rose-600"><Trash2 className="h-3 w-3" /></button>
+                                {t.category !== "Final Payment" && (
+                                  <button onClick={() => handleDeleteTransaction(t.id)} className="p-1 text-slate-400 hover:text-rose-600"><Trash2 className="h-3 w-3" /></button>
+                                )}
                               </div>
                             </td>
                           </tr>
