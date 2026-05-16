@@ -5,7 +5,8 @@ import { useSession } from "next-auth/react";
 import { 
   User, Shield, Smartphone, LogOut, Loader2, Save, 
   Key, Globe, Clock, Monitor, RefreshCcw, AlertCircle,
-  Zap, Check, Settings as SettingsIcon, Database, Lock
+  Zap, Check, Settings as SettingsIcon, Database, Lock,
+  Trash2, MoreHorizontal, ExternalLink, AlertTriangle, Search, Filter, RotateCcw, Activity, MapPin, ChevronRight, Phone
 } from "lucide-react";
 import PinModal from "@/components/analytics/PinModal";
 import { cn } from "@/lib/utils";
@@ -43,9 +44,19 @@ export default function SettingsPage() {
   const [hasPinSetup, setHasPinSetup] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
   const [pinModalMode, setPinModalMode] = useState<"verify" | "setup" | "confirm">("verify");
+  const [pinError, setPinError] = useState("");
   const [tempPin, setTempPin] = useState("");
   const [verifiedCurrentPin, setVerifiedCurrentPin] = useState("");
-  const [pinError, setPinError] = useState("");
+
+  // Customer Clean Up States
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [isCustomersLoading, setIsCustomersLoading] = useState(false);
+  const [customerSearchTerm, setCustomerSearchTerm] = useState("");
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [permanentDeleteId, setPermanentDeleteId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isCleanupUnlocked, setIsCleanupUnlocked] = useState(false);
+  const [pinPurpose, setPinPurpose] = useState<"configure" | "unlock">("configure");
 
   useEffect(() => {
     if (session?.user) {
@@ -57,7 +68,42 @@ export default function SettingsPage() {
     }
     fetchSessions();
     fetchSettings();
-  }, [session]);
+    
+    // Reset cleanup unlock when switching tabs
+    if (activeTab !== "customer-cleanup") {
+      setIsCleanupUnlocked(false);
+    }
+
+    if (activeTab === "customer-cleanup") {
+      fetchCustomers();
+    }
+  }, [session, activeTab]);
+
+  const fetchCustomers = async () => {
+    setIsCustomersLoading(true);
+    try {
+      const res = await fetch("/api/customers");
+      if (res.ok) {
+        const data = await res.json();
+        setCustomers(data);
+      }
+    } catch (err) { console.error(err); }
+    finally { setIsCustomersLoading(false); }
+  };
+
+  const handlePermanentDelete = async () => {
+    if (!permanentDeleteId) return;
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/leads/${permanentDeleteId}?permanent=true`, { method: "DELETE" });
+      if (res.ok) {
+        setCustomers(prev => prev.filter(c => c.id !== permanentDeleteId));
+        setPermanentDeleteId(null);
+        setMessage({ type: "success", text: "Customer permanently deleted" });
+      }
+    } catch (e) { console.error(e); }
+    finally { setIsDeleting(false); }
+  };
 
   const fetchSessions = async () => {
     try {
@@ -179,6 +225,26 @@ export default function SettingsPage() {
   const handlePinModalSuccess = async (pin: string) => {
     setPinError("");
     
+    if (pinPurpose === "unlock") {
+      setIsLoading(true);
+      try {
+        const res = await fetch("/api/analytics/verify-pin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pin }),
+        });
+        if (res.ok) {
+          setIsCleanupUnlocked(true);
+          setShowPinModal(false);
+          setPinPurpose("configure"); // Reset for next use
+        } else {
+          setPinError("Incorrect PIN");
+        }
+      } catch (e) { setPinError("Connection error"); }
+      finally { setIsLoading(false); }
+      return;
+    }
+
     if (pinModalMode === "verify") {
       // Verify current PIN before allowing change
       setIsLoading(true);
@@ -308,6 +374,7 @@ export default function SettingsPage() {
     { id: "profile", label: "Identity Profile", icon: User },
     { id: "system", label: "System Config", icon: SettingsIcon },
     { id: "security", label: "Advanced Security", icon: Shield },
+    { id: "customer-cleanup", label: "Customer Clean Up", icon: Trash2 },
     { id: "backup", label: "Backup & Restore", icon: Database },
   ];
 
@@ -606,6 +673,7 @@ export default function SettingsPage() {
                           <button 
                             onClick={() => {
                               setPinModalMode("verify");
+                              setPinPurpose("configure");
                               setShowPinModal(true);
                             }}
                             className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline"
@@ -614,7 +682,12 @@ export default function SettingsPage() {
                           </button>
                         )}
                         <button
-                          onClick={() => handleTogglePinProtection(!isAnalyticsPinEnabled)}
+                          onClick={() => {
+                            if (!isAnalyticsPinEnabled && !hasPinSetup) {
+                              setPinPurpose("configure");
+                            }
+                            handleTogglePinProtection(!isAnalyticsPinEnabled);
+                          }}
                           className={cn(
                             "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
                             isAnalyticsPinEnabled ? "bg-primary" : "bg-slate-200"
@@ -729,8 +802,174 @@ export default function SettingsPage() {
               </div>
             </div>
           )}
-        </div>
+
+          {activeTab === "customer-cleanup" && (
+            isAnalyticsPinEnabled && !isCleanupUnlocked ? (
+              <div className="flex flex-col items-center justify-center py-32 bg-white rounded-2xl border border-slate-200 shadow-sm animate-in fade-in zoom-in-95 duration-300">
+                 <div className="h-16 w-16 bg-slate-900 rounded-2xl flex items-center justify-center mb-6 shadow-xl rotate-3">
+                    <Lock className="h-8 w-8 text-white" />
+                 </div>
+                 <h3 className="text-base font-bold text-slate-900 uppercase tracking-widest">Access Restricted</h3>
+                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1 mb-8 max-w-xs text-center leading-relaxed">
+                   Security PIN verification required to access customer cleanup tools.
+                 </p>
+                 <button 
+                   onClick={() => {
+                      setPinModalMode("verify");
+                      setPinPurpose("unlock");
+                      setShowPinModal(true);
+                   }}
+                   className="px-8 py-3 bg-indigo-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-100 active:scale-95 transition-all flex items-center gap-2"
+                 >
+                   <Shield className="h-4 w-4" /> Unlock Tab
+                 </button>
+              </div>
+            ) : (
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center">
+                      <Trash2 className="h-5 w-5 text-rose-600" />
+                    </div>
+                    <div>
+                      <h2 className="text-sm font-bold text-slate-900 uppercase tracking-widest">Permanent Data Removal</h2>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Purge customer records and associated history</p>
+                    </div>
+                  </div>
+                  <div className="relative w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                    <input 
+                      type="text" 
+                      placeholder="Search customers..."
+                      className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs focus:bg-white focus:border-rose-300 outline-none transition-all"
+                      value={customerSearchTerm}
+                      onChange={e => setCustomerSearchTerm(e.target.value)}
+                    />
+                  </div>
+                </div>
+                
+                <div className="overflow-x-auto min-h-[400px]">
+                  {isCustomersLoading ? (
+                    <div className="flex flex-col items-center justify-center h-64 text-slate-400">
+                      <Loader2 className="h-8 w-8 animate-spin text-rose-500 mb-3" />
+                      <span className="text-xs font-bold uppercase tracking-widest">Scanning Directory...</span>
+                    </div>
+                  ) : (
+                    <table className="min-w-full divide-y divide-slate-100">
+                      <thead className="bg-slate-50/30">
+                        <tr>
+                          <th className="py-4 pl-8 pr-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Client Profile</th>
+                          <th className="px-3 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Service</th>
+                          <th className="px-3 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Handler</th>
+                          <th className="relative py-4 pl-3 pr-8"><span className="sr-only">Actions</span></th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-50">
+                        {customers.filter(c => 
+                          c.customerName.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
+                          c.contactNumber.includes(customerSearchTerm)
+                        ).length === 0 ? (
+                          <tr>
+                            <td colSpan={4} className="py-20 text-center">
+                              <Activity className="h-8 w-8 text-slate-200 mx-auto mb-3" />
+                              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">No matching customers identified</p>
+                            </td>
+                          </tr>
+                        ) : (
+                          customers.filter(c => 
+                            c.customerName.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
+                            c.contactNumber.includes(customerSearchTerm)
+                          ).map((customer) => {
+                            const displayName = customer.project?.name || customer.customerName;
+                            return (
+                              <tr key={customer.id} className="group hover:bg-slate-50/50 transition-colors">
+                                <td className="whitespace-nowrap py-4 pl-8 pr-3">
+                                  <div className="flex items-center">
+                                    <div className="h-9 w-9 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 font-bold border border-slate-200 text-xs">
+                                      {displayName.charAt(0)}
+                                    </div>
+                                    <div className="ml-4">
+                                      <div className="text-xs font-bold text-slate-900 flex items-center gap-2">
+                                        {displayName}
+                                        {customer.project?.name && (
+                                          <span className="px-1 py-0.5 bg-slate-100 text-[8px] font-black text-slate-400 rounded uppercase tracking-tighter border border-slate-200">Project</span>
+                                        )}
+                                      </div>
+                                      <div className="text-[10px] text-slate-400 font-medium flex items-center gap-1.5 mt-0.5">
+                                        <Phone className="h-2.5 w-2.5" /> {customer.contactNumber}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="whitespace-nowrap px-3 py-4">
+                                  <div className="text-[10px] font-bold text-slate-600 uppercase tracking-wide flex items-center gap-1.5">
+                                    <Zap className="h-3 w-3 text-amber-500" />
+                                    {customer.serviceType.replace("_", " ")}
+                                  </div>
+                                  <div className="text-[9px] text-slate-400 font-medium flex items-center gap-1 mt-1 truncate max-w-[120px]">
+                                    <MapPin className="h-2.5 w-2.5" /> {customer.fullAddress || "No address"}
+                                  </div>
+                                </td>
+                                <td className="whitespace-nowrap px-3 py-4">
+                                  <div className="text-[10px] font-bold text-slate-600 flex items-center gap-2">
+                                    <div className="h-5 w-5 rounded-full bg-slate-100 flex items-center justify-center border border-white">
+                                      <User className="h-2.5 w-2.5 text-slate-400" />
+                                    </div>
+                                    {customer.assignedStaff?.name || "Internal"}
+                                  </div>
+                                </td>
+                                <td className="relative whitespace-nowrap py-4 pl-3 pr-8 text-right">
+                                  <div className="flex items-center justify-end gap-3">
+                                    <button 
+                                      onClick={() => setOpenMenuId(openMenuId === customer.id ? null : customer.id)}
+                                      className={cn(
+                                        "p-2 rounded-lg transition-all",
+                                        openMenuId === customer.id ? "bg-slate-900 text-white" : "text-slate-400 hover:text-slate-900 hover:bg-white border border-transparent hover:border-slate-100 shadow-sm"
+                                      )}
+                                    >
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </button>
+                                    
+                                    {openMenuId === customer.id && (
+                                      <>
+                                        <div className="fixed inset-0 z-10" onClick={() => setOpenMenuId(null)} />
+                                        <div className="absolute right-0 mt-2 w-44 rounded-xl bg-white text-slate-900 shadow-xl border border-slate-200 z-20 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                          <div className="p-1">
+                                            <button 
+                                              onClick={() => { window.open(`/customers/${customer.id}`, '_blank'); setOpenMenuId(null); }}
+                                              className="w-full flex items-center gap-2.5 px-3 py-2 text-[10px] font-bold uppercase tracking-wider hover:bg-slate-50 rounded-lg transition-colors text-left"
+                                            >
+                                              <ExternalLink className="h-3.5 w-3.5 text-slate-400" /> View Profile
+                                            </button>
+                                            <div className="h-px bg-slate-100 my-1" />
+                                            <button 
+                                              onClick={() => { setPermanentDeleteId(customer.id); setOpenMenuId(null); }}
+                                              className="w-full flex items-center gap-2.5 px-3 py-2 text-[10px] font-bold uppercase tracking-wider hover:bg-rose-50 text-rose-600 rounded-lg transition-colors text-left"
+                                            >
+                                              <Trash2 className="h-3.5 w-3.5" /> Delete Permanently
+                                            </button>
+                                          </div>
+                                        </div>
+                                      </>
+                                    )}
+                                    <ChevronRight className="h-3.5 w-3.5 text-slate-200 group-hover:text-rose-400 transition-all" />
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </div>
+            </div>
+          )
+        )}
       </div>
+    </div>
 
       {/* Restore Confirmation Modal */}
       {showRestoreModal && (
@@ -791,6 +1030,39 @@ export default function SettingsPage() {
           isLoading={isLoading}
           error={pinError}
         />
+      )}
+
+      {/* Customer Permanent Delete Modal */}
+      {permanentDeleteId && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/20 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 animate-in zoom-in-95">
+            <div className="p-8 text-center">
+              <div className="bg-rose-50 h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-5">
+                <AlertTriangle className="h-8 w-8 text-rose-500" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 tracking-tight">Erase Customer Data?</h3>
+              <p className="mt-2 text-slate-500 font-medium leading-relaxed px-4 text-xs uppercase tracking-wider">
+                This will permanently destroy this customer and all their associated projects, payments, and history. <span className="text-rose-600 font-black">THIS CANNOT BE UNDONE.</span>
+              </p>
+              <div className="mt-8 flex flex-col gap-2">
+                 <button 
+                   disabled={isDeleting} 
+                   onClick={handlePermanentDelete}
+                   className="w-full bg-rose-600 hover:bg-rose-700 py-3.5 rounded-xl text-white font-bold text-xs uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-rose-100"
+                 >
+                   {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                   Confirm Destruction
+                 </button>
+                 <button 
+                   onClick={() => setPermanentDeleteId(null)}
+                   className="w-full bg-slate-50 hover:bg-slate-100 py-3.5 rounded-xl text-slate-500 font-bold text-xs uppercase tracking-widest transition-colors"
+                 >
+                   Cancel
+                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

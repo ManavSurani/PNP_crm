@@ -306,3 +306,15 @@ Answer: I have executed a 'Smart Cleanup' using smart-cleanup.mjs. This script s
 ## Query: ok clean this table fully like i don't want any project from this table
 
 Answer: I have performed a FULL cleanup of the database. All leads, projects, transactions, and business data have been removed. User accounts and system settings remain preserved for a fresh start.
+
+## Query: i want to create one page with in setting for customer clean up page in this page i want to see all customer diractory data with same column name only put one action column in this page table where customer can delete option and for that use same 3 dot design like that which is in lead pipline page and if i delete from here than same as lead permently delete reduce count form whole project so and don't change anything other than this and mack project flow same as as it is so for this create me an plane
+
+Answer: I have created an implementation plan to add a "Customer Clean Up" tab in the settings. This page will display all customers with a 3-dot action menu to permanently delete them, which will also automatically update all project-wide counts.
+
+## Query: Business Analytics Security can you put this same security pin which you ask me when ever i go to bussiness analytics same for customer cleanup like when i click on that ask me an pin for that then i should see this data and for both this use same pin and don't change anything other than that so first create me an plane
+
+Answer: I have created an implementation plan to protect the "Customer Clean Up" tab with the same Security PIN used for Business Analytics. This ensures that sensitive data removal tools are restricted to authorized users while sharing the same PIN configuration and session-lock state.
+
+## Query: here i want pin ask me each time i go to clean up customer page don't like bussiness analytics that one time if i add a pin then show me all the data through out the sesetion here when ever i visit this at that time ask me pin and also don't change anything other than this so for that create me an plane
+
+Answer: I have created an implementation plan to make the "Customer Clean Up" tab require a PIN entry every single time it is visited. This behavior is more restrictive than Business Analytics, as it does not persist the unlock state across tab switches or sessions.
