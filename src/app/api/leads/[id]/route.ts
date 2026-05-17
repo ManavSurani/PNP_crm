@@ -136,20 +136,23 @@ export async function PUT(
 
     // Handle Financial Fields
     if (initialDealAmount !== undefined) {
-      updateData.initialDealAmount = parseFloat(initialDealAmount);
+      updateData.initialDealAmount = initialDealAmount === null ? null : parseFloat(initialDealAmount);
       
       // Log the update
       // @ts-ignore - newly added
       const oldLead = await prisma.lead.findUnique({ where: { id }, select: { initialDealAmount: true } });
       // @ts-ignore - newly added
       if (oldLead && oldLead.initialDealAmount !== parseFloat(initialDealAmount)) {
+        const detailsText = oldLead.initialDealAmount !== null && oldLead.initialDealAmount !== undefined
+          ? `Deal amount updated from ₹${oldLead.initialDealAmount.toLocaleString()} to ₹${parseFloat(initialDealAmount).toLocaleString()}`
+          : `Project deal initialized — ₹${parseFloat(initialDealAmount).toLocaleString()}`;
         // @ts-ignore - newly added
         await prisma.leadFinancialLog.create({
           data: {
             leadId: id,
             action: "DEAL_UPDATE",
             // @ts-ignore - newly added
-            details: `Deal amount updated from ₹${oldLead.initialDealAmount.toLocaleString()} to ₹${parseFloat(initialDealAmount).toLocaleString()}`,
+            details: detailsText,
             amount: parseFloat(initialDealAmount)
           }
         });

@@ -109,10 +109,11 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
   // Calculations
   const totalReceived = useMemo(() => customer?.transactions?.filter(t => t.type === "RECEIVED").reduce((sum, t) => sum + t.amount, 0) || 0, [customer]);
   const totalExpense = useMemo(() => customer?.transactions?.filter(t => t.type === "EXPENSE" && t.source !== "DESIGN").reduce((sum, t) => sum + t.amount, 0) || 0, [customer]);
-  const initialDeal = customer?.initialDealAmount || 0;
+  const initialDeal = customer?.initialDealAmount;
+  const hasFinanceSetup = initialDeal !== null && initialDeal !== undefined;
 
   // NEW ACCOUNTING LOGIC
-  const currentTotal = initialDeal + totalExpense;
+  const currentTotal = (initialDeal || 0) + totalExpense;
   const remainingDue = Math.max(0, currentTotal - totalReceived);
   const paymentProgress = currentTotal > 0 ? (totalReceived / currentTotal) * 100 : 0;
 
@@ -270,7 +271,7 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
       curY += 4; rule(curY); curY += 5;
 
       const summaryItems = [
-        { label: "Initial Deal", value: fmt(initialDeal), color: COL.muted },
+        { label: "Initial Deal", value: fmt(initialDeal || 0), color: COL.muted },
         { label: "Total Expenses", value: fmt(totalExpense), color: COL.red },
         { label: "Current Total", value: fmt(currentTotal), color: COL.body },
         { label: "Client Paid", value: fmt(totalReceived), color: COL.green },
@@ -377,7 +378,7 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
         ry += 8;
       };
 
-      row("Initial Deal Value", fmt(initialDeal), COL.body);
+      row("Initial Deal Value", fmt(initialDeal || 0), COL.body);
       row("Add: Project Expenses", fmt(totalExpense), COL.red);
       row("Current Project Total", fmt(currentTotal), COL.body, true);
       row("Less: Client Payments", fmt(totalReceived), COL.green);
@@ -532,7 +533,7 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
       <div className="max-w-[1600px] mx-auto px-6 py-6">
 
         {/* --- INITIAL DEAL SETUP / EDIT --- */}
-        {initialDeal === 0 ? (
+        {!hasFinanceSetup ? (
           <div className="mb-8 bg-white border-2 border-dashed border-slate-200 rounded-2xl p-12 text-center max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="h-16 w-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
               <IndianRupee className="h-8 w-8 text-slate-400" />
@@ -737,7 +738,7 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
       {showDealModal && (
         <DealAmountModal
           leadId={id}
-          currentAmount={customer?.initialDealAmount || 0}
+          currentAmount={customer?.initialDealAmount}
           currentNotes={customer?.initialDealNotes || ""}
           onClose={() => setShowDealModal(false)}
           onSuccess={() => { fetchData(); fetchLogs(); }}
@@ -754,7 +755,7 @@ function SummaryWidget({ label, value, color, isBold = false, prefix = "", highl
     <div className={cn("px-4 py-1.5 transition-all", highlight && "bg-slate-50 rounded-lg")}>
       <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">{label}</p>
       <p className={cn("text-xs font-black tracking-tight", color, isBold ? "text-sm scale-105" : "")}>
-        {prefix}₹{value.toLocaleString()}
+        {prefix}₹{(value ?? 0).toLocaleString()}
       </p>
     </div>
   );
@@ -908,12 +909,12 @@ function TransactionModal({ type, leadId, customerName, editingData, onClose, on
 }
 
 function DealAmountModal({ leadId, currentAmount, currentNotes, onClose, onSuccess }: any) {
-  const [amount, setAmount] = useState(currentAmount || "");
+  const [amount, setAmount] = useState(currentAmount !== null && currentAmount !== undefined ? currentAmount : "");
   const [notes, setNotes] = useState(currentNotes || "");
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = async () => {
-    if (!amount) return;
+    if (amount === "" || amount === null || amount === undefined) return;
     setIsSaving(true);
     try {
       const res = await fetch(`/api/leads/${leadId}`, {
@@ -943,7 +944,7 @@ function DealAmountModal({ leadId, currentAmount, currentNotes, onClose, onSucce
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          initialDealAmount: 0,
+          initialDealAmount: null,
           initialDealNotes: ""
         })
       });
@@ -987,7 +988,7 @@ function DealAmountModal({ leadId, currentAmount, currentNotes, onClose, onSucce
           </div>
 
           <div className="flex gap-2">
-            {currentAmount > 0 && (
+            {(currentAmount !== null && currentAmount !== undefined) && (
               <button
                 onClick={handleDelete}
                 className="p-3 text-rose-500 hover:bg-rose-50 rounded-xl transition-all border border-rose-100"

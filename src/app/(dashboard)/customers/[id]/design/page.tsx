@@ -78,7 +78,8 @@ export default function DesignExpensesPage({ params }: { params: Promise<{ id: s
   }
 
   // Calculations
-  const initialDeal = customer?.initialDealAmount || 0;
+  const initialDeal = customer?.initialDealAmount;
+  const hasFinanceSetup = initialDeal !== null && initialDeal !== undefined;
   const designExpenses = useMemo(() => 
     customer?.transactions?.filter(t => t.type === "EXPENSE" && t.source === "DESIGN") || []
   , [customer]);
@@ -89,7 +90,7 @@ export default function DesignExpensesPage({ params }: { params: Promise<{ id: s
       .reduce((sum, t) => sum + t.amount, 0)
   , [designExpenses]);
 
-  const designProfit = initialDeal - totalDesignCost;
+  const designProfit = (initialDeal || 0) - totalDesignCost;
 
   const handleDeleteTransaction = async (transId: string) => {
     if (!confirm("Are you sure you want to delete this design expense?")) return;
@@ -159,7 +160,7 @@ export default function DesignExpensesPage({ params }: { params: Promise<{ id: s
       <div className="max-w-[1600px] mx-auto px-6 py-8">
         
         {/* --- INITIAL DEAL SETUP --- */}
-        {initialDeal === 0 ? (
+        {!hasFinanceSetup ? (
           <div className="mb-8 bg-white border-2 border-dashed border-slate-200 rounded-2xl p-12 text-center max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="h-16 w-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-6">
               <Palette className="h-8 w-8 text-rose-400" />
@@ -333,7 +334,7 @@ export default function DesignExpensesPage({ params }: { params: Promise<{ id: s
       {showDealModal && (
         <DealAmountModal 
           leadId={id} 
-          currentAmount={customer?.initialDealAmount || 0}
+          currentAmount={customer?.initialDealAmount}
           currentNotes={customer?.initialDealNotes || ""}
           onClose={() => setShowDealModal(false)}
           onSuccess={() => { fetchData(); fetchLogs(); }}
@@ -354,7 +355,7 @@ function ProfitCard({ label, value, icon, color, isHighlight = false, prefix = "
           <p className={cn("text-[9px] font-black uppercase tracking-widest", isHighlight ? "text-slate-400" : "text-slate-400")}>{label}</p>
        </div>
        <p className={cn("text-2xl font-black tracking-tight relative z-10", isHighlight ? "text-white" : "text-slate-900")}>
-          {prefix}₹{value.toLocaleString()}
+          {prefix}₹{(value ?? 0).toLocaleString()}
        </p>
     </div>
   );
@@ -474,12 +475,12 @@ function TransactionModal({ leadId, editingData, onClose, onSuccess }: any) {
 }
 
 function DealAmountModal({ leadId, currentAmount, currentNotes, onClose, onSuccess }: any) {
-  const [amount, setAmount] = useState(currentAmount || "");
+  const [amount, setAmount] = useState(currentAmount !== null && currentAmount !== undefined ? currentAmount : "");
   const [notes, setNotes] = useState(currentNotes || "");
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = async () => {
-    if (!amount) return;
+    if (amount === "" || amount === null || amount === undefined) return;
     setIsSaving(true);
     try {
       const res = await fetch(`/api/leads/${leadId}`, {

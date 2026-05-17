@@ -92,7 +92,7 @@ model Lead {
   isProjectCompleted  Boolean            @default(false)
   reactivatedAt       DateTime?
   reactivationNote    String?
-  initialDealAmount   Float              @default(0)
+  initialDealAmount   Float?
   initialDealNotes    String?
   followUps           FollowUp[]
   assignedStaff       User?              @relation(fields: [assignedStaffId], references: [id])

@@ -9,7 +9,7 @@ export async function GET() {
 
     const stats = await Promise.all([
       prisma.lead.findMany({
-        where: { initialDealAmount: { gt: 0 }, isCancelled: false } as any,
+        where: { initialDealAmount: { not: null }, isCancelled: false } as any,
         include: {
           transactions: true,
           project: { select: { name: true } }
