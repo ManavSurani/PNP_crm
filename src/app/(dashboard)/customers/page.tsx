@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 type Customer = {
   id: string;
   customerName: string;
-  project?: { id: string; name: string | null } | null;
+  project?: { id: string; name: string | null; startedOn?: string } | null;
   contactNumber: string;
   fullAddress: string | null;
   inquirySource: string;
@@ -69,7 +69,8 @@ export default function CustomersPage() {
     const matchesSource = filters.source === "ALL" || customer.inquirySource === filters.source;
     const matchesService = filters.service === "ALL" || customer.serviceType === filters.service;
 
-    const customerDate = new Date(customer.createdAt);
+    const conversionDateStr = customer.project?.startedOn || customer.createdAt;
+    const customerDate = new Date(conversionDateStr);
     const matchesStartDate = !filters.startDate || customerDate >= new Date(filters.startDate);
     const matchesEndDate = !filters.endDate || customerDate <= new Date(filters.endDate + "T23:59:59");
 
@@ -77,8 +78,10 @@ export default function CustomersPage() {
   }).sort((a, b) => {
     const aName = a.project?.name || a.customerName;
     const bName = b.project?.name || b.customerName;
-    if (sortBy === "NEWEST") return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-    if (sortBy === "OLDEST") return new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+    const aConversionDateStr = a.project?.startedOn || a.createdAt;
+    const bConversionDateStr = b.project?.startedOn || b.createdAt;
+    if (sortBy === "NEWEST") return new Date(bConversionDateStr).getTime() - new Date(aConversionDateStr).getTime();
+    if (sortBy === "OLDEST") return new Date(aConversionDateStr).getTime() - new Date(bConversionDateStr).getTime();
     if (sortBy === "PROJECT_FIRST") {
       if (a.project?.name && !b.project?.name) return -1;
       if (!a.project?.name && b.project?.name) return 1;
@@ -290,7 +293,7 @@ export default function CustomersPage() {
                         </div>
                       </td>
                       <td onClick={() => router.push(`/customers/${customer.id}`)} className="whitespace-nowrap px-3 py-5">
-                        <div className="mt-1.5 text-xs font-medium text-slate-600">{format(new Date(customer.updatedAt), "dd MMM yyyy")}</div>
+                        <div className="mt-1.5 text-xs font-medium text-slate-600">{format(new Date(customer.project?.startedOn || customer.createdAt), "dd MMM yyyy")}</div>
                       </td>
                       <td onClick={() => router.push(`/customers/${customer.id}`)} className="whitespace-nowrap px-3 py-5">
                         <div className="text-xs font-semibold text-slate-900 flex items-center gap-2">

@@ -23,7 +23,7 @@ export async function GET(request: Request) {
         },
         project: {
           // @ts-ignore - name field exists in schema but IDE lag
-          select: { id: true, name: true }
+          select: { id: true, name: true, startedOn: true }
         }
       }
     });

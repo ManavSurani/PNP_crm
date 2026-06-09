@@ -12,8 +12,8 @@ import BrandLogo from "@/components/layout/BrandLogo";
 
 export default function LoginForm() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("admin@pnp.com");
+  const [password, setPassword] = useState("pnpadmin123");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 

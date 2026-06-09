@@ -56,7 +56,8 @@ export default function SettingsPage() {
   const [permanentDeleteId, setPermanentDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isCleanupUnlocked, setIsCleanupUnlocked] = useState(false);
-  const [pinPurpose, setPinPurpose] = useState<"configure" | "unlock">("configure");
+  const [isIdentityUnlocked, setIsIdentityUnlocked] = useState(false);
+  const [pinPurpose, setPinPurpose] = useState<"configure" | "unlock" | "disable" | "identity">("configure");
 
   useEffect(() => {
     if (session?.user) {
@@ -245,6 +246,26 @@ export default function SettingsPage() {
       return;
     }
 
+    if (pinPurpose === "identity") {
+      setIsLoading(true);
+      try {
+        const res = await fetch("/api/analytics/verify-pin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pin }),
+        });
+        if (res.ok) {
+          setIsIdentityUnlocked(true);
+          setShowPinModal(false);
+          setPinPurpose("configure"); // Reset for next use
+        } else {
+          setPinError("Incorrect PIN");
+        }
+      } catch (e) { setPinError("Connection error"); }
+      finally { setIsLoading(false); }
+      return;
+    }
+
     if (pinModalMode === "verify") {
       // Verify current PIN before allowing change
       setIsLoading(true);
@@ -255,8 +276,14 @@ export default function SettingsPage() {
           body: JSON.stringify({ pin }),
         });
         if (res.ok) {
-          setVerifiedCurrentPin(pin);
-          setPinModalMode("setup");
+          if (pinPurpose === "disable") {
+            setShowPinModal(false);
+            handleTogglePinProtection(false);
+            setPinPurpose("configure");
+          } else {
+            setVerifiedCurrentPin(pin);
+            setPinModalMode("setup");
+          }
         } else {
           setPinError("Current PIN is incorrect");
         }
@@ -422,7 +449,8 @@ export default function SettingsPage() {
           )}
 
           {activeTab === "profile" && (
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2">
+            isIdentityUnlocked ? (
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2">
               <div className="p-6 border-b border-slate-100 bg-slate-50/50">
                 <h2 className="text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
                   <User className="h-4 w-4 text-primary" /> Profile Credentials
@@ -489,6 +517,27 @@ export default function SettingsPage() {
                 </div>
               </form>
             </div>
+            ) : (
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-16 flex flex-col items-center justify-center text-center animate-in zoom-in-95">
+                <div className="h-20 w-20 bg-slate-900 rounded-3xl flex items-center justify-center shadow-2xl mb-6 shadow-slate-900/20">
+                  <Lock className="h-8 w-8 text-white" />
+                </div>
+                <h3 className="text-xl font-black text-slate-900 uppercase tracking-widest">Access Restricted</h3>
+                <p className="text-xs font-bold text-slate-400 mt-3 max-w-sm uppercase leading-relaxed tracking-wider">
+                  Security PIN verification required to access Identity Profile settings.
+                </p>
+                <button
+                  onClick={() => {
+                    setPinPurpose("identity");
+                    setPinModalMode("verify");
+                    setShowPinModal(true);
+                  }}
+                  className="mt-8 bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-indigo-200 transition-all active:scale-95 flex items-center gap-2"
+                >
+                  <Shield className="h-4 w-4" /> Unlock Tab
+                </button>
+              </div>
+            )
           )}
 
           {activeTab === "system" && (
@@ -683,10 +732,16 @@ export default function SettingsPage() {
                         )}
                         <button
                           onClick={() => {
-                            if (!isAnalyticsPinEnabled && !hasPinSetup) {
-                              setPinPurpose("configure");
+                            if (isAnalyticsPinEnabled) {
+                              setPinPurpose("disable");
+                              setPinModalMode("verify");
+                              setShowPinModal(true);
+                            } else {
+                              if (!hasPinSetup) {
+                                setPinPurpose("configure");
+                              }
+                              handleTogglePinProtection(true);
                             }
-                            handleTogglePinProtection(!isAnalyticsPinEnabled);
                           }}
                           className={cn(
                             "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
