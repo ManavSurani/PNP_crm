@@ -404,6 +404,7 @@ model ProjectQuotation {
   fieldId          String
   vendorId         String
   amount           Float
+  note             String?
   priority         Int              @default(0)
   isPriorityLocked Boolean          @default(false)
   createdAt        DateTime         @default(now())

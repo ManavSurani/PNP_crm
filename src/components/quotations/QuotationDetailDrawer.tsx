@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Trash2, Plus, Loader2, Calendar, CreditCard, Clock, CheckCircle2 } from "lucide-react";
+import { X, Trash2, Plus, Loader2, Calendar, CreditCard, Clock, CheckCircle2, Pencil, Check, StickyNote } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +18,7 @@ interface Quotation {
   field: { name: string };
   vendor: { name: string; phone: string };
   payments: Payment[];
+  note?: string | null;
 }
 
 interface QuotationDetailDrawerProps {
@@ -35,10 +36,18 @@ export default function QuotationDetailDrawer({ isOpen, onClose, quotation, onUp
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentDate, setPaymentDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [paymentNote, setPaymentNote] = useState("");
+  
+  const [isEditingNote, setIsEditingNote] = useState(false);
+  const [tempNote, setTempNote] = useState("");
+  const [isSubmittingNote, setIsSubmittingNote] = useState(false);
+  const [displayNote, setDisplayNote] = useState<string | null>(null);
 
   useEffect(() => {
     if (quotation) {
       setPayments(quotation.payments);
+      setTempNote(quotation.note || "");
+      setDisplayNote(quotation.note || null);
+      setIsEditingNote(false);
     }
   }, [quotation]);
 
@@ -85,6 +94,48 @@ export default function QuotationDetailDrawer({ isOpen, onClose, quotation, onUp
       }
     } catch (error) {
       console.error("Error deleting payment:", error);
+    }
+  };
+
+  const handleDeleteNote = async () => {
+    setIsSubmittingNote(true);
+    try {
+      const res = await fetch(`/api/project-quotations/${quotation?.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ note: null }),
+      });
+      if (res.ok) {
+        setTempNote("");
+        setDisplayNote(null);
+        setIsEditingNote(false);
+        onUpdate();
+      }
+    } catch (error) {
+      console.error("Error deleting note:", error);
+    } finally {
+      setIsSubmittingNote(false);
+    }
+  };
+
+  const handleUpdateNote = async () => {
+    if (!quotation) return;
+    setIsSubmittingNote(true);
+    try {
+      const res = await fetch(`/api/project-quotations/${quotation.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ note: tempNote.trim() || null }),
+      });
+      if (res.ok) {
+        setDisplayNote(tempNote.trim() || null);
+        setIsEditingNote(false);
+        onUpdate();
+      }
+    } catch (error) {
+      console.error("Error updating note:", error);
+    } finally {
+      setIsSubmittingNote(false);
     }
   };
 
@@ -150,6 +201,88 @@ export default function QuotationDetailDrawer({ isOpen, onClose, quotation, onUp
                       </p>
                     </div>
                  </div>
+               </div>
+            </div>
+
+            {/* Notes Section */}
+            <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 relative group">
+               <div className="flex justify-between items-start mb-3">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <StickyNote className="h-3.5 w-3.5" /> Field Notes
+                  </span>
+               </div>
+               
+               <div className="relative">
+                 {isEditingNote ? (
+                   <div className="flex items-start gap-2 animate-in fade-in duration-200">
+                     <textarea
+                       autoFocus
+                       className="w-full bg-white border border-slate-200 rounded-lg p-3 text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all resize-none overflow-hidden"
+                       value={tempNote}
+                       onChange={(e) => {
+                         setTempNote(e.target.value);
+                         e.target.style.height = 'auto';
+                         e.target.style.height = e.target.scrollHeight + 'px';
+                       }}
+                       onFocus={(e) => {
+                         e.target.style.height = 'auto';
+                         e.target.style.height = e.target.scrollHeight + 'px';
+                       }}
+                       placeholder="Add your notes here..."
+                       rows={1}
+                     />
+                     <div className="flex flex-col gap-1 shrink-0">
+                       <button 
+                         onClick={handleUpdateNote} 
+                         disabled={isSubmittingNote} 
+                         className="p-1.5 bg-emerald-600 text-white rounded-lg shadow-sm hover:bg-emerald-700 transition-all disabled:opacity-50 flex items-center justify-center h-8 w-8"
+                       >
+                         {isSubmittingNote ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-5 w-5" />}
+                       </button>
+                       <button 
+                         onClick={() => {
+                           setTempNote(displayNote || "");
+                           setIsEditingNote(false);
+                         }} 
+                         className="p-1.5 bg-slate-100 text-slate-500 rounded-lg hover:bg-slate-200 transition-all flex items-center justify-center h-8 w-8"
+                       >
+                         <X className="h-5 w-5" />
+                       </button>
+                       {displayNote && (
+                         <button 
+                           onClick={handleDeleteNote}
+                           disabled={isSubmittingNote}
+                           className="p-1.5 bg-rose-50 text-rose-500 rounded-lg hover:bg-rose-100 hover:text-rose-600 transition-all flex items-center justify-center h-8 w-8 mt-1"
+                         >
+                           <Trash2 className="h-4 w-4" />
+                         </button>
+                       )}
+                     </div>
+                   </div>
+                 ) : (
+                   <div>
+                     {displayNote ? (
+                       <div 
+                         onClick={() => setIsEditingNote(true)}
+                         className="p-3 -mx-3 rounded-xl hover:bg-white border border-transparent hover:border-slate-100 hover:shadow-sm transition-all cursor-text group/note relative"
+                       >
+                         <p className="text-sm font-medium text-slate-700 whitespace-pre-wrap leading-relaxed break-words">
+                           {displayNote}
+                         </p>
+                         <div className="absolute top-2 right-2 opacity-0 group-hover/note:opacity-100 bg-white p-1.5 rounded-md shadow-sm border border-slate-100 text-slate-400">
+                            <Pencil className="h-3 w-3" />
+                         </div>
+                       </div>
+                     ) : (
+                       <button 
+                         onClick={() => setIsEditingNote(true)}
+                         className="w-full py-3 border-2 border-dashed border-slate-200 rounded-xl text-xs font-black text-slate-400 hover:border-emerald-400 hover:text-emerald-600 transition-all flex items-center justify-center gap-2 group/btn bg-white"
+                       >
+                         <StickyNote className="h-4 w-4 group-hover/btn:scale-110 transition-transform" /> ADD FIELD NOTE
+                       </button>
+                     )}
+                   </div>
+                 )}
                </div>
             </div>
 
@@ -307,5 +440,3 @@ export default function QuotationDetailDrawer({ isOpen, onClose, quotation, onUp
     </>
   );
 }
-
-
