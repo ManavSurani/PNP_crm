@@ -344,6 +344,9 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
     ...(lead.transactions || []).map(t => ({ ...t, type: "TRANSACTION" as const })),
   ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
+  // Extract pending follow-up (the one that triggers notifications)
+  const pendingFollowUp = (lead.followUps || []).find(f => !f.completedDate);
+
   // Dynamic Sequential Numbering for NOT_PICKED follow-ups
   const notPickedItems = [...timeline].filter(item => item.type === "FOLLOW_UP" && (item as any).outcome === "NOT_PICKED").reverse(); // Oldest first
   const getAttemptNumber = (id: string) => {
@@ -584,6 +587,55 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
 
             <div className="flex-1 overflow-auto max-h-[750px] scrollbar-thin scrollbar-thumb-slate-200">
               <div className="divide-y divide-slate-100">
+                {/* ACTIVE PENDING FOLLOW-UP CARD */}
+                {pendingFollowUp && !isLocked && (
+                  <div className="group relative flex bg-amber-50/30 hover:bg-amber-50/60 transition-all border-b border-amber-100/50">
+                    <div className="w-1.5 self-stretch shrink-0 bg-amber-500 animate-pulse-soft" />
+                    
+                    <div className="flex-1 p-5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="h-7 w-7 rounded-lg flex items-center justify-center shadow-sm border bg-amber-100 border-amber-200 text-amber-700">
+                            <Clock className="h-3.5 w-3.5" />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-xs font-bold text-slate-900 leading-none">
+                              Active Scheduled Call
+                            </span>
+                            <span className="text-[10px] font-semibold text-slate-500 mt-1 flex items-center gap-1">
+                              Pending action required
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Cancel Button */}
+                        <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleDeleteActivity(pendingFollowUp.id, "FOLLOW_UP");
+                            }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 hover:border-rose-300 rounded-lg text-[10px] font-bold uppercase tracking-widest shadow-sm transition-all"
+                            title="Cancel Scheduled Call"
+                          >
+                            <Trash2 className="h-3 w-3" /> Cancel Call
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="pl-10 pr-4">
+                        <div className="flex items-center gap-2 px-3 py-2 bg-white border border-amber-200/60 rounded-xl shadow-sm w-fit">
+                           <Calendar className="h-3.5 w-3.5 text-amber-500" />
+                           <span className="text-xs font-black text-amber-700 uppercase tracking-widest">
+                             {pendingFollowUp.nextCallDate ? format(new Date(pendingFollowUp.nextCallDate), "dd MMM, yyyy") : "No Date"}
+                             {pendingFollowUp.nextCallTime && ` @ ${pendingFollowUp.nextCallTime}`}
+                           </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {timeline.map((item: any) => (
                   <div key={item.id} className="group relative flex hover:bg-slate-50/50 transition-all">
                     {/* Status Bar */}

@@ -115,7 +115,7 @@ function Get-Notifications {
         $cacheBuster = [DateTimeOffset]::Now.ToUnixTimeMilliseconds()
         $bustedUrl = "$ApiUrl&t=$cacheBuster"
         $response = Invoke-RestMethod -Uri $bustedUrl -TimeoutSec 8 -ErrorAction Stop
-        return $response
+        return ,$response
     } catch {
         return $null
     }
