@@ -58,22 +58,20 @@ export async function DELETE(
     // 3. Recalculate lead status to maintain synchronization
     const leadId = followUp.leadId;
     
-    // Count remaining successful contacts
-    const successfulCalls = await prisma.followUp.count({
-      where: { leadId, outcome: "PICKED", completedDate: { not: null } }
-    });
-
-    // Count remaining meetings
-    const activeMeetings = await prisma.meeting.count({
-      where: { leadId }
-    });
-
-    // If no successful contact or meeting exists, revert status
-    if (successfulCalls === 0 && activeMeetings === 0) {
-      await prisma.lead.update({
-        where: { id: leadId },
-        data: { status: "NEW_INQUIRY" }
+    const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { status: true } });
+    if (lead && ["NEW_INQUIRY", "FOLLOW_UP", "MEETING_SCHEDULED"].includes(lead.status)) {
+      const activeMeetings = await prisma.meeting.count({ where: { leadId, status: "SCHEDULED" } });
+      const successfulCalls = await prisma.followUp.count({
+        where: { leadId, outcome: { in: ["PICKED", "INTERESTED"] }, completedDate: { not: null } }
       });
+
+      if (activeMeetings > 0) {
+        await prisma.lead.update({ where: { id: leadId }, data: { status: "MEETING_SCHEDULED" } });
+      } else if (successfulCalls > 0) {
+        await prisma.lead.update({ where: { id: leadId }, data: { status: "FOLLOW_UP" } });
+      } else {
+        await prisma.lead.update({ where: { id: leadId }, data: { status: "NEW_INQUIRY" } });
+      }
     }
 
     return NextResponse.json({ success: true });

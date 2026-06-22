@@ -19,6 +19,23 @@ export const authConfig = {
   pages: {
     signIn: "/login",
   },
+  session: {
+    strategy: "jwt",
+    // We do not define maxAge here to ensure it uses the browser session
+  },
+  cookies: {
+    sessionToken: {
+      name: process.env.NODE_ENV === "production" ? "__Secure-authjs.session-token" : "authjs.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        // By omitting maxAge/expires here, we force the browser to treat this as a "Session Cookie"
+        // which means it gets automatically deleted the moment the user closes the app/browser.
+      }
+    }
+  },
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;

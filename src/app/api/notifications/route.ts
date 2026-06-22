@@ -1,13 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { isTodayDate, isOverdueDate } from "@/lib/follow-up-utils";
 import { startOfDay, endOfDay } from "date-fns";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const session = await auth();
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const token = req.nextUrl.searchParams.get("token");
+    if (token !== "pnp_desktop_local_secret") {
+      const session = await auth();
+      if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const now = new Date();
     const todayStart = startOfDay(now);

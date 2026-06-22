@@ -38,7 +38,7 @@ type LeadDetails = {
 
 type ModalType = 
   | "EDIT" | "PICKED" | "NOT_PICKED" | "MEETING" | "CANCEL" | "REACTIVATE" | "CONVERT"
-  | null;
+  | "COMPLETE_MEETING" | null;
 
 const CANCEL_REASONS = [
   "No Response",
@@ -83,6 +83,10 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [newName, setNewName] = useState("");
+  const [completingMeetingId, setCompletingMeetingId] = useState<string | null>(null);
+  const [meetingOutcome, setMeetingOutcome] = useState("");
+  const [editMeetingDate, setEditMeetingDate] = useState("");
+  const [editMeetingTime, setEditMeetingTime] = useState("");
 
   const handleSaveName = async () => {
     if (!newName.trim() || newName === lead?.customerName) {
@@ -99,6 +103,7 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
       if (res.ok) {
         setIsEditingName(false);
         fetchLead();
+        window.dispatchEvent(new CustomEvent("refresh-notifications"));
       }
     } catch (e) {
       console.error(e);
@@ -135,6 +140,8 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
     setMeetingForm({ address: "", date: "", time: "", notes: "" });
     setEditError(null);
     setIsEditingAddress(false);
+    setCompletingMeetingId(null);
+    setMeetingOutcome("");
   };
 
   const post = async (url: string, body: object) => {
@@ -145,7 +152,11 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      if (res.ok) { closeModal(); fetchLead(); }
+      if (res.ok) { 
+        closeModal(); 
+        fetchLead();
+        window.dispatchEvent(new CustomEvent("refresh-notifications"));
+      }
     } catch (e) { console.error(e); }
     finally { setIsSubmitting(false); }
   };
@@ -165,6 +176,7 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
       const res = await fetch(apiUrl, { method: "DELETE" });
       if (res.ok) {
         fetchLead();
+        window.dispatchEvent(new CustomEvent("refresh-notifications"));
       } else {
         const err = await res.json();
         alert(`API Error: ${err.error || "Unknown"}`);
@@ -190,7 +202,7 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
           break;
         case "MEETING":
           url = `/api/meetings/${editingItem.id}`;
-          body = { notes: editNoteText };
+          body = { notes: editNoteText, date: editMeetingDate || undefined, time: editMeetingTime || undefined };
           break;
         case "NOTE":
           url = `/api/notes/${editingItem.id}`;
@@ -204,7 +216,73 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      if (res.ok) { setEditingItem(null); fetchLead(); }
+      if (res.ok) { 
+        setEditingItem(null); 
+        fetchLead();
+        window.dispatchEvent(new CustomEvent("refresh-notifications"));
+      }
+    } catch (e) { console.error(e); }
+    finally { setIsSubmitting(false); }
+  };
+
+  const handleMeetingOutcome = async () => {
+    setIsSubmitting(true);
+    try {
+      // Fetch the old meeting's data to preserve notes
+      const oldMeeting = timeline.find((t: any) => t.type === "MEETING" && t.id === completingMeetingId);
+      const address = (oldMeeting as any)?.address || lead?.fullAddress || "TBD";
+      const existingNotes = (oldMeeting as any)?.notes || "";
+      
+      if (meetingOutcome === "RESCHEDULE") {
+        // Complete the old meeting first
+        await fetch(`/api/meetings/${completingMeetingId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "COMPLETED", notes: existingNotes }),
+        });
+
+        // Create a new meeting (copying ONLY the new summary text)
+        await fetch(`/api/meetings`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ leadId: id, address, date: followUpDate, time: followUpTime, notes: noteContent }),
+        });
+      } else {
+        const appendedNotes = noteContent 
+          ? (existingNotes ? `${existingNotes}\n\nOutcome (${meetingOutcome === "RECALL" ? "Recall" : "Not Interested"}): ${noteContent}` : `Outcome (${meetingOutcome === "RECALL" ? "Recall" : "Not Interested"}): ${noteContent}`) 
+          : existingNotes;
+          
+        // Complete the meeting
+        await fetch(`/api/meetings/${completingMeetingId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "COMPLETED", notes: appendedNotes }),
+        });
+        
+        if (meetingOutcome === "RECALL") {
+          await fetch(`/api/follow-ups`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+              leadId: id, 
+              outcome: "PICKED", 
+              pickedStatus: "NEXT_DAY", 
+              followUpDate, 
+              followUpTime, 
+              noteGiven: noteContent 
+            }),
+          });
+        } else if (meetingOutcome === "NOT_INTERESTED") {
+          await fetch(`/api/follow-ups`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ leadId: id, outcome: "CANCELLED", cancelReason: "Not Interested", noteGiven: noteContent }),
+          });
+        }
+      }
+      closeModal();
+      fetchLead();
+      window.dispatchEvent(new CustomEvent("refresh-notifications"));
     } catch (e) { console.error(e); }
     finally { setIsSubmitting(false); }
   };
@@ -221,7 +299,8 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
       });
       if (res.ok) { 
         closeModal(); 
-        fetchLead(); 
+        fetchLead();
+        window.dispatchEvent(new CustomEvent("refresh-notifications"));
       } else {
         const err = await res.json();
         setEditError(err.details || err.error || "Failed to update lead");
@@ -240,6 +319,7 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
       if (res.ok) {
         closeModal();
         fetchLead();
+        window.dispatchEvent(new CustomEvent("refresh-notifications"));
       } else {
         const error = await res.json();
         alert(`Conversion Failed: ${error.details || error.error || "Unknown Error"}`);
@@ -542,11 +622,27 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                         {/* Action Buttons */}
                         {!isLocked && (
                           <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {item.type === "MEETING" && (item as any).status === "SCHEDULED" && (
+                              <button
+                                onClick={() => {
+                                  setCompletingMeetingId(item.id);
+                                  setActiveModal("COMPLETE_MEETING");
+                                }}
+                                className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-white rounded-md border border-transparent hover:border-slate-200 transition-all"
+                                title="Complete Visit"
+                              >
+                                <Check className="h-3.5 w-3.5" />
+                              </button>
+                            )}
                             <button 
                               onClick={() => {
                                 setEditingItem({ ...item });
                                 let initialText = "";
-                                if (item.type === "MEETING") initialText = item.notes || "";
+                                if (item.type === "MEETING") {
+                                  initialText = item.notes || "";
+                                  setEditMeetingDate((item as any).date ? new Date((item as any).date).toISOString().split('T')[0] : "");
+                                  setEditMeetingTime((item as any).time || "");
+                                }
                                 else if (item.type === "NOTE") initialText = item.content || "";
                                 else if (item.type === "FOLLOW_UP") initialText = item.noteGiven || "";
                                 setEditNoteText(initialText);
@@ -1036,13 +1132,23 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
 
       {/* ─── MODAL: EDIT ACTIVITY ─── */}
       {editingItem && (
-        <Modal title="Edit Activity Note" icon={<Pencil className="h-5 w-5" />} color="primary" onClose={() => setEditingItem(null)}>
+        <Modal title={editingItem.type === "MEETING" ? "Edit Site Visit" : "Edit Activity Note"} icon={<Pencil className="h-5 w-5" />} color="primary" onClose={() => setEditingItem(null)}>
           <form onSubmit={(e) => {
             e.preventDefault();
             handleUpdateActivity();
           }}>
             <div className="p-8 space-y-6">
-            <Field label="Note Content">
+            {editingItem.type === "MEETING" && (
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Visit Date *">
+                  <input type="date" required className={inputCls} value={editMeetingDate} onChange={e => setEditMeetingDate(e.target.value)} />
+                </Field>
+                <Field label="Visit Time">
+                  <input type="time" className={inputCls} value={editMeetingTime} onChange={e => setEditMeetingTime(e.target.value)} />
+                </Field>
+              </div>
+            )}
+            <Field label={editingItem.type === "MEETING" ? "Preparation Notes" : "Note Content"}>
               <textarea 
                 rows={5} 
                 className={inputCls} 
@@ -1058,6 +1164,63 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
           </div>
         </form>
       </Modal>
+      )}
+
+      {/* ─── MODAL: COMPLETE MEETING ─── */}
+      {activeModal === "COMPLETE_MEETING" && (
+        <Modal title="Complete Site Visit" icon={<CheckCircle2 className="h-5 w-5 text-emerald-500" />} color="primary" onClose={closeModal}>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            handleMeetingOutcome();
+          }}>
+            <div className="p-8 space-y-6">
+              <Field label="Visit Outcome *">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  {[
+                    { val: "RECALL", label: "Want to recall" },
+                    { val: "RESCHEDULE", label: "Reschedule the visit" },
+                    { val: "NOT_INTERESTED", label: "Not interested" },
+                  ].map(opt => (
+                    <button key={opt.val} type="button"
+                      onClick={() => setMeetingOutcome(opt.val)}
+                      className={cn(
+                        "py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border transition-all",
+                        meetingOutcome === opt.val ? "bg-slate-900 text-white border-slate-900 shadow-lg scale-[1.02]" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                      )}
+                    >{opt.label}</button>
+                  ))}
+                </div>
+              </Field>
+
+              {(meetingOutcome === "RECALL" || meetingOutcome === "RESCHEDULE") && (
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label={meetingOutcome === "RECALL" ? "Recall Date *" : "New Date *"}>
+                    <input type="date" required className={inputCls} min={new Date().toISOString().split('T')[0]}
+                      value={followUpDate} onChange={e => setFollowUpDate(e.target.value)}
+                    />
+                  </Field>
+                  <Field label="Time (Optional)">
+                    <input type="time" className={inputCls}
+                      value={followUpTime} onChange={e => setFollowUpTime(e.target.value)}
+                    />
+                  </Field>
+                </div>
+              )}
+
+              <Field label="Summary Notes (Optional)">
+                <textarea rows={3} className={inputCls} placeholder="Add any details about the outcome..."
+                  value={noteContent} onChange={e => setNoteContent(e.target.value)} />
+              </Field>
+
+              <ModalFooter onClose={closeModal} isSubmitting={isSubmitting} label="Complete Visit" 
+                disabled={
+                  !meetingOutcome || 
+                  ((meetingOutcome === "RECALL" || meetingOutcome === "RESCHEDULE") && !followUpDate)
+                }
+              />
+            </div>
+          </form>
+        </Modal>
       )}
     </div>
   );

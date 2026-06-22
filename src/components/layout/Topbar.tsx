@@ -7,7 +7,7 @@ import { Search, User as UserIcon, LogOut, Loader2, MapPin, Phone, ArrowRight } 
 import NotificationBell from "./NotificationBell";
 
 export default function Topbar() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<any[]>([]);
@@ -156,7 +156,7 @@ export default function Topbar() {
               </div>
               <span className="hidden lg:flex lg:items-center">
                 <span className="ml-4 text-sm font-semibold leading-6 text-slate-900" aria-hidden="true">
-                  {session?.user?.name || "Admin"}
+                  {status === "loading" ? "..." : (session?.user?.name || "User")}
                 </span>
               </span>
             </button>
@@ -165,8 +165,12 @@ export default function Topbar() {
               className="hidden group-hover:block absolute right-0 top-full mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-[60]"
             >
               <div className="px-4 py-2 border-b border-slate-100">
-                <p className="text-sm font-medium text-slate-900">{session?.user?.name || "Admin"}</p>
-                <p className="text-xs text-slate-500 capitalize">{session?.user?.role?.toLowerCase() || "Role"}</p>
+                <p className="text-sm font-medium text-slate-900">
+                  {status === "loading" ? "Loading..." : (session?.user?.name || "User")}
+                </p>
+                <p className="text-xs text-slate-500 capitalize">
+                  {status === "loading" ? "..." : (session?.user?.role?.toLowerCase() || "Role")}
+                </p>
               </div>
               <button
                 onClick={() => signOut({ callbackUrl: "/login" })}

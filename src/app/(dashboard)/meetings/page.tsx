@@ -37,6 +37,7 @@ export default function MeetingsPage() {
   useEffect(() => { fetchMeetings(); }, []);
 
   const filtered = meetings.filter(m => 
+    m.status === "SCHEDULED" &&
     (m.lead.customerName.toLowerCase().includes(search.toLowerCase()) ||
     m.address.toLowerCase().includes(search.toLowerCase()))
   );

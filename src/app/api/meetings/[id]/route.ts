@@ -26,6 +26,25 @@ export async function PATCH(
       }
     });
 
+    if (status === "COMPLETED") {
+      const remainingMeetings = await prisma.meeting.count({ 
+        where: { leadId: meeting.leadId, status: "SCHEDULED" } 
+      });
+
+      if (remainingMeetings === 0) {
+        const successfulCalls = await prisma.followUp.count({
+          where: { leadId: meeting.leadId, outcome: "PICKED", completedDate: { not: null } }
+        });
+
+        if (successfulCalls > 0) {
+          await prisma.lead.update({ where: { id: meeting.leadId }, data: { status: "FOLLOW_UP" } });
+        } else {
+          await prisma.lead.update({ where: { id: meeting.leadId }, data: { status: "NEW_INQUIRY" } });
+        }
+      }
+    }
+
+
     return NextResponse.json(meeting);
   } catch (error) {
     console.error("[MEETING_PATCH]", error);
@@ -61,13 +80,16 @@ export async function DELETE(
     // 3. Recalculate status
     const leadId = meeting.leadId;
     
-    const remainingMeetings = await prisma.meeting.count({ where: { leadId } });
-    const successfulCalls = await prisma.followUp.count({
-      where: { leadId, outcome: "PICKED", completedDate: { not: null } }
-    });
+    const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { status: true } });
+    if (lead && ["NEW_INQUIRY", "FOLLOW_UP", "MEETING_SCHEDULED"].includes(lead.status)) {
+      const activeMeetings = await prisma.meeting.count({ where: { leadId, status: "SCHEDULED" } });
+      const successfulCalls = await prisma.followUp.count({
+        where: { leadId, outcome: { in: ["PICKED", "INTERESTED"] }, completedDate: { not: null } }
+      });
 
-    if (remainingMeetings === 0) {
-      if (successfulCalls > 0) {
+      if (activeMeetings > 0) {
+        await prisma.lead.update({ where: { id: leadId }, data: { status: "MEETING_SCHEDULED" } });
+      } else if (successfulCalls > 0) {
         await prisma.lead.update({ where: { id: leadId }, data: { status: "FOLLOW_UP" } });
       } else {
         await prisma.lead.update({ where: { id: leadId }, data: { status: "NEW_INQUIRY" } });

@@ -75,7 +75,14 @@ export async function GET() {
         by: ['packageType'],
         _count: { id: true }
       }),
-      prisma.meeting.count(),
+      prisma.meeting.findMany({
+        where: {
+          status: "SCHEDULED",
+          lead: { isCancelled: false, status: { not: "WON_ORDER" } }
+        },
+        distinct: ['leadId'],
+        select: { id: true }
+      }),
       prisma.followUp.count({
         where: {
           nextCallDate: { gt: todayEnd },
@@ -90,6 +97,8 @@ export async function GET() {
       prisma.lead.count({ where: { status: "WON_ORDER", isCancelled: false, 
         // @ts-ignore
         isProjectCompleted: true } }),
+      // [21] NEW: Current Leads in Pipeline
+      prisma.lead.count({ where: { status: { not: "WON_ORDER" }, isCancelled: false } }),
     ]);
 
     const topProjects = (stats[13] as any[] || []).map((o: any) => {
@@ -167,7 +176,8 @@ export async function GET() {
         canceledArchive: stats[8] + stats[17] + stats[18] + stats[19],
         completedProjects: stats[20],
         totalPending,
-        totalMeetings: stats[15],
+        totalMeetings: (stats[15] as any[]).length,
+        currentLeads: stats[21],
         topProjects,
         packageStats
       },

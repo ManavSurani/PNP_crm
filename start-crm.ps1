@@ -37,6 +37,10 @@ function Stop-CrmProcesses {
     Get-CimInstance Win32_Process -Filter "Name = 'node.exe' OR Name = 'cmd.exe'" | Where-Object { $_.CommandLine -like "*$AppRoot*" } | ForEach-Object {
         Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
     }
+    # Kill existing desktop notifiers
+    Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe'" | Where-Object { $_.CommandLine -like "*desktop-notifier.ps1*" } | ForEach-Object {
+        Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+    }
 }
 
 Stop-CrmProcesses
@@ -92,6 +96,13 @@ Write-Host "Waiting for server to become ready..." -ForegroundColor Cyan
 
 Start-Process -FilePath "cmd.exe" -ArgumentList $StartArgs -WorkingDirectory $AppRoot -WindowStyle Hidden -RedirectStandardOutput $NpmLogFile -RedirectStandardError $ErrFile
 
+# Launch Desktop Notifier Background Service
+$NotifierScript = Join-Path $AppRoot "desktop-notifier.ps1"
+if (Test-Path $NotifierScript) {
+    Start-Process -FilePath "powershell.exe" -ArgumentList "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$NotifierScript`"" -WindowStyle Hidden
+    Write-Host "Desktop notifier service started." -ForegroundColor Green
+}
+
 # 7. Wait for Server to be Ready
 function Find-Browser {
     $paths = @(
@@ -130,7 +141,16 @@ if ($ready) {
     "Server is ready! Opening browser..." | Out-File $LogFile -Append
     $browser = Find-Browser
     if ($browser) {
-        Start-Process $browser -ArgumentList "--app=$url", "--window-size=1280,800"
+        # 1. Aggressively hunt down and kill any lingering hidden Chrome processes locking the profile
+        Get-CimInstance Win32_Process -Filter "Name = 'chrome.exe' OR Name = 'msedge.exe'" | Where-Object { $_.CommandLine -like "*isolated_session_profile*" } | ForEach-Object {
+            Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+        }
+        Start-Sleep -Seconds 1
+        
+        # 2. Force a completely pristine sandbox profile for every launch to guarantee a login prompt
+        $TempProfile = Join-Path $AppRoot "_data\isolated_session_profile"
+        if (Test-Path $TempProfile) { Remove-Item $TempProfile -Recurse -Force -ErrorAction SilentlyContinue }
+        Start-Process $browser -ArgumentList "--app=$url", "--window-size=1280,800", "--user-data-dir=`"$TempProfile`""
     } else {
         Start-Process $url
     }

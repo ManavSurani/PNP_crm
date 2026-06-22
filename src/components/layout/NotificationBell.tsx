@@ -57,7 +57,17 @@ export default function NotificationBell() {
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+
+    // Listen for custom refresh event
+    const handleRefresh = () => {
+      fetchNotifications();
+    };
+    window.addEventListener("refresh-notifications", handleRefresh);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("refresh-notifications", handleRefresh);
+    };
   }, []);
 
   const unreadCount = notifications.filter(n => !readIds.has(n.id)).length;
