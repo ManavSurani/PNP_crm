@@ -4,9 +4,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { 
   Trash2, Search, ArrowRight, RotateCcw, 
-  Trash, Loader2, User, ShoppingCart, 
+  Loader2, User, ShoppingCart, 
   ChevronRight, Calendar, AlertCircle,
-  MoreHorizontal, Eye, ArrowLeft
+  MoreHorizontal, Eye, ArrowLeft, Filter
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -23,6 +23,17 @@ export default function CanceledArchivePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"leads" | "orders">("leads");
   const [search, setSearch] = useState("");
+  const [filterCancelReason, setFilterCancelReason] = useState("ALL");
+
+  const CANCEL_REASONS = [
+    "No Response",
+    "Not Interested",
+    "Budget Issue",
+    "Already Purchased",
+    "Wrong Number",
+    "Project Postponed",
+    "Need Turnkey",
+  ];
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -54,34 +65,14 @@ export default function CanceledArchivePage() {
 
   const handleReactivateOrder = async (id: string) => {
     try {
-      const res = await fetch(`/api/orders/${id}/reactivate`, { 
+      const res = await fetch(`/api/leads/${id}/reactivate`, { 
         method: "POST" 
       });
       if (res.ok) fetchData();
     } catch (e) { console.error(e); }
   };
 
-  const handleDeleteAll = async () => {
-    const label = activeTab === "leads" ? "Canceled Leads" : "Aborted Orders";
-    if (!window.confirm(`⚠️ CRITICAL: Are you sure you want to PERMANENTLY WIPE ALL ${label}? This cannot be undone.`)) return;
-    
-    setIsLoading(true);
-    try {
-      const res = await fetch(`/api/canceled?type=${activeTab}`, { method: "DELETE" });
-      if (res.ok) fetchData();
-    } catch (e) { console.error(e); }
-    finally { setIsLoading(false); }
-  };
-
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
-
-  const handleDeleteItem = async (id: string) => {
-    if (!window.confirm("🚨 Permanent Deletion: Are you sure you want to completely erase this record? This action is irreversible.")) return;
-    try {
-      const res = await fetch(`/api/${activeTab}/${id}`, { method: "DELETE" });
-      if (res.ok) fetchData();
-    } catch (e) { console.error(e); }
-  };
 
   useEffect(() => {
     const handleClickOutside = () => setMenuOpenId(null);
@@ -92,11 +83,12 @@ export default function CanceledArchivePage() {
   const currentList = activeTab === "leads" ? data?.leads || [] : data?.orders || [];
   const filteredList = currentList.filter(item => {
     const term = search.toLowerCase();
-    if (activeTab === "leads") {
-      return item.customerName.toLowerCase().includes(term) || item.contactNumber.includes(term);
-    } else {
-      return item.orderNo.toLowerCase().includes(term) || (item.lead?.customerName || "").toLowerCase().includes(term);
-    }
+    const matchesSearch = activeTab === "leads" 
+      ? item.customerName.toLowerCase().includes(term) || item.contactNumber.includes(term)
+      : (item.customerName || "").toLowerCase().includes(term) || (item.contactNumber || "").includes(term);
+    
+    const matchesReason = filterCancelReason === "ALL" || item.cancelReason === filterCancelReason;
+    return matchesSearch && matchesReason;
   });
 
   return (
@@ -111,24 +103,15 @@ export default function CanceledArchivePage() {
           </h1>
           <p className="text-slate-500 text-sm mt-1">Review and reactivate lost opportunities or canceled deployments.</p>
         </div>
-        <div className="relative z-10">
-          <button 
-            onClick={handleDeleteAll}
-            disabled={filteredList.length === 0 || isLoading}
-            className="flex items-center gap-2 px-6 py-2.5 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-rose-200 active:scale-95"
-          >
-            <Trash className="h-4 w-4" /> Delete All {activeTab === "leads" ? "Leads" : "Orders"}
-          </button>
-        </div>
       </div>
 
       {/* Tabs & Search */}
-      <div className="flex flex-col md:flex-row gap-6 items-center justify-between">
-        <div className="flex p-1 bg-slate-100 rounded-xl border border-slate-200">
+      <div className="flex flex-col md:flex-row items-center gap-4">
+        <div className="flex p-1 bg-slate-100 rounded-xl border border-slate-200 shrink-0 w-full md:w-auto">
            <button 
              onClick={() => setActiveTab("leads")}
              className={cn(
-               "px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2",
+               "px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 flex-1 md:flex-none",
                activeTab === "leads" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
              )}
            >
@@ -137,7 +120,7 @@ export default function CanceledArchivePage() {
            <button 
              onClick={() => setActiveTab("orders")}
              className={cn(
-               "px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2",
+               "px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 flex-1 md:flex-none",
                activeTab === "orders" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
              )}
            >
@@ -145,29 +128,55 @@ export default function CanceledArchivePage() {
            </button>
         </div>
 
-        <div className="relative w-full md:max-w-xs group">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-          <input 
-            type="text" 
-            placeholder={`Search ${activeTab}...`} 
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all outline-none"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+        <div className="flex flex-col sm:flex-row items-center gap-4 flex-grow w-full md:max-w-2xl group ml-auto justify-end">
+          <div className="relative flex-1 w-full">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-rose-500 transition-colors" />
+            <input 
+              type="text" 
+              placeholder={`Search ${activeTab}...`} 
+              className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all outline-none"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="w-full sm:w-64">
+            <select 
+              className="block w-full rounded-lg border border-slate-200 py-2.5 px-4 text-slate-900 bg-white focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 text-sm outline-none cursor-pointer"
+              value={filterCancelReason}
+              onChange={e => setFilterCancelReason(e.target.value)}
+            >
+              <option value="ALL">All Reasons</option>
+              {CANCEL_REASONS.map(r => (
+                <option key={r} value={r}>{r}</option>
+              ))}
+            </select>
+          </div>
+          {(search !== "" || filterCancelReason !== "ALL") && (
+            <button 
+              onClick={() => {
+                setSearch("");
+                setFilterCancelReason("ALL");
+              }}
+              className="flex items-center justify-center p-2.5 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition shadow-sm shrink-0"
+              title="Reset Filters"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
 
       {/* Archive List */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm min-h-[400px]">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col">
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center h-64 text-slate-400">
+          <div className="flex flex-col items-center justify-center flex-1 text-slate-400 min-h-[400px]">
             <Loader2 className="h-8 w-8 animate-spin text-rose-500 mb-3" />
             <p className="text-sm font-medium">Indexing Archive...</p>
           </div>
         ) : (
-          <div className="overflow-x-auto pb-32">
-             <table className="min-w-full divide-y divide-slate-200">
-               <thead className="bg-slate-50/50">
+          <div className="overflow-auto flex-1 scrollbar-thin scrollbar-thumb-slate-200" style={{ maxHeight: 'calc(100vh - 320px)' }}>
+             <table className="min-w-full divide-y divide-slate-200 table-fixed" style={{ minWidth: '800px' }}>
+               <thead className="bg-slate-50/50 sticky top-0 z-20 backdrop-blur-sm">
                  <tr>
                     <th scope="col" className="w-[40%] py-4 pl-8 pr-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Identity</th>
                     <th scope="col" className="w-[30%] px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Cancellation Intel</th>
@@ -194,17 +203,17 @@ export default function CanceledArchivePage() {
                            <div className="w-1 self-stretch shrink-0 bg-rose-500" />
                            <div className="flex items-center gap-4 pl-7">
                               <div className="h-10 w-10 bg-white rounded-lg flex items-center justify-center text-slate-400 font-bold text-xs border border-slate-200 shadow-sm group-hover:bg-rose-50 group-hover:text-rose-500 group-hover:border-rose-100 transition-all uppercase">
-                               {activeTab === "leads" ? (item.customerName?.charAt(0) || "?") : (item.orderNo?.charAt(0) || "#")}
+                               {item.customerName?.charAt(0) || "?"}
                             </div>
                             <div className="flex flex-col">
                                <span className="text-sm font-bold text-slate-900 uppercase tracking-tight group-hover:text-rose-600 transition-colors">
-                                  {(activeTab === "leads" ? item.customerName : item.orderNo) || "Unnamed Record"}
+                                  {item.customerName || "Unnamed Record"}
                                </span>
                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1 flex items-center gap-1.5">
                                   {activeTab === "leads" ? (
                                     <>Type: {item.serviceType?.replace("_", " ") || "Not Specified"}</>
                                   ) : (
-                                    <>Customer: {item.lead?.customerName || "Missing Identity"}</>
+                                    <>Type: {item.serviceType?.replace("_", " ") || "Not Specified"}</>
                                   )}
                                </span>
                             </div>
@@ -214,7 +223,7 @@ export default function CanceledArchivePage() {
                       <td className="px-3 py-5">
                          <div className="max-w-xs">
                             <p className="text-xs font-semibold text-slate-700 leading-relaxed italic line-clamp-2">
-                               {activeTab === "leads" ? (item.cancelReason || "No context provided") : (item.blockReason || "Deployment aborted")}
+                               {item.cancelReason || "No context provided"}
                             </p>
                             {activeTab === "leads" && item.assignedStaff && (
                               <p className="text-[9px] text-slate-400 font-bold uppercase mt-1.5 flex items-center gap-1">
@@ -269,17 +278,11 @@ export default function CanceledArchivePage() {
                          {menuOpenId === item.id && (
                            <div className="absolute right-8 top-12 w-44 bg-white rounded-xl shadow-xl border border-slate-200 z-[100] py-1.5 animate-in fade-in zoom-in-95 duration-100">
                              <Link 
-                               href={activeTab === "leads" ? `/leads/${item.id}` : `/orders/${item.id}`}
+                               href={activeTab === "leads" ? `/leads/${item.id}` : `/customers/${item.id}`}
                                className="w-full px-4 py-2 text-left text-xs font-semibold text-slate-600 hover:bg-slate-50 flex items-center gap-2 transition-colors"
                              >
                                <Eye className="h-3.5 w-3.5 text-indigo-500" /> Visit Profile
                              </Link>
-                             <button 
-                               onClick={() => handleDeleteItem(item.id)}
-                               className="w-full px-4 py-2 text-left text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors"
-                             >
-                               <Trash className="h-3.5 w-3.5" /> Delete Data
-                             </button>
                            </div>
                          )}
                       </td>

@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Loader2, Check, X, Phone, Search, Pencil, Trash2, Wrench } from "lucide-react";
+import { Plus, Loader2, Check, X, Phone, Search, Pencil, Trash2, Wrench, RotateCcw } from "lucide-react";
 
 export default function SuppliersPage() {
   const [vendors, setVendors] = useState<any[]>([]);
   const [isLoadingVendors, setIsLoadingVendors] = useState(true);
   const [vendorSearch, setVendorSearch] = useState("");
+  const [filterField, setFilterField] = useState("ALL");
   const [editingVendorId, setEditingVendorId] = useState<string | null>(null);
   const [editingVendor, setEditingVendor] = useState({ name: "", phone: "" });
 
@@ -16,7 +17,7 @@ export default function SuppliersPage() {
   const [newContactsList, setNewContactsList] = useState<{name: string, phone: string}[]>([]);
   const [isVendorSaving, setIsVendorSaving] = useState(false);
 
-  useEffect(() => { fetchVendors(); }, []);
+  useEffect(() => { fetchVendors(); fetchFields(); }, []);
 
   const fetchVendors = async () => {
     setIsLoadingVendors(true);
@@ -84,12 +85,14 @@ export default function SuppliersPage() {
     } catch (error) { console.error(error); }
   };
 
-  const filteredVendors = vendors.filter((v) =>
-    v.name.toLowerCase().includes(vendorSearch.toLowerCase()) ||
-    v.phone.includes(vendorSearch) ||
-    v.field?.name?.toLowerCase().includes(vendorSearch.toLowerCase()) ||
-    v.contacts?.some((c: any) => c.phone.includes(vendorSearch) || (c.name && c.name.toLowerCase().includes(vendorSearch.toLowerCase())))
-  );
+  const filteredVendors = vendors.filter((v) => {
+    const matchesSearch = v.name.toLowerCase().includes(vendorSearch.toLowerCase()) ||
+                          v.phone.includes(vendorSearch) ||
+                          v.field?.name?.toLowerCase().includes(vendorSearch.toLowerCase()) ||
+                          v.contacts?.some((c: any) => c.phone.includes(vendorSearch) || (c.name && c.name.toLowerCase().includes(vendorSearch.toLowerCase())));
+    const matchesField = filterField === "ALL" || v.fieldId === filterField;
+    return matchesSearch && matchesField;
+  });
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-10">
@@ -110,15 +113,41 @@ export default function SuppliersPage() {
         </div>
       </div>
 
-      <div className="relative max-w-xl">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-        <input
-          type="text"
-          className={inputCls + " pl-12"}
-          placeholder="Search by name, phone or field..."
-          value={vendorSearch}
-          onChange={(e) => setVendorSearch(e.target.value)}
-        />
+      <div className="flex flex-col sm:flex-row items-center gap-4 flex-grow w-full md:max-w-2xl group">
+        <div className="relative flex-1 w-full">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <input
+            type="text"
+            className="block w-full rounded-lg border border-slate-200 py-2.5 pl-11 pr-4 text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm bg-white transition-all outline-none"
+            placeholder="Search by name, phone or field..."
+            value={vendorSearch}
+            onChange={(e) => setVendorSearch(e.target.value)}
+          />
+        </div>
+        <div className="w-full sm:w-64">
+          <select
+            className="block w-full rounded-lg border border-slate-200 py-2.5 px-4 text-slate-900 bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm outline-none cursor-pointer"
+            value={filterField}
+            onChange={(e) => setFilterField(e.target.value)}
+          >
+            <option value="ALL">All Categories</option>
+            {fields.map(f => (
+              <option key={f.id} value={f.id}>{f.name}</option>
+            ))}
+          </select>
+        </div>
+        {(vendorSearch !== "" || filterField !== "ALL") && (
+          <button 
+            onClick={() => {
+              setVendorSearch("");
+              setFilterField("ALL");
+            }}
+            className="flex items-center justify-center p-2.5 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition shadow-sm shrink-0"
+            title="Reset Filters"
+          >
+            <RotateCcw className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       {isLoadingVendors ? (
@@ -126,14 +155,15 @@ export default function SuppliersPage() {
           <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <table className="min-w-full divide-y divide-slate-100">
-            <thead className="bg-slate-50/50">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col">
+          <div className="overflow-auto flex-1 scrollbar-thin scrollbar-thumb-slate-200" style={{ maxHeight: 'calc(100vh - 420px)' }}>
+            <table className="w-full divide-y divide-slate-100 table-fixed" style={{ minWidth: '800px' }}>
+              <thead className="bg-slate-50/50 sticky top-0 z-20 backdrop-blur-sm">
               <tr>
-                <th className="py-4 pl-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Vendor Name</th>
-                <th className="py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Field / Category</th>
-                <th className="py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Phone Numbers</th>
-                <th className="py-4 pr-6 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Actions</th>
+                <th className="w-[35%] py-4 pl-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Vendor Name</th>
+                <th className="w-[25%] py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Field / Category</th>
+                <th className="w-[25%] py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Phone Numbers</th>
+                <th className="w-[15%] py-4 pr-6 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -219,6 +249,7 @@ export default function SuppliersPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 

@@ -6,7 +6,7 @@ import { format } from "date-fns";
 import {
   Phone, MapPin, FileText, Clock, Zap, Loader2, Pencil, X, CheckCircle2,
   PhoneMissed, Calendar, Check, RotateCcw, Ban, AlertTriangle, ListTodo, Activity, Trash2,
-  Banknote, MessageSquare, ChevronRight, ArrowLeft, Globe
+  Banknote, MessageSquare, ChevronRight, ArrowLeft, Globe, User
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -27,7 +27,7 @@ type LeadTransaction = { id: string; type: "RECEIVED" | "EXPENSE"; amount: numbe
 
 type LeadDetails = {
   id: string; customerName: string; contactNumber: string; alternateNumber: string | null;
-  fullAddress: string | null; inquirySource: string; serviceType: string;
+  fullAddress: string | null; inquirySource: string; referenceName?: string | null; serviceType: string;
   status: string; isCancelled: boolean; cancelReason: string | null;
   createdAt: string; budgetRange: string | null; requirementDetails: string | null;
   siteLocation: string | null; landmark: string | null; preferredVisitTime: string | null;
@@ -37,8 +37,8 @@ type LeadDetails = {
 };
 
 type ModalType = 
-  | "EDIT" | "PICKED" | "NOT_PICKED" | "MEETING" | "CANCEL" | "REACTIVATE" | "CONVERT"
-  | "COMPLETE_MEETING" | null;
+  | "EDIT" | "PICKED" | "NOT_PICKED" | "MEETING" | "CANCEL" | "REACTIVATE" | "CONVERT" | "COMPLETE_MEETING"
+  | null;
 
 const CANCEL_REASONS = [
   "No Response",
@@ -47,6 +47,7 @@ const CANCEL_REASONS = [
   "Already Purchased",
   "Wrong Number",
   "Project Postponed",
+  "Need Turnkey",
 ];
 
 const SERVICE_TYPES = [
@@ -69,6 +70,8 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form state
+  const [completingMeetingId, setCompletingMeetingId] = useState<string | null>(null);
+  const [meetingOutcome, setMeetingOutcome] = useState("");
   const [noteContent, setNoteContent] = useState("");
   const [pickedStatus, setPickedStatus] = useState("");
   const [followUpDate, setFollowUpDate] = useState("");
@@ -79,14 +82,12 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
   const [editForm, setEditForm] = useState<Partial<LeadDetails>>({});
   const [editingItem, setEditingItem] = useState<{ id: string; type: "FOLLOW_UP" | "MEETING" | "NOTE" | "TRANSACTION"; noteGiven?: string | null; notes?: string | null; address?: string; date?: string; time?: string; content?: string } | null>(null);
   const [editNoteText, setEditNoteText] = useState("");
+  const [editMeetingDate, setEditMeetingDate] = useState("");
+  const [editMeetingTime, setEditMeetingTime] = useState("");
   const [editError, setEditError] = useState<string | null>(null);
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [newName, setNewName] = useState("");
-  const [completingMeetingId, setCompletingMeetingId] = useState<string | null>(null);
-  const [meetingOutcome, setMeetingOutcome] = useState("");
-  const [editMeetingDate, setEditMeetingDate] = useState("");
-  const [editMeetingTime, setEditMeetingTime] = useState("");
 
   const handleSaveName = async () => {
     if (!newName.trim() || newName === lead?.customerName) {
@@ -129,8 +130,14 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
 
   useEffect(() => { fetchLead(); }, [id]);
 
+  useEffect(() => {
+    if (editError) setEditError(null);
+  }, [editForm]);
+
   const closeModal = () => {
     setActiveModal(null);
+    setCompletingMeetingId(null);
+    setMeetingOutcome("");
     setNoteContent("");
     setPickedStatus("");
     setFollowUpDate("");
@@ -140,8 +147,6 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
     setMeetingForm({ address: "", date: "", time: "", notes: "" });
     setEditError(null);
     setIsEditingAddress(false);
-    setCompletingMeetingId(null);
-    setMeetingOutcome("");
   };
 
   const post = async (url: string, body: object) => {
@@ -152,11 +157,7 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      if (res.ok) { 
-        closeModal(); 
-        fetchLead();
-        window.dispatchEvent(new CustomEvent("refresh-notifications"));
-      }
+      if (res.ok) { closeModal(); fetchLead(); window.dispatchEvent(new CustomEvent("refresh-notifications")); }
     } catch (e) { console.error(e); }
     finally { setIsSubmitting(false); }
   };
@@ -188,41 +189,26 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
     }
   };
 
-  const handleUpdateActivity = async () => {
-    if (!editingItem) return;
+  const handleCompleteMeeting = async (meetingId: string) => {
     setIsSubmitting(true);
     try {
-      let url = "";
-      let body = {};
-      
-      switch (editingItem.type) {
-        case "FOLLOW_UP":
-          url = `/api/follow-ups/${editingItem.id}`;
-          body = { noteGiven: editNoteText };
-          break;
-        case "MEETING":
-          url = `/api/meetings/${editingItem.id}`;
-          body = { notes: editNoteText, date: editMeetingDate || undefined, time: editMeetingTime || undefined };
-          break;
-        case "NOTE":
-          url = `/api/notes/${editingItem.id}`;
-          body = { content: editNoteText };
-          break;
-        default: return; // Transactions not editable from here
-      }
-
-      const res = await fetch(url, {
+      const res = await fetch(`/api/meetings/${meetingId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ status: "COMPLETED" }),
       });
-      if (res.ok) { 
-        setEditingItem(null); 
+      if (res.ok) {
         fetchLead();
         window.dispatchEvent(new CustomEvent("refresh-notifications"));
+      } else {
+        const err = await res.json();
+        alert(`Error: ${err.error || "Unknown"}`);
       }
-    } catch (e) { console.error(e); }
-    finally { setIsSubmitting(false); }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleMeetingOutcome = async () => {
@@ -248,41 +234,97 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
           body: JSON.stringify({ leadId: id, address, date: followUpDate, time: followUpTime, notes: noteContent }),
         });
       } else {
-        const appendedNotes = noteContent 
-          ? (existingNotes ? `${existingNotes}\n\nOutcome (${meetingOutcome === "RECALL" ? "Recall" : "Not Interested"}): ${noteContent}` : `Outcome (${meetingOutcome === "RECALL" ? "Recall" : "Not Interested"}): ${noteContent}`) 
-          : existingNotes;
-          
-        // Complete the meeting
-        await fetch(`/api/meetings/${completingMeetingId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: "COMPLETED", notes: appendedNotes }),
-        });
-        
-        if (meetingOutcome === "RECALL") {
-          await fetch(`/api/follow-ups`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-              leadId: id, 
-              outcome: "PICKED", 
-              pickedStatus: "NEXT_DAY", 
-              followUpDate, 
-              followUpTime, 
-              noteGiven: noteContent 
-            }),
-          });
+        if (meetingOutcome === "CONVERT") {
+          if (!window.confirm("Are you sure you want to convert this lead to a customer?")) {
+            setIsSubmitting(false);
+            return;
+          }
         } else if (meetingOutcome === "NOT_INTERESTED") {
-          await fetch(`/api/follow-ups`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ leadId: id, outcome: "CANCELLED", cancelReason: "Not Interested", noteGiven: noteContent }),
-          });
+          if (!window.confirm("Are you sure this person is not interested? This will cancel the lead.")) {
+            setIsSubmitting(false);
+            return;
+          }
+        }
+
+        // Consolidated Meeting Completion & Follow-up Logging
+        const completeRes = await fetch(`/api/meetings/${completingMeetingId}/complete`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            meetingOutcome,
+            noteContent,
+            cancelReason,
+            followUpDate,
+            followUpTime,
+          }),
+        });
+
+        if (!completeRes.ok) {
+          const err = await completeRes.json();
+          alert(`Error: ${err.error || "Unknown error"}`);
+          setIsSubmitting(false);
+          return;
+        }
+
+        const data = await completeRes.json();
+
+        if (meetingOutcome === "CONVERT") {
+          const res = await fetch(`/api/leads/${id}/convert`, { method: "POST" });
+          if (res.ok) {
+            closeModal();
+            router.push(`/customers/${id}`);
+            return;
+          } else {
+            const err = await res.json();
+            alert(`Error: ${err.error || "Unknown error"}`);
+            setIsSubmitting(false);
+            return;
+          }
+        } else if (data.isCancelled) {
+          closeModal();
+          router.push("/canceled");
+          return; // Exit early if redirected
         }
       }
       closeModal();
       fetchLead();
       window.dispatchEvent(new CustomEvent("refresh-notifications"));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleUpdateActivity = async () => {
+    if (!editingItem) return;
+    setIsSubmitting(true);
+    try {
+      let url = "";
+      let body = {};
+      
+      switch (editingItem.type) {
+        case "FOLLOW_UP":
+          url = `/api/follow-ups/${editingItem.id}`;
+          body = { noteGiven: editNoteText };
+          break;
+        case "MEETING":
+          url = `/api/meetings/${editingItem.id}`;
+          body = { notes: editNoteText, date: editMeetingDate, time: editMeetingTime };
+          break;
+        case "NOTE":
+          url = `/api/notes/${editingItem.id}`;
+          body = { content: editNoteText };
+          break;
+        default: return; // Transactions not editable from here
+      }
+
+      const res = await fetch(url, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) { setEditingItem(null); fetchLead(); window.dispatchEvent(new CustomEvent("refresh-notifications")); }
     } catch (e) { console.error(e); }
     finally { setIsSubmitting(false); }
   };
@@ -299,7 +341,7 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
       });
       if (res.ok) { 
         closeModal(); 
-        fetchLead();
+        fetchLead(); 
         window.dispatchEvent(new CustomEvent("refresh-notifications"));
       } else {
         const err = await res.json();
@@ -344,14 +386,21 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
     ...(lead.transactions || []).map(t => ({ ...t, type: "TRANSACTION" as const })),
   ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-  // Extract pending follow-up (the one that triggers notifications)
-  const pendingFollowUp = (lead.followUps || []).find(f => !f.completedDate);
-
   // Dynamic Sequential Numbering for NOT_PICKED follow-ups
-  const notPickedItems = [...timeline].filter(item => item.type === "FOLLOW_UP" && (item as any).outcome === "NOT_PICKED").reverse(); // Oldest first
   const getAttemptNumber = (id: string) => {
-    const idx = notPickedItems.findIndex(item => item.id === id);
-    return idx !== -1 ? idx + 1 : null;
+    const itemIndex = timeline.findIndex(item => item.id === id);
+    if (itemIndex === -1) return null;
+    
+    let count = 0;
+    // Iterate downwards through older items to count the streak
+    for (let i = itemIndex; i < timeline.length; i++) {
+      const t = timeline[i];
+      if (t.type === "FOLLOW_UP") {
+        if ((t as any).outcome === "NOT_PICKED") count++;
+        else if ((t as any).outcome === "PICKED" || (t as any).outcome === "INTERESTED") break;
+      }
+    }
+    return count;
   };
 
   const getStatusColor = (item: any) => {
@@ -426,7 +475,21 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
               </div>
             ) : (
               <div className="flex items-center gap-3 group/name">
-                <h1 className="text-xl font-semibold text-slate-900 tracking-tight">{lead.customerName || "Unnamed Lead"}</h1>
+                <h1 
+                  onDoubleClick={() => {
+                    if (!isLocked) {
+                      setNewName(lead.customerName || "");
+                      setIsEditingName(true);
+                    }
+                  }}
+                  className={cn(
+                    "text-xl font-semibold tracking-tight transition-opacity",
+                    !isLocked ? "cursor-pointer hover:opacity-80 text-slate-900" : "text-slate-900"
+                  )}
+                  title={!isLocked ? "Double-click to edit" : undefined}
+                >
+                  {lead.customerName || "Unnamed Lead"}
+                </h1>
                 {!isLocked && (
                   <button 
                     onClick={() => {
@@ -444,6 +507,9 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
             <div className="mt-1.5 flex flex-wrap gap-3 text-xs">
               <span className="flex items-center gap-1.5 text-slate-600 font-medium bg-slate-50 px-3 py-1 rounded-md border border-slate-200"><Phone className="h-3.5 w-3.5 text-indigo-600" /> {lead.contactNumber}</span>
               <span className="flex items-center gap-1.5 text-slate-600 font-medium bg-slate-50 px-3 py-1 rounded-md border border-slate-200 uppercase"><FileText className="h-3.5 w-3.5 text-slate-400" /> {lead.serviceType.replace(/_/g, " ")}</span>
+              {lead.inquirySource === "THROUGH_REFERENCE" && lead.referenceName && (
+                <span className="flex items-center gap-1.5 text-slate-600 font-medium bg-slate-50 px-3 py-1 rounded-md border border-slate-200 uppercase"><User className="h-3.5 w-3.5 text-amber-500" /> {lead.referenceName}</span>
+              )}
             </div>
           </div>
         </div>
@@ -503,6 +569,14 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                 >
                   <RotateCcw className="h-4 w-4" /> Reactivate Lead
                 </button>
+              </div>
+            ) : timeline.some((item: any) => item.type === "MEETING" && item.status === "SCHEDULED") ? (
+              <div className="space-y-4">
+                <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-4 text-center">
+                  <Calendar className="h-6 w-6 text-indigo-400 mx-auto mb-2" />
+                  <p className="text-indigo-400 font-semibold text-[11px] uppercase tracking-wider">Site Visit Pending</p>
+                  <p className="text-slate-400 text-[10px] mt-1 leading-relaxed">Please complete the pending site visit from the timeline before taking new actions.</p>
+                </div>
               </div>
             ) : (
               <div className="space-y-3">
@@ -587,55 +661,6 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
 
             <div className="flex-1 overflow-auto max-h-[750px] scrollbar-thin scrollbar-thumb-slate-200">
               <div className="divide-y divide-slate-100">
-                {/* ACTIVE PENDING FOLLOW-UP CARD */}
-                {pendingFollowUp && !isLocked && (
-                  <div className="group relative flex bg-amber-50/30 hover:bg-amber-50/60 transition-all border-b border-amber-100/50">
-                    <div className="w-1.5 self-stretch shrink-0 bg-amber-500 animate-pulse-soft" />
-                    
-                    <div className="flex-1 p-5 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="h-7 w-7 rounded-lg flex items-center justify-center shadow-sm border bg-amber-100 border-amber-200 text-amber-700">
-                            <Clock className="h-3.5 w-3.5" />
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-xs font-bold text-slate-900 leading-none">
-                              Active Scheduled Call
-                            </span>
-                            <span className="text-[10px] font-semibold text-slate-500 mt-1 flex items-center gap-1">
-                              Pending action required
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Cancel Button */}
-                        <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button 
-                            onClick={(e) => {
-                              e.preventDefault();
-                              handleDeleteActivity(pendingFollowUp.id, "FOLLOW_UP");
-                            }}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 hover:border-rose-300 rounded-lg text-[10px] font-bold uppercase tracking-widest shadow-sm transition-all"
-                            title="Cancel Scheduled Call"
-                          >
-                            <Trash2 className="h-3 w-3" /> Cancel Call
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="pl-10 pr-4">
-                        <div className="flex items-center gap-2 px-3 py-2 bg-white border border-amber-200/60 rounded-xl shadow-sm w-fit">
-                           <Calendar className="h-3.5 w-3.5 text-amber-500" />
-                           <span className="text-xs font-black text-amber-700 uppercase tracking-widest">
-                             {pendingFollowUp.nextCallDate ? format(new Date(pendingFollowUp.nextCallDate), "dd MMM, yyyy") : "No Date"}
-                             {pendingFollowUp.nextCallTime && ` @ ${pendingFollowUp.nextCallTime}`}
-                           </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 {timeline.map((item: any) => (
                   <div key={item.id} className="group relative flex hover:bg-slate-50/50 transition-all">
                     {/* Status Bar */}
@@ -674,13 +699,14 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                         {/* Action Buttons */}
                         {!isLocked && (
                           <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                            {item.type === "MEETING" && (item as any).status === "SCHEDULED" && (
+                            {item.type === "MEETING" && item.status !== "COMPLETED" && (
                               <button
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.preventDefault();
                                   setCompletingMeetingId(item.id);
                                   setActiveModal("COMPLETE_MEETING");
                                 }}
-                                className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-white rounded-md border border-transparent hover:border-slate-200 transition-all"
+                                className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-md border border-transparent hover:border-emerald-200 transition-all"
                                 title="Complete Visit"
                               >
                                 <Check className="h-3.5 w-3.5" />
@@ -692,8 +718,8 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                                 let initialText = "";
                                 if (item.type === "MEETING") {
                                   initialText = item.notes || "";
-                                  setEditMeetingDate((item as any).date ? new Date((item as any).date).toISOString().split('T')[0] : "");
-                                  setEditMeetingTime((item as any).time || "");
+                                  setEditMeetingDate(item.date ? new Date(item.date).toISOString().split('T')[0] : "");
+                                  setEditMeetingTime(item.time || "");
                                 }
                                 else if (item.type === "NOTE") initialText = item.content || "";
                                 else if (item.type === "FOLLOW_UP") initialText = item.noteGiven || "";
@@ -785,7 +811,7 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
       {/* ─── MODAL: EDIT LEAD ─── */}
       {activeModal === "EDIT" && (
         <Modal title="Edit Lead" icon={<Pencil className="h-5 w-5" />} color="primary" onClose={closeModal}>
-          <form onSubmit={handleUpdateLead} className="p-8 space-y-6 overflow-y-auto max-h-[65vh]">
+          <form onSubmit={handleUpdateLead} className="p-8 space-y-6">
             {editError && (
               <div className="p-4 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-3 text-rose-700 mb-6">
                 <AlertTriangle className="h-5 w-5 shrink-0" />
@@ -816,17 +842,49 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
               </div>
 
               <Field label="Address"><input className={inputCls} value={editForm.fullAddress || ""} onChange={e => setEditForm({ ...editForm, fullAddress: e.target.value })} /></Field>
-              <Field label="Interested Service">
+              <Field label="Interested Service *">
                 <select 
+                  required
                   className={inputCls} 
-                  value={editForm.serviceType || "OTHER"} 
+                  value={editForm.serviceType || ""} 
                   onChange={e => setEditForm({ ...editForm, serviceType: e.target.value as any })}
                 >
+                  <option value="" disabled>--Select--</option>
                   {SERVICE_TYPES.map(s => (
                     <option key={s} value={s}>{s.replace(/_/g, " ")}</option>
                   ))}
                 </select>
               </Field>
+
+              <Field label="Inquiry Source *">
+                <select 
+                  required
+                  className={inputCls} 
+                  value={editForm.inquirySource || ""} 
+                  onChange={e => setEditForm({ ...editForm, inquirySource: e.target.value as any })}
+                >
+                  <option value="" disabled>--Select--</option>
+                  <option value="WHATSAPP">WhatsApp</option>
+                  <option value="FACEBOOK">Facebook</option>
+                  <option value="INSTAGRAM">Instagram</option>
+                  <option value="WEBSITE">Website</option>
+                  <option value="DIRECT_CALL">Direct Call</option>
+                  <option value="WALK_IN">Walk In</option>
+                  <option value="THROUGH_REFERENCE">Reference</option>
+                </select>
+              </Field>
+
+              {editForm.inquirySource === "THROUGH_REFERENCE" && (
+                <Field label="Reference Person Name *">
+                  <input 
+                    required 
+                    className={inputCls} 
+                    value={editForm.referenceName || ""} 
+                    onChange={e => setEditForm({ ...editForm, referenceName: e.target.value })} 
+                  />
+                </Field>
+              )}
+
               <Field label="Requirement Details" className="md:col-span-2"><textarea rows={3} className={inputCls} value={editForm.requirementDetails || ""} onChange={e => setEditForm({ ...editForm, requirementDetails: e.target.value })} /></Field>
             </div>
             
@@ -1218,7 +1276,7 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
       </Modal>
       )}
 
-      {/* ─── MODAL: COMPLETE MEETING ─── */}
+      {/* ─── MODAL: COMPLETE MEETING OUTCOME ─── */}
       {activeModal === "COMPLETE_MEETING" && (
         <Modal title="Complete Site Visit" icon={<CheckCircle2 className="h-5 w-5 text-emerald-500" />} color="primary" onClose={closeModal}>
           <form onSubmit={(e) => {
@@ -1231,13 +1289,15 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                   {[
                     { val: "RECALL", label: "Want to recall" },
                     { val: "RESCHEDULE", label: "Reschedule the visit" },
+                    { val: "NOT_PICKED", label: "No Answer" },
                     { val: "NOT_INTERESTED", label: "Not interested" },
+                    { val: "CONVERT", label: "Convert to Customer" },
                   ].map(opt => (
                     <button key={opt.val} type="button"
                       onClick={() => setMeetingOutcome(opt.val)}
                       className={cn(
                         "py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border transition-all",
-                        meetingOutcome === opt.val ? "bg-slate-900 text-white border-slate-900 shadow-lg scale-[1.02]" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                        meetingOutcome === opt.val ? "bg-slate-900 text-white border-slate-900 shadow-lg scale-[1.02]" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50",
                       )}
                     >{opt.label}</button>
                   ))}
@@ -1257,6 +1317,20 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                     />
                   </Field>
                 </div>
+              )}
+
+              {meetingOutcome === "NOT_INTERESTED" && (
+                <Field label="Reason for Drop-off *">
+                  <select 
+                    className={inputCls}
+                    value={cancelReason}
+                    onChange={e => setCancelReason(e.target.value)}
+                  >
+                    {CANCEL_REASONS.map(r => (
+                      <option key={r} value={r}>{r}</option>
+                    ))}
+                  </select>
+                </Field>
               )}
 
               <Field label="Summary Notes (Optional)">

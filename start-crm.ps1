@@ -97,11 +97,7 @@ Write-Host "Waiting for server to become ready..." -ForegroundColor Cyan
 Start-Process -FilePath "cmd.exe" -ArgumentList $StartArgs -WorkingDirectory $AppRoot -WindowStyle Hidden -RedirectStandardOutput $NpmLogFile -RedirectStandardError $ErrFile
 
 # Launch Desktop Notifier Background Service
-$NotifierScript = Join-Path $AppRoot "desktop-notifier.ps1"
-if (Test-Path $NotifierScript) {
-    Start-Process -FilePath "powershell.exe" -ArgumentList "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$NotifierScript`"" -WindowStyle Hidden
-    Write-Host "Desktop notifier service started." -ForegroundColor Green
-}
+Start-Process -FilePath "powershell.exe" -ArgumentList "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$AppRoot\desktop-notifier.ps1`"" -WindowStyle Hidden
 
 # 7. Wait for Server to be Ready
 function Find-Browser {
@@ -141,16 +137,11 @@ if ($ready) {
     "Server is ready! Opening browser..." | Out-File $LogFile -Append
     $browser = Find-Browser
     if ($browser) {
-        # 1. Aggressively hunt down and kill any lingering hidden Chrome processes locking the profile
-        Get-CimInstance Win32_Process -Filter "Name = 'chrome.exe' OR Name = 'msedge.exe'" | Where-Object { $_.CommandLine -like "*isolated_session_profile*" } | ForEach-Object {
-            Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+        $ProfileDir = Join-Path $env:TEMP "pnp_crm_session"
+        if (Test-Path $ProfileDir) {
+            Remove-Item -Path $ProfileDir -Recurse -Force -ErrorAction SilentlyContinue
         }
-        Start-Sleep -Seconds 1
-        
-        # 2. Force a completely pristine sandbox profile for every launch to guarantee a login prompt
-        $TempProfile = Join-Path $AppRoot "_data\isolated_session_profile"
-        if (Test-Path $TempProfile) { Remove-Item $TempProfile -Recurse -Force -ErrorAction SilentlyContinue }
-        Start-Process $browser -ArgumentList "--app=$url", "--window-size=1280,800", "--user-data-dir=`"$TempProfile`""
+        Start-Process $browser -ArgumentList "--app=$url", "--window-size=1280,800", "--user-data-dir=`"$ProfileDir`""
     } else {
         Start-Process $url
     }

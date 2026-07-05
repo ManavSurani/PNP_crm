@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  CartesianGrid, PieChart as RechartsPie, Cell, Pie, Legend
+  CartesianGrid, PieChart as RechartsPie, Cell, Pie, Legend, AreaChart, Area
 } from "recharts";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -26,6 +26,7 @@ export default function ReportsPage() {
   const router = useRouter();
   const [data, setData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [timeframe, setTimeframe] = useState<"months" | "years">("months");
 
   useEffect(() => {
     fetch("/api/reports")
@@ -77,9 +78,9 @@ export default function ReportsPage() {
               <div className="py-8 text-center border border-dashed border-slate-100 rounded-lg text-[11px] text-slate-400 font-medium italic">No follow-ups due today.</div>
             ) : alerts.todayFollowUps.map((f: any) => (
               <Link href={`/leads/${f.lead?.id}`} key={f.id} className="flex items-center gap-3 p-2.5 bg-slate-50 hover:bg-white rounded-lg border border-slate-100 hover:border-amber-200 transition-all group">
-                <div className="h-8 w-8 bg-white rounded-md flex items-center justify-center text-slate-400 font-bold text-xs ring-1 ring-slate-200 group-hover:text-amber-600 group-hover:ring-amber-200">{f.lead.customerName.charAt(0)}</div>
+                <div className="h-8 w-8 bg-white rounded-md flex items-center justify-center text-slate-400 font-bold text-xs ring-1 ring-slate-200 group-hover:text-amber-600 group-hover:ring-amber-200">{f.lead.customerName ? f.lead.customerName.charAt(0).toUpperCase() : "?"}</div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-slate-900 truncate">{f.lead.customerName}</p>
+                  <p className="text-xs font-semibold text-slate-900 truncate">{f.lead.customerName || "Unknown Customer"}</p>
                   <p className="text-[10px] text-slate-500 font-medium">{f.lead.contactNumber}</p>
                 </div>
                 <ChevronRight className="h-3 w-3 text-slate-300" />
@@ -102,9 +103,9 @@ export default function ReportsPage() {
               <div className="py-8 text-center border border-dashed border-slate-100 rounded-lg text-[11px] text-slate-400 font-medium italic">Pipeline is up to date.</div>
             ) : alerts.overdueFollowUps.map((f: any) => (
               <Link href={`/leads/${f.lead?.id}`} key={f.id} className="flex items-center gap-3 p-2.5 bg-rose-50/30 hover:bg-rose-50 rounded-lg border border-rose-100 transition-all group">
-                <div className="h-8 w-8 bg-white rounded-md flex items-center justify-center text-rose-400 font-bold text-xs ring-1 ring-rose-200 group-hover:text-rose-600">{f.lead.customerName.charAt(0)}</div>
+                <div className="h-8 w-8 bg-white rounded-md flex items-center justify-center text-rose-400 font-bold text-xs ring-1 ring-rose-200 group-hover:text-rose-600">{f.lead.customerName ? f.lead.customerName.charAt(0).toUpperCase() : "?"}</div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-slate-900 truncate">{f.lead.customerName}</p>
+                  <p className="text-xs font-semibold text-slate-900 truncate">{f.lead.customerName || "Unknown Customer"}</p>
                   <p className="text-[10px] text-rose-500 font-medium italic">Due: {format(new Date(f.nextCallDate), "dd MMM")}</p>
                 </div>
               </Link>
@@ -126,9 +127,9 @@ export default function ReportsPage() {
               <div className="py-8 text-center border border-dashed border-slate-100 rounded-lg text-[11px] text-slate-400 font-medium italic">No visits scheduled today.</div>
             ) : alerts.todayMeetings.map((m: any) => (
               <Link href={`/leads/${m.lead?.id}`} key={m.id} className="flex items-center gap-3 p-2.5 bg-indigo-50/50 hover:bg-indigo-50 rounded-lg border border-indigo-100 transition-all group">
-                <div className="h-8 w-8 bg-white rounded-md flex items-center justify-center text-indigo-400 font-bold text-xs ring-1 ring-indigo-200 group-hover:text-indigo-600">{m.lead.customerName.charAt(0)}</div>
+                <div className="h-8 w-8 bg-white rounded-md flex items-center justify-center text-indigo-400 font-bold text-xs ring-1 ring-indigo-200 group-hover:text-indigo-600">{m.lead.customerName ? m.lead.customerName.charAt(0).toUpperCase() : "?"}</div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-slate-900 truncate">{m.lead.customerName}</p>
+                  <p className="text-xs font-semibold text-slate-900 truncate">{m.lead.customerName || "Unknown Customer"}</p>
                   <p className="text-[10px] text-indigo-600 font-semibold flex items-center gap-1"><Clock className="h-3 w-3" /> {m.time}</p>
                 </div>
               </Link>
@@ -149,20 +150,45 @@ export default function ReportsPage() {
                 <p className="text-xs text-slate-400 font-medium">Monthly collection trajectory</p>
               </div>
             </div>
+            <button 
+              onClick={() => setTimeframe(timeframe === "months" ? "years" : "months")}
+              className="px-3 py-1 bg-slate-50 hover:bg-slate-100 rounded-lg border border-slate-200 text-xs font-medium text-slate-500 transition-colors cursor-pointer active:scale-95"
+            >
+               {timeframe === "months" ? "Months" : "Years"}
+            </button>
           </div>
           <div className="h-72 min-w-0">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={charts.revenueChart} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                <Tooltip 
-                  cursor={{ fill: '#f8fafc' }}
-                  formatter={(v: any) => [`₹${Number(v).toLocaleString()}`, "Revenue"]}
-                  contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontSize: '12px' }} 
-                />
-                <Bar dataKey="revenue" fill="#4f46e5" radius={[4, 4, 0, 0]} maxBarSize={48} />
-              </BarChart>
+              {timeframe === "months" ? (
+                <BarChart data={charts.revenueChart} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                  <Tooltip 
+                    cursor={{ fill: '#f8fafc' }}
+                    formatter={(v: any) => [`₹${Number(v).toLocaleString()}`, "Revenue"]}
+                    contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontSize: '12px' }} 
+                  />
+                  <Bar dataKey="revenue" fill="#4f46e5" radius={[4, 4, 0, 0]} maxBarSize={48} />
+                </BarChart>
+              ) : (
+                <AreaChart data={charts.revenueChartYears} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                  <XAxis dataKey="year" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                  <Tooltip 
+                    formatter={(v: any) => [`₹${Number(v).toLocaleString()}`, "Revenue"]}
+                    contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontSize: '12px' }} 
+                  />
+                  <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#4f46e5" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
+                </AreaChart>
+              )}
             </ResponsiveContainer>
           </div>
         </div>
@@ -248,10 +274,10 @@ export default function ReportsPage() {
               <Link href={`/leads/${lead.id}`} key={lead.id}
                 className="flex items-center gap-3.5 p-3 hover:bg-slate-50 rounded-xl transition-all border border-slate-100 hover:border-primary/20 group">
                 <div className="h-9 w-9 bg-slate-100 rounded-lg flex items-center justify-center font-bold text-slate-400 text-xs group-hover:text-primary group-hover:bg-primary/5 transition-colors">
-                  {lead.customerName.charAt(0)}
+                  {lead.customerName ? lead.customerName.charAt(0).toUpperCase() : "?"}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-slate-900 truncate">{lead.customerName}</p>
+                  <p className="text-xs font-semibold text-slate-900 truncate">{lead.customerName || "Unknown Customer"}</p>
                   <p className="text-[10px] text-slate-400 font-medium uppercase tracking-tight">{lead.serviceType.replace(/_/g, " ")}</p>
                 </div>
                 <span className={cn(

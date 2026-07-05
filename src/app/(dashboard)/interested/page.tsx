@@ -121,11 +121,11 @@ export default function InterestedLeadsPage() {
               <div className="p-6 space-y-4">
                 <div className="flex items-center justify-between">
                    <div className="h-10 w-10 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center font-bold text-slate-400">
-                      {lead.customerName.charAt(0)}
+                      {lead.customerName ? lead.customerName.charAt(0).toUpperCase() : "?"}
                    </div>
                 </div>
                 <div>
-                   <h3 className="text-base font-bold text-slate-900 group-hover:text-primary transition-colors">{lead.customerName}</h3>
+                   <h3 className="text-base font-bold text-slate-900 group-hover:text-primary transition-colors">{lead.customerName || "Unknown Customer"}</h3>
                    <p className="text-xs text-slate-400 font-semibold uppercase tracking-widest mt-1">{lead.serviceType.replace(/_/g, " ")}</p>
                 </div>
                 

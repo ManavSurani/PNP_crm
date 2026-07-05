@@ -6,7 +6,7 @@ import {
   Phone, MapPin, FileText, Clock, Loader2, CheckCircle2,
   Calendar, IndianRupee, ArrowRight, Pencil, X,
   Check, RotateCcw, Ban, AlertTriangle, Activity,
-  ArrowLeft, ChevronRight
+  ArrowLeft, ChevronRight, User
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -17,7 +17,7 @@ type Meeting = { id: string; address: string; date: string; time: string; notes:
 
 type CustomerDetails = {
   id: string; customerName: string; project?: { name: string | null } | null; contactNumber: string; alternateNumber: string | null;
-  fullAddress: string | null; inquirySource: string; serviceType: string; priority: string;
+  fullAddress: string | null; inquirySource: string; referenceName?: string | null; serviceType: string; priority: string;
   status: string; isCancelled: boolean; cancelReason: string | null;
   createdAt: string; updatedAt: string;
   budgetRange: string | null; requirementDetails: string | null;
@@ -73,6 +73,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
   const [cancelReason, setCancelReason] = useState(CANCEL_REASONS[0]);
   const [reactivationNote, setReactivationNote] = useState("");
   const [editForm, setEditForm] = useState<Partial<CustomerDetails>>({});
+  const [editError, setEditError] = useState<string | null>(null);
 
   const [noteForm, setNoteForm] = useState({ content: "", isCompleted: false });
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
@@ -107,6 +108,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
     setNoteForm({ content: "", isCompleted: false });
     setEditingNoteId(null);
     setDeleteTarget(null);
+    setEditError(null);
   };
 
   const post = async (url: string, body: object) => {
@@ -125,6 +127,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
   const handleUpdateCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setEditError(null);
     try {
       const res = await fetch(`/api/leads/${id}`, {
         method: "PUT",
@@ -132,9 +135,20 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
         body: JSON.stringify(editForm),
       });
       if (res.ok) { closeModal(); fetchCustomer(); }
-    } catch (e) { console.error(e); }
+      else {
+        const err = await res.json();
+        setEditError(err.details || err.error || "Failed to update profile");
+      }
+    } catch (e) { 
+      console.error(e);
+      setEditError("Network error. Please try again.");
+    }
     finally { setIsSubmitting(false); }
   };
+
+  useEffect(() => {
+    if (editError) setEditError(null);
+  }, [editForm]);
 
   if (isLoading) return <div className="flex items-center justify-center min-h-[400px]"><Loader2 className="animate-spin h-8 w-8 text-emerald-600" /></div>;
   if (!customer) return <div className="p-10 text-center text-slate-500 font-bold">Customer profile not found.</div>;
@@ -192,6 +206,9 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
             <div className="flex flex-wrap gap-2 text-[11px]">
               <span className="flex items-center gap-1.5 text-slate-600 font-semibold bg-slate-50 px-2 py-0.5 rounded border border-slate-200"><Phone className="h-3 w-3 text-emerald-600" /> {customer.contactNumber}</span>
               <span className="flex items-center gap-1.5 text-slate-600 font-semibold bg-slate-50 px-2 py-0.5 rounded border border-slate-200 uppercase tracking-tight"><FileText className="h-3 w-3 text-emerald-500" /> {customer.serviceType.replace(/_/g, " ")}</span>
+              {customer.inquirySource === "THROUGH_REFERENCE" && customer.referenceName && (
+                <span className="flex items-center gap-1.5 text-slate-600 font-semibold bg-slate-50 px-2 py-0.5 rounded border border-slate-200 uppercase tracking-tight"><User className="h-3 w-3 text-amber-500" /> {customer.referenceName}</span>
+              )}
               {customer.project?.name && <span className="flex items-center gap-1.5 text-slate-400 font-bold px-2 py-0.5 rounded border border-slate-100 uppercase tracking-tighter">Client: {customer.customerName}</span>}
             </div>
           </div>
@@ -452,7 +469,13 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
       {/* ─── MODAL: EDIT CUSTOMER ─── */}
       {activeModal === "EDIT" && (
         <Modal title="Update Profile" icon={<Pencil className="h-5 w-5" />} color="primary" onClose={closeModal}>
-          <form onSubmit={handleUpdateCustomer} className="p-8 space-y-6 overflow-y-auto max-h-[65vh]">
+          <form onSubmit={handleUpdateCustomer} className="p-8 space-y-6">
+            {editError && (
+              <div className="p-4 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-3 text-rose-700 mb-6">
+                <AlertTriangle className="h-5 w-5 shrink-0" />
+                <p className="text-xs font-semibold">{editError}</p>
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Field label="Customer Name *"><input required className={inputCls} value={editForm.customerName || ""} onChange={e => setEditForm({ ...editForm, customerName: e.target.value })} /></Field>
               <Field label="Phone *">

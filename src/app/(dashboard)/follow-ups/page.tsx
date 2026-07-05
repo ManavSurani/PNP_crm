@@ -31,12 +31,12 @@ export default function FollowUpsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
   const [sortBy, setSortBy] = useState("DATE_ASC"); // Default to nearest upcoming
-  const [showUpcomingOnly, setShowUpcomingOnly] = useState(false);
+  const [filterDistance, setFilterDistance] = useState<"ALL" | "TODAY" | "OVERDUE" | "UPCOMING">("ALL");
 
   const fetchFollowUps = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch("/api/follow-ups");
+      const res = await fetch("/api/follow-ups", { cache: "no-store" });
       const data = await res.json();
       if (Array.isArray(data)) {
         setFollowUps(data);
@@ -63,6 +63,9 @@ export default function FollowUpsPage() {
   }, []);
 
   const filtered = followUps.filter(f => {
+    const attempts = f.lead?._count?.followUps || 0;
+    if (attempts === 0) return false;
+
     const matchesSearch = 
       f.lead.customerName.toLowerCase().includes(search.toLowerCase()) ||
       f.noteGiven?.toLowerCase().includes(search.toLowerCase());
@@ -71,9 +74,13 @@ export default function FollowUpsPage() {
     const matchesStart = !dateRange.start || (fDate && fDate >= new Date(dateRange.start));
     const matchesEnd = !dateRange.end || (fDate && fDate <= new Date(dateRange.end + "T23:59:59"));
 
-    const matchesUpcoming = !showUpcomingOnly || isFollowUpUpcoming(f.nextCallDate, f.completedDate);
+    const matchesDistance = 
+      filterDistance === "ALL" ? true :
+      filterDistance === "TODAY" ? isFollowUpToday(f.nextCallDate, f.completedDate) :
+      filterDistance === "OVERDUE" ? isFollowUpOverdue(f.nextCallDate, f.completedDate) :
+      filterDistance === "UPCOMING" ? isFollowUpUpcoming(f.nextCallDate, f.completedDate) : true;
 
-    return matchesSearch && matchesStart && matchesEnd && matchesUpcoming;
+    return matchesSearch && matchesStart && matchesEnd && matchesDistance;
   }).sort((a, b) => {
     // Priority: Scheduled items first
     if (a.nextCallDate && !b.nextCallDate) return -1;
@@ -136,24 +143,41 @@ export default function FollowUpsPage() {
         </div>
 
         <div className="relative z-10 flex gap-3">
-          <div className="px-5 py-3 rounded-xl bg-indigo-50/50 border border-indigo-100 flex flex-col items-center min-w-[100px] shadow-sm shadow-indigo-50/50">
-             <span className="text-xl font-black text-indigo-600 leading-none">{todayCount}</span>
-             <span className="text-[9px] font-bold text-indigo-400 uppercase tracking-widest mt-1.5">Today</span>
-          </div>
-          <div className="px-5 py-3 rounded-xl bg-rose-50/50 border border-rose-100 flex flex-col items-center min-w-[100px] shadow-sm shadow-rose-50/50">
-             <span className="text-xl font-black text-rose-600 leading-none">{overdueCount}</span>
-             <span className="text-[9px] font-bold text-rose-400 uppercase tracking-widest mt-1.5">Overdue</span>
-          </div>
-          <div className={cn(
-            "px-5 py-3 rounded-xl flex flex-col items-center min-w-[100px] shadow-sm transition-all cursor-pointer active:scale-95 border",
-            showUpcomingOnly 
-              ? "bg-amber-600 border-amber-500 shadow-amber-100" 
-              : "bg-amber-50/50 border-amber-100 shadow-amber-50/50"
-          )}
-          onClick={() => setShowUpcomingOnly(!showUpcomingOnly)}
+          <div 
+            onClick={() => setFilterDistance(filterDistance === "TODAY" ? "ALL" : "TODAY")}
+            className={cn(
+              "px-5 py-3 rounded-xl flex flex-col items-center min-w-[100px] shadow-sm transition-all cursor-pointer active:scale-95 border",
+              filterDistance === "TODAY" 
+                ? "bg-indigo-600 border-indigo-500 shadow-indigo-100" 
+                : "bg-indigo-50/50 border-indigo-100 shadow-indigo-50/50"
+            )}
           >
-             <span className={cn("text-xl font-black leading-none", showUpcomingOnly ? "text-white" : "text-amber-600")}>{upcomingCount}</span>
-             <span className={cn("text-[9px] font-bold uppercase tracking-widest mt-1.5", showUpcomingOnly ? "text-amber-100" : "text-amber-400")}>UPCOMING</span>
+             <span className={cn("text-xl font-black leading-none", filterDistance === "TODAY" ? "text-white" : "text-indigo-600")}>{todayCount}</span>
+             <span className={cn("text-[9px] font-bold uppercase tracking-widest mt-1.5", filterDistance === "TODAY" ? "text-indigo-100" : "text-indigo-400")}>Today</span>
+          </div>
+          <div 
+            onClick={() => setFilterDistance(filterDistance === "OVERDUE" ? "ALL" : "OVERDUE")}
+            className={cn(
+              "px-5 py-3 rounded-xl flex flex-col items-center min-w-[100px] shadow-sm transition-all cursor-pointer active:scale-95 border",
+              filterDistance === "OVERDUE" 
+                ? "bg-rose-600 border-rose-500 shadow-rose-100" 
+                : "bg-rose-50/50 border-rose-100 shadow-rose-50/50"
+            )}
+          >
+             <span className={cn("text-xl font-black leading-none", filterDistance === "OVERDUE" ? "text-white" : "text-rose-600")}>{overdueCount}</span>
+             <span className={cn("text-[9px] font-bold uppercase tracking-widest mt-1.5", filterDistance === "OVERDUE" ? "text-rose-100" : "text-rose-400")}>Overdue</span>
+          </div>
+          <div 
+            onClick={() => setFilterDistance(filterDistance === "UPCOMING" ? "ALL" : "UPCOMING")}
+            className={cn(
+              "px-5 py-3 rounded-xl flex flex-col items-center min-w-[100px] shadow-sm transition-all cursor-pointer active:scale-95 border",
+              filterDistance === "UPCOMING" 
+                ? "bg-amber-600 border-amber-500 shadow-amber-100" 
+                : "bg-amber-50/50 border-amber-100 shadow-amber-50/50"
+            )}
+          >
+             <span className={cn("text-xl font-black leading-none", filterDistance === "UPCOMING" ? "text-white" : "text-amber-600")}>{upcomingCount}</span>
+             <span className={cn("text-[9px] font-bold uppercase tracking-widest mt-1.5", filterDistance === "UPCOMING" ? "text-amber-100" : "text-amber-400")}>UPCOMING</span>
           </div>
         </div>
       </div>
@@ -180,18 +204,20 @@ export default function FollowUpsPage() {
           >
             <Filter className="h-4 w-4" /> {showFilters ? "Hide Filters" : "Filter Queue"}
           </button>
-          <button 
-            onClick={() => {
-              setSearch("");
-              setDateRange({ start: "", end: "" });
-              setSortBy("DATE_ASC");
-              setShowUpcomingOnly(false);
-            }}
-            className="p-3 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition shadow-sm active:scale-95"
-            title="Reset All"
-          >
-            <RotateCcw className="h-4 w-4" />
-          </button>
+          {(search !== "" || dateRange.start !== "" || dateRange.end !== "" || sortBy !== "DATE_ASC" || filterDistance !== "ALL") && (
+            <button 
+              onClick={() => {
+                setSearch("");
+                setDateRange({ start: "", end: "" });
+                setSortBy("DATE_ASC");
+                setFilterDistance("ALL");
+              }}
+              className="p-3 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition shadow-sm active:scale-95"
+              title="Reset All"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -233,17 +259,22 @@ export default function FollowUpsPage() {
                 </div>
              </div>
              <div className="flex-1">
-                <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-tight mb-1.5 ml-1">UPCOMING</label>
+                <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-tight mb-1.5 ml-1">QUEUE DISTANCE</label>
                 <button 
-                  onClick={() => setShowUpcomingOnly(!showUpcomingOnly)}
+                  onClick={() => {
+                    if (filterDistance === "ALL") setFilterDistance("UPCOMING");
+                    else if (filterDistance === "UPCOMING") setFilterDistance("OVERDUE");
+                    else if (filterDistance === "OVERDUE") setFilterDistance("TODAY");
+                    else setFilterDistance("ALL");
+                  }}
                   className={cn(
                     "w-full rounded-lg border py-2 px-3 text-[10px] font-bold uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2",
-                    showUpcomingOnly 
-                      ? "bg-amber-600 text-white border-amber-500" 
+                    filterDistance !== "ALL" 
+                      ? "bg-indigo-600 text-white border-indigo-500" 
                       : "bg-white border-slate-100 text-slate-500 hover:bg-slate-50"
                   )}
                 >
-                  <Globe className="h-3 w-3" /> {showUpcomingOnly ? "Upcoming Only" : "All Distances"}
+                  <Globe className="h-3 w-3" /> {filterDistance === "ALL" ? "All Distances" : `${filterDistance} ONLY`}
                 </button>
              </div>
           </div>
@@ -277,6 +308,7 @@ export default function FollowUpsPage() {
                     return (
                       <tr 
                         key={followUp.id} 
+                        onClick={() => router.push(`/leads/${followUp.leadId}`)}
                         className="group hover:bg-slate-50/80 transition-all cursor-pointer"
                       >
                         <td className="py-4 pl-0 pr-3">

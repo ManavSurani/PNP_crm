@@ -29,7 +29,7 @@ export async function GET() {
           completedDate: null,
           lead: { isCancelled: false }
         },
-        include: { lead: { select: { customerName: true, contactNumber: true, serviceType: true } } },
+        include: { lead: { select: { id: true, customerName: true, contactNumber: true, serviceType: true } } },
         orderBy: { nextCallDate: "asc" },
       }),
       // Overdue (past date, not completed)
@@ -39,7 +39,7 @@ export async function GET() {
           completedDate: null,
           lead: { isCancelled: false }
         },
-        include: { lead: { select: { customerName: true, contactNumber: true, status: true } } },
+        include: { lead: { select: { id: true, customerName: true, contactNumber: true, status: true } } },
         orderBy: { nextCallDate: "asc" },
         take: 10,
       }),
@@ -50,7 +50,7 @@ export async function GET() {
           status: "SCHEDULED",
           lead: { isCancelled: false }
         },
-        include: { lead: { select: { customerName: true, contactNumber: true } } },
+        include: { lead: { select: { id: true, customerName: true, contactNumber: true } } },
         orderBy: { date: "asc" },
       }),
       // Recent 5 leads
@@ -64,11 +64,11 @@ export async function GET() {
       prisma.lead.groupBy({ where: { isCancelled: false }, by: ["status"], _count: { _all: true } }),
       // Count by inquiry source
       prisma.lead.groupBy({ where: { isCancelled: false }, by: ["inquirySource"], _count: { _all: true }, orderBy: { _count: { inquirySource: "desc" } } }),
-      // Last 6 months revenue - Unified via LeadTransaction
+      // Last 5 years revenue - Unified via LeadTransaction
       prisma.leadTransaction.findMany({
         where: { 
           type: "RECEIVED",
-          createdAt: { gte: new Date(new Date().setMonth(new Date().getMonth() - 5)) },
+          createdAt: { gte: new Date(new Date().setFullYear(new Date().getFullYear() - 4)) },
           lead: { isCancelled: false }
         },
         select: { amount: true, createdAt: true },
@@ -91,6 +91,17 @@ export async function GET() {
         .reduce((s, p) => s + p.amount, 0),
     }));
 
+    // Build 5-year revenue chart
+    const currentYear = new Date().getFullYear();
+    const last5Years = Array.from({ length: 5 }, (_, i) => currentYear - 4 + i);
+    
+    const revenueChartYears = last5Years.map(year => ({
+      year: year.toString(),
+      revenue: monthlyRevenue
+        .filter(p => p.createdAt.getFullYear() === year)
+        .reduce((s, p) => s + p.amount, 0),
+    }));
+
     const totalLeads = leadsByStatus.reduce((s, l) => s + l._count._all, 0);
 
     return NextResponse.json({
@@ -101,6 +112,7 @@ export async function GET() {
       },
       charts: {
         revenueChart,
+        revenueChartYears,
         leadsByStatus: leadsByStatus.map(l => ({ status: l.status, count: l._count._all })),
         leadsBySource: leadsBySource.map(l => ({ source: l.inquirySource, count: l._count._all })),
       },

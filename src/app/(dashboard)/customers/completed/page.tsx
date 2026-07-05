@@ -19,6 +19,7 @@ type Customer = {
   initialDealAmount: number;
   createdAt: string;
   updatedAt: string;
+  inquirySource?: string;
   isFinanciallyClosed: boolean;
 };
 
@@ -27,6 +28,14 @@ export default function CompletedProjectsPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({
+    source: "ALL",
+    service: "ALL",
+    startDate: "",
+    endDate: ""
+  });
+  const [sortBy, setSortBy] = useState("NEWEST");
   const [isReactivating, setIsReactivating] = useState<string | null>(null);
 
   const fetchCustomers = async () => {
@@ -72,11 +81,35 @@ export default function CompletedProjectsPage() {
 
   const filteredCustomers = customers.filter((customer) => {
     const displayName = customer.project?.name || customer.customerName;
-    return (
+    const matchesSearch = 
       displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       customer.contactNumber.includes(searchTerm) ||
-      customer.serviceType.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+      customer.serviceType.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesSource = filters.source === "ALL" || customer.inquirySource === filters.source;
+    const matchesService = filters.service === "ALL" || customer.serviceType?.toLowerCase().replace(/_/g, " ") === filters.service.toLowerCase().replace(/_/g, " ");
+
+    const conversionDateStr = customer.project?.completedOn || customer.updatedAt;
+    const customerDate = new Date(conversionDateStr);
+    const matchesStartDate = !filters.startDate || customerDate >= new Date(filters.startDate);
+    const matchesEndDate = !filters.endDate || customerDate <= new Date(filters.endDate + "T23:59:59");
+
+    return matchesSearch && matchesSource && matchesService && matchesStartDate && matchesEndDate;
+  }).sort((a, b) => {
+    const aName = a.project?.name || a.customerName;
+    const bName = b.project?.name || b.customerName;
+    const aConversionDateStr = a.project?.completedOn || a.updatedAt;
+    const bConversionDateStr = b.project?.completedOn || b.updatedAt;
+    if (sortBy === "NEWEST") return new Date(bConversionDateStr).getTime() - new Date(aConversionDateStr).getTime();
+    if (sortBy === "OLDEST") return new Date(aConversionDateStr).getTime() - new Date(bConversionDateStr).getTime();
+    if (sortBy === "PROJECT_FIRST") {
+      if (a.project?.name && !b.project?.name) return -1;
+      if (!a.project?.name && b.project?.name) return 1;
+      return aName.localeCompare(bName);
+    }
+    if (sortBy === "A-Z") return aName.localeCompare(bName);
+    if (sortBy === "Z-A") return bName.localeCompare(aName);
+    return 0;
   });
 
   return (
@@ -109,35 +142,123 @@ export default function CompletedProjectsPage() {
         </div>
         <div className="flex items-center gap-2 w-full md:w-auto">
           <button 
-            onClick={() => {
-              setSearchTerm("");
-              fetchCustomers();
-            }}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition shadow-sm"
+            onClick={() => setShowFilters(!showFilters)}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2.5 border rounded-lg text-sm font-medium transition shadow-sm",
+              showFilters ? "bg-slate-900 text-white border-slate-900" : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+            )}
           >
-            <RotateCcw className="h-4 w-4" /> Reset
+            <Filter className="h-4 w-4" /> {showFilters ? "Hide Filters" : "Filters"}
           </button>
+          {(searchTerm !== "" || filters.source !== "ALL" || filters.service !== "ALL" || filters.startDate !== "" || filters.endDate !== "" || sortBy !== "NEWEST") && (
+            <button 
+              onClick={() => {
+                setSearchTerm("");
+                setFilters({ source: "ALL", service: "ALL", startDate: "", endDate: "" });
+                setSortBy("NEWEST");
+              }}
+              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition shadow-sm"
+            >
+              <RotateCcw className="h-4 w-4" /> Reset
+            </button>
+          )}
         </div>
       </div>
 
+      {/* Compact Filter Options */}
+      {showFilters && (
+        <div className="bg-emerald-50/50 p-3 rounded-xl border border-emerald-100 shadow-sm animate-in slide-in-from-top-2 duration-200 shrink-0">
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="min-w-[140px] flex-1">
+              <label className="block text-[9px] font-bold text-emerald-700 uppercase tracking-tight mb-1 ml-1">Acquisition Source</label>
+              <select 
+                className="w-full rounded-lg border border-emerald-200 bg-white/70 py-1.5 px-3 text-xs focus:bg-white focus:border-emerald-500 outline-none transition-all cursor-pointer"
+                value={filters.source}
+                onChange={e => setFilters({...filters, source: e.target.value})}
+              >
+                <option value="ALL">All Sources</option>
+                <option value="WHATSAPP">WhatsApp</option>
+                <option value="FACEBOOK">Facebook</option>
+                <option value="INSTAGRAM">Instagram</option>
+                <option value="WEBSITE">Website</option>
+                <option value="DIRECT_CALL">Direct Call</option>
+                <option value="WALK_IN">Walk In</option>
+                <option value="REFERENCE">Reference</option>
+              </select>
+            </div>
+            <div className="min-w-[140px] flex-1">
+              <label className="block text-[9px] font-bold text-emerald-700 uppercase tracking-tight mb-1 ml-1">Service Category</label>
+              <select 
+                className="w-full rounded-lg border border-emerald-200 bg-white/70 py-1.5 px-3 text-xs focus:bg-white focus:border-emerald-500 outline-none transition-all cursor-pointer"
+                value={filters.service}
+                onChange={e => setFilters({...filters, service: e.target.value})}
+              >
+                <option value="ALL">All Services</option>
+                <option value="Interior Design">Interior Design</option>
+                <option value="2BHK Interior">2BHK Interior</option>
+                <option value="3BHK Interior">3BHK Interior</option>
+                <option value="4BHK Interior">4BHK Interior</option>
+                <option value="Raw house">Raw house</option>
+                <option value="Office">Office</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div className="min-w-[140px] flex-1">
+              <label className="block text-[9px] font-bold text-emerald-700 uppercase tracking-tight mb-1 ml-1">Sort By</label>
+              <select 
+                className="w-full rounded-lg border border-emerald-200 bg-white/70 py-1.5 px-3 text-xs focus:bg-white focus:border-emerald-500 outline-none transition-all cursor-pointer"
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value)}
+              >
+                <option value="NEWEST">Date: Newest First</option>
+                <option value="OLDEST">Date: Oldest First</option>
+                <option value="PROJECT_FIRST">Projects First</option>
+                <option value="A-Z">Alphabetical: A-Z</option>
+                <option value="Z-A">Alphabetical: Z-A</option>
+              </select>
+            </div>
+            <div className="flex-[1.5] flex items-center gap-2">
+              <div className="flex-1">
+                <label className="block text-[9px] font-bold text-emerald-700 uppercase tracking-tight mb-1 ml-1">Completion From</label>
+                <input 
+                  type="date"
+                  className="w-full rounded-lg border border-emerald-200 bg-white/70 py-1.5 px-3 text-xs focus:bg-white focus:border-emerald-500 outline-none transition-all"
+                  value={filters.startDate}
+                  onChange={e => setFilters({...filters, startDate: e.target.value})}
+                />
+              </div>
+              <div className="flex-1">
+                <label className="block text-[9px] font-bold text-emerald-700 uppercase tracking-tight mb-1 ml-1">Completion To</label>
+                <input 
+                  type="date"
+                  className="w-full rounded-lg border border-emerald-200 bg-white/70 py-1.5 px-3 text-xs focus:bg-white focus:border-emerald-500 outline-none transition-all"
+                  value={filters.endDate}
+                  onChange={e => setFilters({...filters, endDate: e.target.value})}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main List Container - Matched to Customer Directory */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col">
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center h-96 text-slate-400">
+          <div className="flex flex-col items-center justify-center flex-1 text-slate-400 min-h-[400px]">
             <Loader2 className="h-8 w-8 animate-spin text-emerald-500 mb-3" />
             <span className="text-sm font-medium">Loading Archive...</span>
           </div>
         ) : (
-          <div className="overflow-x-auto min-h-[400px]">
-            <table className="min-w-full divide-y divide-slate-200">
-              <thead className="bg-slate-50/50">
+          <div className="overflow-auto flex-1 scrollbar-thin scrollbar-thumb-slate-200" style={{ maxHeight: 'calc(100vh - 420px)' }}>
+            <table className="w-full divide-y divide-slate-200 table-fixed" style={{ minWidth: '800px' }}>
+              <thead className="bg-slate-50/50 sticky top-0 z-20 backdrop-blur-sm">
                 <tr>
-                  <th scope="col" className="py-4 pl-8 pr-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Customer / Project</th>
-                  <th scope="col" className="px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Service</th>
-                  <th scope="col" className="px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Completion</th>
-                  <th scope="col" className="px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Final Deal</th>
-                  <th scope="col" className="px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                  <th scope="col" className="relative py-4 pl-3 pr-8"><span className="sr-only">Actions</span></th>
+                  <th scope="col" className="w-[25%] py-4 pl-8 pr-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Customer / Project</th>
+                  <th scope="col" className="w-[20%] px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Service</th>
+                  <th scope="col" className="w-[15%] px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Completion</th>
+                  <th scope="col" className="w-[15%] px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Final Deal</th>
+                  <th scope="col" className="w-[15%] px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                  <th scope="col" className="w-[10%] relative py-4 pl-3 pr-8"><span className="sr-only">Actions</span></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">

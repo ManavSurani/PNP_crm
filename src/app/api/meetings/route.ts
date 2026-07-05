@@ -36,6 +36,23 @@ export async function POST(request: Request) {
         }
       });
 
+      // Automatically complete pending follow-up silently
+      const pendingFollowUp = await tx.followUp.findFirst({
+        where: { leadId, completedDate: null },
+        orderBy: { scheduledDate: "asc" }
+      });
+
+      if (pendingFollowUp) {
+        await tx.followUp.update({
+          where: { id: pendingFollowUp.id },
+          data: {
+            completedDate: new Date(),
+            outcome: "MEETING_SCHEDULED",
+            noteGiven: null
+          }
+        });
+      }
+
       return meeting;
     });
 

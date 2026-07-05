@@ -10,6 +10,7 @@ export async function GET() {
     const [canceledLeads, canceledOrders] = await Promise.all([
       prisma.lead.findMany({
         where: {
+          status: { not: "WON_ORDER" },
           OR: [
             { status: "CANCELLED" },
             { isCancelled: true }
@@ -20,10 +21,13 @@ export async function GET() {
         },
         orderBy: { updatedAt: "desc" }
       }),
-      prisma.order.findMany({
-        where: { status: "CANCELLED" },
+      prisma.lead.findMany({
+        where: { 
+          status: "WON_ORDER",
+          isCancelled: true
+        },
         include: {
-          lead: { select: { customerName: true, contactNumber: true, serviceType: true } }
+          assignedStaff: { select: { name: true } }
         },
         orderBy: { updatedAt: "desc" }
       })
@@ -50,6 +54,7 @@ export async function DELETE(request: Request) {
       // Find IDs to log
       const leadsToWipe = await prisma.lead.findMany({
         where: {
+          status: { not: "WON_ORDER" },
           OR: [
             { status: "CANCELLED" },
             { isCancelled: true }
@@ -75,20 +80,23 @@ export async function DELETE(request: Request) {
         });
       }
     } else if (type === "orders") {
-      const ordersToWipe = await prisma.order.findMany({
-        where: { status: "CANCELLED" },
+      const ordersToWipe = await prisma.lead.findMany({
+        where: { 
+          status: "WON_ORDER",
+          isCancelled: true
+        },
         select: { id: true }
       });
 
       if (ordersToWipe.length > 0) {
-        await prisma.order.deleteMany({
+        await prisma.lead.deleteMany({
           where: { id: { in: ordersToWipe.map(o => o.id) } }
         });
 
         await prisma.auditLog.createMany({
           data: ordersToWipe.map(o => ({
             action: "WIPE_DATA",
-            entity: "Order",
+            entity: "Lead",
             entityId: o.id,
             oldValue: "CANCELLED",
             userId: session.user.id

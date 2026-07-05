@@ -30,6 +30,16 @@ export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id:
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { id } = await params;
+    
+    // Check if it's a Reactivation Note to lift the penalty
+    const note = await prisma.leadNote.findUnique({ where: { id } });
+    if (note && note.leadId && note.content.includes("Lead Reactivated")) {
+      await prisma.lead.update({
+        where: { id: note.leadId },
+        data: { reactivatedAt: null }
+      });
+    }
+
     await prisma.leadNote.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (error) {

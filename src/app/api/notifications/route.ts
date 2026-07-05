@@ -29,12 +29,12 @@ export async function GET(req: NextRequest) {
       }
     });
 
-    // 2. Fetch Meetings (Today)
-    const todayMeetings = await prisma.meeting.findMany({
+    // 2. Fetch Meetings (Today & Overdue)
+    const pendingMeetings = await prisma.meeting.findMany({
       where: {
         status: "SCHEDULED",
-        date: { gte: todayStart, lte: todayEnd },
-        lead: { isCancelled: false }
+        date: { lte: todayEnd },
+        lead: { isCancelled: false, status: { not: "WON_ORDER" } }
       },
       include: {
         lead: { select: { customerName: true } }
@@ -87,17 +87,18 @@ export async function GET(req: NextRequest) {
     });
 
     // Map Meetings
-    todayMeetings.forEach(m => {
+    pendingMeetings.forEach(m => {
+      const isMeetingOverdue = m.date < todayStart;
       notifications.push({
         id: `meet-${m.id}`,
-        type: "SITE_VISIT",
-        title: "Site Visit Today",
+        type: isMeetingOverdue ? "OVERDUE" : "SITE_VISIT",
+        title: isMeetingOverdue ? "Overdue Site Visit" : "Site Visit Today",
         description: `Visit ${m.lead.customerName} at ${m.address}`,
         time: m.time,
         date: m.date,
         priority: "HIGH",
         link: `/leads/${m.leadId}`,
-        category: "Site Visits"
+        category: isMeetingOverdue ? "Overdue" : "Site Visits"
       });
     });
 

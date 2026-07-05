@@ -89,14 +89,21 @@ export async function POST(request: Request) {
 
       if (!lead) throw new Error("Lead not found");
 
-      // 1. Calculate attempt number based on completed records
-      const activeMissesCount = await tx.followUp.count({
-        where: {
-          leadId,
-          outcome: "NOT_PICKED",
-          completedDate: { not: null }
-        }
+      // 1. Calculate attempt number based on consecutive completed records
+      const recentFollowUps = await tx.followUp.findMany({
+        where: { leadId, completedDate: { not: null } },
+        orderBy: { createdAt: "desc" },
+        select: { outcome: true }
       });
+      
+      let activeMissesCount = 0;
+      for (const f of recentFollowUps) {
+        if (f.outcome === "NOT_PICKED") {
+          activeMissesCount++;
+        } else if (f.outcome === "PICKED" || f.outcome === "INTERESTED") {
+          break; // Break the streak on any successful connection
+        }
+      }
 
       const attemptCount = activeMissesCount + 1;
 
@@ -120,7 +127,11 @@ export async function POST(request: Request) {
             finalCancelReason = "No Response - 4 Attempts Reached";
           } else {
             leadStatusUpdate = "FOLLOW_UP";
-            scheduledCallDate = addDays(new Date(), 1); 
+            // Anchor strictly to the start of the next calendar day
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(0, 0, 0, 0);
+            scheduledCallDate = tomorrow; 
           }
         }
       } else if (outcome === "PICKED") {
@@ -140,7 +151,10 @@ export async function POST(request: Request) {
           finalCancelReason = cancelReason || "Customer Cancelled";
         } else if (pickedStatus === "NEXT_DAY") {
           leadStatusUpdate = "FOLLOW_UP";
-          scheduledCallDate = addDays(new Date(), 1);
+          const tomorrow = new Date();
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          tomorrow.setHours(0, 0, 0, 0);
+          scheduledCallDate = tomorrow;
         } else {
           leadStatusUpdate = "FOLLOW_UP";
         }

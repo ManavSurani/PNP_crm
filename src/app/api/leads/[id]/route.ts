@@ -23,6 +23,7 @@ export async function GET(
         alternateNumber: true,
         fullAddress: true,
         inquirySource: true,
+        referenceName: true,
         serviceType: true,
         priority: true,
         status: true,
@@ -81,7 +82,7 @@ export async function PUT(
     
     const { 
       customerName, projectName, contactNumber, alternateNumber, fullAddress, 
-      landmark, requirementDetails, inquirySource, serviceType, 
+      landmark, requirementDetails, inquirySource, referenceName, serviceType, 
       status, priority, assignedStaffId, budgetRange,
       siteLocation, preferredVisitTime, initialDealAmount, initialDealNotes, isCancelled, cancelReason
     } = body;
@@ -104,7 +105,17 @@ export async function PUT(
     if (fullAddress !== undefined) updateData.fullAddress = fullAddress;
     if (landmark !== undefined) updateData.landmark = landmark;
     if (requirementDetails !== undefined) updateData.requirementDetails = requirementDetails;
-    if (inquirySource !== undefined) updateData.inquirySource = inquirySource;
+    if (inquirySource !== undefined) {
+      updateData.inquirySource = inquirySource;
+      if (inquirySource !== "THROUGH_REFERENCE") {
+        updateData.referenceName = null;
+      }
+    }
+    if (referenceName !== undefined) {
+      if (updateData.inquirySource === "THROUGH_REFERENCE" || inquirySource === undefined) {
+        updateData.referenceName = referenceName || null;
+      }
+    }
     if (serviceType !== undefined) updateData.serviceType = serviceType;
     if (status !== undefined) updateData.status = status;
     if (priority !== undefined) updateData.priority = priority;

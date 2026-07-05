@@ -18,6 +18,7 @@ type Lead = {
   alternateNumber: string | null;
   fullAddress: string | null;
   inquirySource: string;
+  referenceName?: string | null;
   serviceType: string;
   status: string;
   createdAt: string;
@@ -34,8 +35,7 @@ export default function LeadsPage() {
   const [filters, setFilters] = useState({
     status: "ALL",
     source: "ALL",
-    startDate: "",
-    endDate: ""
+    service: "ALL",
   });
   const [sortBy, setSortBy] = useState("NEWEST");
   
@@ -116,12 +116,9 @@ export default function LeadsPage() {
     
     const matchesStatus = filters.status === "ALL" ? (lead.status !== "WON_ORDER" && lead.status !== "CANCELLED") : lead.status === filters.status;
     const matchesSource = filters.source === "ALL" || lead.inquirySource === filters.source;
-    
-    const leadDate = new Date(lead.createdAt);
-    const matchesStartDate = !filters.startDate || leadDate >= new Date(filters.startDate);
-    const matchesEndDate = !filters.endDate || leadDate <= new Date(filters.endDate + "T23:59:59");
+    const matchesService = filters.service === "ALL" || lead.serviceType?.toLowerCase().replace(/_/g, " ") === filters.service.toLowerCase().replace(/_/g, " ");
 
-    return matchesSearch && matchesStatus && matchesSource && matchesStartDate && matchesEndDate;
+    return matchesSearch && matchesStatus && matchesSource && matchesService;
   }).sort((a, b) => {
     if (sortBy === "NEWEST") return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     if (sortBy === "OLDEST") return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
@@ -188,16 +185,18 @@ export default function LeadsPage() {
           >
             <Filter className="h-4 w-4" /> {showFilters ? "Hide Filters" : "Filters"}
           </button>
-          <button 
-            onClick={() => {
-              setSearchTerm("");
-              setFilters({ status: "ALL", source: "ALL", startDate: "", endDate: "" });
-              setSortBy("NEWEST");
-            }}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition shadow-sm"
-          >
-            <RotateCcw className="h-4 w-4" /> Reset
-          </button>
+          { (searchTerm !== "" || filters.status !== "ALL" || filters.source !== "ALL" || filters.service !== "ALL" || sortBy !== "NEWEST") && (
+            <button 
+              onClick={() => {
+                setSearchTerm("");
+                setFilters({ status: "ALL", source: "ALL", service: "ALL" });
+                setSortBy("NEWEST");
+              }}
+              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition shadow-sm"
+            >
+              <RotateCcw className="h-4 w-4" /> Reset
+            </button>
+          )}
         </div>
       </div>
 
@@ -216,8 +215,6 @@ export default function LeadsPage() {
                 <option value="NEW_INQUIRY">New Inquiry</option>
                 <option value="FOLLOW_UP">Follow Up</option>
                 <option value="MEETING_SCHEDULED">Visit Scheduled</option>
-                <option value="WON_ORDER">Won Order</option>
-                <option value="CANCELLED">Cancelled</option>
               </select>
             </div>
             <div className="min-w-[140px] flex-1">
@@ -234,6 +231,7 @@ export default function LeadsPage() {
                 <option value="WEBSITE">Website</option>
                 <option value="DIRECT_CALL">Direct Call</option>
                 <option value="WALK_IN">Walk In</option>
+                <option value="REFERENCE">Reference</option>
               </select>
             </div>
             <div className="min-w-[140px] flex-1">
@@ -250,25 +248,22 @@ export default function LeadsPage() {
                 <option value="Z-A">Name: Z-A</option>
               </select>
             </div>
-            <div className="flex-[1.5] flex items-center gap-2">
-              <div className="flex-1">
-                <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-tight mb-1 ml-1">From</label>
-                <input 
-                  type="date"
-                  className="w-full rounded-lg border border-slate-100 bg-slate-50/50 py-1.5 px-3 text-xs focus:bg-white focus:border-primary outline-none transition-all"
-                  value={filters.startDate}
-                  onChange={e => setFilters({...filters, startDate: e.target.value})}
-                />
-              </div>
-              <div className="flex-1">
-                <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-tight mb-1 ml-1">To</label>
-                <input 
-                  type="date"
-                  className="w-full rounded-lg border border-slate-100 bg-slate-50/50 py-1.5 px-3 text-xs focus:bg-white focus:border-primary outline-none transition-all"
-                  value={filters.endDate}
-                  onChange={e => setFilters({...filters, endDate: e.target.value})}
-                />
-              </div>
+            <div className="flex-[1.5]">
+              <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-tight mb-1 ml-1">Service Context</label>
+              <select 
+                className="w-full rounded-lg border border-slate-100 bg-slate-50/50 py-1.5 px-3 text-xs focus:bg-white focus:border-primary outline-none transition-all cursor-pointer"
+                value={filters.service}
+                onChange={e => setFilters({...filters, service: e.target.value})}
+              >
+                <option value="ALL">All Services</option>
+                <option value="Interior Design">Interior Design</option>
+                <option value="2BHK Interior">2BHK Interior</option>
+                <option value="3BHK Interior">3BHK Interior</option>
+                <option value="4BHK Interior">4BHK Interior</option>
+                <option value="Raw house">Raw house</option>
+                <option value="Office">Office</option>
+                <option value="Other">Other</option>
+              </select>
             </div>
           </div>
         </div>
@@ -333,7 +328,7 @@ export default function LeadsPage() {
                             <div className="text-sm font-semibold text-slate-900 group-hover:text-primary transition-colors flex items-center gap-2">
                               {lead.customerName || "Unknown Customer"}
                               <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 ring-1 ring-slate-200">
-                                {lead.inquirySource}
+                                {lead.inquirySource === "THROUGH_REFERENCE" ? "REFERENCE" : lead.inquirySource}
                               </span>
                             </div>
                             <div className="mt-0.5 text-xs text-slate-500 flex items-center gap-1.5">
@@ -483,7 +478,8 @@ function CreateOrEditModal({ isOpen, lead, onClose, onSuccess }: { isOpen: boole
     contactNumber: "",
     fullAddress: "",
     serviceType: "Interior Design",
-    inquirySource: "WHATSAPP"
+    inquirySource: "",
+    referenceName: ""
   });
 
   // Duplicate detection states
@@ -498,7 +494,8 @@ function CreateOrEditModal({ isOpen, lead, onClose, onSuccess }: { isOpen: boole
         contactNumber: lead.contactNumber,
         fullAddress: lead.fullAddress || "",
         serviceType: lead.serviceType,
-        inquirySource: lead.inquirySource
+        inquirySource: lead.inquirySource,
+        referenceName: lead.referenceName || ""
       });
       setError(null);
     } else {
@@ -507,7 +504,8 @@ function CreateOrEditModal({ isOpen, lead, onClose, onSuccess }: { isOpen: boole
         contactNumber: "", 
         fullAddress: "",
         serviceType: "INTERIOR_DESIGN", 
-        inquirySource: "WHATSAPP"
+        inquirySource: "",
+        referenceName: ""
       });
     }
   }, [lead, isOpen]);
@@ -543,6 +541,10 @@ function CreateOrEditModal({ isOpen, lead, onClose, onSuccess }: { isOpen: boole
 
     return () => clearTimeout(timer);
   }, [formData.contactNumber, lead]);
+
+  useEffect(() => {
+    if (error) setError(null);
+  }, [formData]);
 
   if (!isOpen) return null;
 
@@ -704,20 +706,40 @@ function CreateOrEditModal({ isOpen, lead, onClose, onSuccess }: { isOpen: boole
               </div>
               
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-2 ml-1">Inquiry Source</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-2 ml-1">Inquiry Source *</label>
                 <select 
+                  required
                   className="block w-full rounded-lg border border-slate-200 py-2.5 px-4 bg-white text-slate-900 focus:border-primary focus:ring-2 focus:ring-primary/10 text-sm transition-all appearance-none outline-none"
                   value={formData.inquirySource}
                   onChange={e => setFormData({...formData, inquirySource: e.target.value})}
                 >
+                  <option value="" disabled>--Select--</option>
                   <option value="WHATSAPP">WhatsApp</option>
                   <option value="FACEBOOK">Facebook</option>
                   <option value="INSTAGRAM">Instagram</option>
                   <option value="WEBSITE">Website</option>
                   <option value="DIRECT_CALL">Direct Call</option>
                   <option value="WALK_IN">Walk In</option>
+                  <option value="THROUGH_REFERENCE">Reference</option>
                 </select>
               </div>
+
+              {formData.inquirySource === "THROUGH_REFERENCE" && (
+                <div className="animate-in fade-in slide-in-from-top-2">
+                  <label className="block text-xs font-semibold text-slate-700 mb-2 ml-1">Reference Person Name *</label>
+                  <div className="relative">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <input 
+                      type="text" 
+                      required
+                      className="block w-full rounded-lg border border-slate-200 py-2.5 pl-11 bg-white text-slate-900 placeholder:text-slate-300 focus:border-primary focus:ring-2 focus:ring-primary/10 text-sm transition-all outline-none"
+                      placeholder="Name of reference person"
+                      value={formData.referenceName}
+                      onChange={e => setFormData({...formData, referenceName: e.target.value})}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

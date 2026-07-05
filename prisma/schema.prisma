@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = "file:C:\\Vs\\pnp_crm\\_data\\crm.db"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -75,6 +75,7 @@ model Lead {
   alternateNumber     String?
   fullAddress         String?
   inquirySource       String             @default("OTHER")
+  referenceName       String?
   serviceType         String             @default("OTHER")
   priority            String             @default("MEDIUM")
   status              String             @default("NEW_INQUIRY")

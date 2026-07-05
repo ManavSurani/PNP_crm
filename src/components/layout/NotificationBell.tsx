@@ -7,6 +7,7 @@ import {
   ExternalLink
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 interface Notification {
@@ -29,10 +30,12 @@ export default function NotificationBell() {
   const [activeTab, setActiveTab] = useState<"All" | "Follow-Ups" | "Site Visits" | "Overdue">("All");
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [isExtended, setIsExtended] = useState(false);
+  const router = useRouter();
 
   const fetchNotifications = async () => {
     try {
-      const res = await fetch("/api/notifications");
+      const res = await fetch("/api/notifications", { cache: "no-store" });
       const data = await res.json();
       if (Array.isArray(data)) {
         setNotifications(data);
@@ -54,6 +57,7 @@ export default function NotificationBell() {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
+        setIsExtended(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -108,7 +112,10 @@ export default function NotificationBell() {
     <div className="relative" ref={dropdownRef}>
       <button 
         type="button" 
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          setIsOpen(!isOpen);
+          if (isOpen) setIsExtended(false);
+        }}
         className={cn(
           "relative -m-2.5 p-2.5 text-slate-400 hover:text-slate-500 transition-colors rounded-full",
           isOpen && "text-slate-600 bg-slate-50"
@@ -154,7 +161,10 @@ export default function NotificationBell() {
                 return (
                   <button
                     key={tab}
-                    onClick={() => setActiveTab(tab as any)}
+                    onClick={() => {
+                      setActiveTab(tab as any);
+                      setIsExtended(false);
+                    }}
                     className={cn(
                       "flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all",
                       activeTab === tab 
@@ -171,7 +181,10 @@ export default function NotificationBell() {
           </div>
 
           {/* List */}
-          <div className="max-h-[420px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200">
+          <div className={cn(
+            "overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 transition-all duration-300",
+            isExtended ? "max-h-[70vh]" : "max-h-[420px]"
+          )}>
             {isLoading ? (
               <div className="py-12 flex flex-col items-center justify-center text-slate-400">
                 <Loader2 className="h-6 w-6 animate-spin mb-2" />
@@ -237,13 +250,28 @@ export default function NotificationBell() {
           </div>
 
           {/* Footer */}
-          <div className="p-3 bg-slate-50/50 border-top border-slate-100">
-            <button 
-              className="w-full py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-bold text-slate-600 hover:bg-white hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-sm flex items-center justify-center gap-2"
-            >
-              <ExternalLink className="h-3 w-3" /> View All Activity
-            </button>
-          </div>
+          {(!isExtended || activeTab !== "All") && (
+            <div className="p-3 bg-slate-50/50 border-top border-slate-100">
+              <button 
+                onClick={() => {
+                  if (activeTab === "Site Visits") {
+                    setIsOpen(false);
+                    setIsExtended(false);
+                    router.push("/meetings");
+                  } else if (activeTab === "Overdue" || activeTab === "Follow-Ups") {
+                    setIsOpen(false);
+                    setIsExtended(false);
+                    router.push("/follow-ups");
+                  } else {
+                    setIsExtended(true);
+                  }
+                }}
+                className="w-full py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-bold text-slate-600 hover:bg-white hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-sm flex items-center justify-center gap-2"
+              >
+                <ExternalLink className="h-3 w-3" /> View All Activity
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

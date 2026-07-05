@@ -8,13 +8,14 @@ import {
 import { format } from "date-fns";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  CartesianGrid
+  CartesianGrid, AreaChart, Area, LineChart, Line
 } from "recharts";
 import { cn } from "@/lib/utils";
 
 export default function Dashboard() {
   const [stats, setStats] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [timeframe, setTimeframe] = useState<"days" | "months" | "years">("days");
 
   useEffect(() => {
     fetch("/api/stats")
@@ -50,7 +51,7 @@ export default function Dashboard() {
     );
   }
 
-  const { metrics, chartData } = stats;
+  const { metrics, chartData, chartDataMonths, chartDataYears } = stats;
 
   const profitMargin = metrics.totalRevenue > 0
     ? ((metrics.netProfit / metrics.totalRevenue) * 100).toFixed(1)
@@ -131,22 +132,53 @@ export default function Dashboard() {
                 <p className="text-xs text-slate-400">Weekly Acquisition Velocity</p>
               </div>
             </div>
-            <div className="px-3 py-1 bg-slate-50 rounded-lg border border-slate-200 text-xs font-medium text-slate-500">
-               Last 7 Days
-            </div>
+            <button 
+              onClick={() => {
+                if (timeframe === "days") setTimeframe("months");
+                else if (timeframe === "months") setTimeframe("years");
+                else setTimeframe("days");
+              }}
+              className="px-3 py-1 bg-slate-50 hover:bg-slate-100 rounded-lg border border-slate-200 text-xs font-medium text-slate-500 transition-colors cursor-pointer active:scale-95"
+            >
+               {timeframe === "days" ? "Last 7 Days" : timeframe === "months" ? "Months" : "Years"}
+            </button>
           </div>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                <Tooltip
-                  cursor={{ fill: '#f8fafc' }}
-                  contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontSize: '12px' }}
-                />
-                <Bar dataKey="leads" name="Leads" fill="#4f46e5" radius={[4, 4, 0, 0]} maxBarSize={32} />
-              </BarChart>
+              {timeframe === "days" ? (
+                <BarChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    cursor={{ fill: '#f8fafc' }}
+                    contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontSize: '12px' }}
+                  />
+                  <Bar dataKey="leads" name="Leads" fill="#4f46e5" radius={[4, 4, 0, 0]} maxBarSize={32} />
+                </BarChart>
+              ) : timeframe === "months" ? (
+                <AreaChart data={chartDataMonths} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontSize: '12px' }} />
+                  <Area type="monotone" dataKey="leads" name="Leads" stroke="#4f46e5" strokeWidth={3} fillOpacity={1} fill="url(#colorLeads)" />
+                </AreaChart>
+              ) : (
+                <LineChart data={chartDataYears} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontSize: '12px' }} />
+                  <Line type="monotone" dataKey="leads" name="Leads" stroke="#4f46e5" strokeWidth={3} dot={{ r: 5, fill: "#4f46e5", stroke: "#fff", strokeWidth: 2 }} activeDot={{ r: 7 }} />
+                </LineChart>
+              )}
             </ResponsiveContainer>
           </div>
         </div>

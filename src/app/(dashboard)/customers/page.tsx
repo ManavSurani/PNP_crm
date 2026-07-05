@@ -67,7 +67,7 @@ export default function CustomersPage() {
       customer.serviceType.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesSource = filters.source === "ALL" || customer.inquirySource === filters.source;
-    const matchesService = filters.service === "ALL" || customer.serviceType === filters.service;
+    const matchesService = filters.service === "ALL" || customer.serviceType?.toLowerCase().replace(/_/g, " ") === filters.service.toLowerCase().replace(/_/g, " ");
 
     const conversionDateStr = customer.project?.startedOn || customer.createdAt;
     const customerDate = new Date(conversionDateStr);
@@ -130,27 +130,29 @@ export default function CustomersPage() {
           >
             <Filter className="h-4 w-4" /> {showFilters ? "Hide Filters" : "Filters"}
           </button>
-          <button 
-            onClick={() => {
-              setSearchTerm("");
-              setFilters({ source: "ALL", service: "ALL", startDate: "", endDate: "" });
-              setSortBy("NEWEST");
-            }}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition shadow-sm"
-          >
-            <RotateCcw className="h-4 w-4" /> Reset
-          </button>
+          {(searchTerm !== "" || filters.source !== "ALL" || filters.service !== "ALL" || filters.startDate !== "" || filters.endDate !== "" || sortBy !== "NEWEST") && (
+            <button 
+              onClick={() => {
+                setSearchTerm("");
+                setFilters({ source: "ALL", service: "ALL", startDate: "", endDate: "" });
+                setSortBy("NEWEST");
+              }}
+              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition shadow-sm"
+            >
+              <RotateCcw className="h-4 w-4" /> Reset
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Filter Options Bar */}
+      {/* Compact Filter Options */}
       {showFilters && (
-        <div className="space-y-4 bg-emerald-50/50 p-6 rounded-xl border border-emerald-100 animate-in slide-in-from-top-2 duration-200">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-2 ml-1">Acquisition Source</label>
+        <div className="bg-emerald-50/50 p-3 rounded-xl border border-emerald-100 shadow-sm animate-in slide-in-from-top-2 duration-200 shrink-0">
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="min-w-[140px] flex-1">
+              <label className="block text-[9px] font-bold text-emerald-700 uppercase tracking-tight mb-1 ml-1">Acquisition Source</label>
               <select 
-                className="w-full rounded-lg border border-emerald-200 bg-white py-2 px-3 text-sm focus:border-emerald-500 outline-none"
+                className="w-full rounded-lg border border-emerald-200 bg-white/70 py-1.5 px-3 text-xs focus:bg-white focus:border-emerald-500 outline-none transition-all cursor-pointer"
                 value={filters.source}
                 onChange={e => setFilters({...filters, source: e.target.value})}
               >
@@ -161,12 +163,13 @@ export default function CustomersPage() {
                 <option value="WEBSITE">Website</option>
                 <option value="DIRECT_CALL">Direct Call</option>
                 <option value="WALK_IN">Walk In</option>
+                <option value="REFERENCE">Reference</option>
               </select>
             </div>
-            <div>
-              <label className="block text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-2 ml-1">Service Category</label>
+            <div className="min-w-[140px] flex-1">
+              <label className="block text-[9px] font-bold text-emerald-700 uppercase tracking-tight mb-1 ml-1">Service Category</label>
               <select 
-                className="w-full rounded-lg border border-emerald-200 bg-white py-2 px-3 text-sm focus:border-emerald-500 outline-none"
+                className="w-full rounded-lg border border-emerald-200 bg-white/70 py-1.5 px-3 text-xs focus:bg-white focus:border-emerald-500 outline-none transition-all cursor-pointer"
                 value={filters.service}
                 onChange={e => setFilters({...filters, service: e.target.value})}
               >
@@ -180,10 +183,10 @@ export default function CustomersPage() {
                 <option value="Other">Other</option>
               </select>
             </div>
-            <div>
-              <label className="block text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-2 ml-1">Sort By</label>
+            <div className="min-w-[140px] flex-1">
+              <label className="block text-[9px] font-bold text-emerald-700 uppercase tracking-tight mb-1 ml-1">Sort By</label>
               <select 
-                className="w-full rounded-lg border border-emerald-200 bg-white py-2 px-3 text-sm focus:border-emerald-500 outline-none"
+                className="w-full rounded-lg border border-emerald-200 bg-white/70 py-1.5 px-3 text-xs focus:bg-white focus:border-emerald-500 outline-none transition-all cursor-pointer"
                 value={sortBy}
                 onChange={e => setSortBy(e.target.value)}
               >
@@ -194,48 +197,47 @@ export default function CustomersPage() {
                 <option value="Z-A">Alphabetical: Z-A</option>
               </select>
             </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-emerald-100">
-             <div>
-                <label className="block text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-2 ml-1">Conversion From</label>
+            <div className="flex-[1.5] flex items-center gap-2">
+              <div className="flex-1">
+                <label className="block text-[9px] font-bold text-emerald-700 uppercase tracking-tight mb-1 ml-1">Conversion From</label>
                 <input 
                   type="date"
-                  className="w-full rounded-lg border border-emerald-200 bg-white py-2 px-3 text-sm focus:border-emerald-500 outline-none"
+                  className="w-full rounded-lg border border-emerald-200 bg-white/70 py-1.5 px-3 text-xs focus:bg-white focus:border-emerald-500 outline-none transition-all"
                   value={filters.startDate}
                   onChange={e => setFilters({...filters, startDate: e.target.value})}
                 />
-             </div>
-             <div>
-                <label className="block text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-2 ml-1">Conversion To</label>
+              </div>
+              <div className="flex-1">
+                <label className="block text-[9px] font-bold text-emerald-700 uppercase tracking-tight mb-1 ml-1">Conversion To</label>
                 <input 
                   type="date"
-                  className="w-full rounded-lg border border-emerald-200 bg-white py-2 px-3 text-sm focus:border-emerald-500 outline-none"
+                  className="w-full rounded-lg border border-emerald-200 bg-white/70 py-1.5 px-3 text-xs focus:bg-white focus:border-emerald-500 outline-none transition-all"
                   value={filters.endDate}
                   onChange={e => setFilters({...filters, endDate: e.target.value})}
                 />
-             </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
 
       {/* Main List Container */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col">
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center h-96 text-slate-400">
+          <div className="flex flex-col items-center justify-center flex-1 text-slate-400 min-h-[400px]">
             <Loader2 className="h-8 w-8 animate-spin text-emerald-500 mb-3" />
             <span className="text-sm font-medium">Loading Directory...</span>
           </div>
         ) : (
-          <div className="overflow-x-auto min-h-[400px]">
-            <table className="min-w-full divide-y divide-slate-200">
-              <thead className="bg-slate-50/50">
+          <div className="overflow-auto flex-1 scrollbar-thin scrollbar-thumb-slate-200" style={{ maxHeight: 'calc(100vh - 320px)' }}>
+            <table className="min-w-full divide-y divide-slate-200 table-fixed" style={{ minWidth: '800px' }}>
+              <thead className="bg-slate-50/50 sticky top-0 z-20 backdrop-blur-sm">
                 <tr>
-                  <th scope="col" className="py-4 pl-8 pr-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Client Profile</th>
-                  <th scope="col" className="px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Purchased Service</th>
-                  <th scope="col" className="px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Conversion Date</th>
-                  <th scope="col" className="px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Handler</th>
-                  <th scope="col" className="relative py-4 pl-3 pr-8"><span className="sr-only">Actions</span></th>
+                  <th scope="col" className="w-[30%] py-4 pl-8 pr-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Client Profile</th>
+                  <th scope="col" className="w-[25%] px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Purchased Service</th>
+                  <th scope="col" className="w-[20%] px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Conversion Date</th>
+                  <th scope="col" className="w-[15%] px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Handler</th>
+                  <th scope="col" className="w-[10%] relative py-4 pl-3 pr-8"><span className="sr-only">Actions</span></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">

@@ -168,6 +168,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                       if (e.key === "Enter") handleUpdateProject();
                       if (e.key === "Escape") setIsEditingProject(false);
                     }}
+                    onBlur={handleUpdateProject}
                   />
                   <div className="flex gap-1">
                     <button onClick={handleUpdateProject} disabled={isSubmitting} className="p-1.5 bg-emerald-600 text-white rounded-lg shadow-sm hover:bg-emerald-700 transition-all"><Check className="h-5 w-5" /></button>
@@ -176,12 +177,19 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                 </div>
               ) : (
                 <div className="flex items-center gap-3">
-                  <h1 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight uppercase">
+                  <h1 
+                    onDoubleClick={() => {
+                      setTempProject(customer?.project?.name || "");
+                      setIsEditingProject(true);
+                    }}
+                    className="text-xl md:text-2xl font-black text-slate-900 tracking-tight uppercase cursor-pointer hover:opacity-80 transition-opacity"
+                    title="Double-click to edit"
+                  >
                     {primaryTitle}
                   </h1>
                   <button 
                     onClick={() => {
-                      setTempProject(customer?.project?.name || customer?.customerName || "");
+                      setTempProject(customer?.project?.name || "");
                       setIsEditingProject(true);
                     }}
                     className="p-1.5 bg-slate-50 text-slate-300 hover:text-emerald-600 rounded-lg border border-slate-100 transition-colors"

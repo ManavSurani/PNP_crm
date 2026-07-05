@@ -130,16 +130,18 @@ export async function GET() {
     const totalOrderValue = (stats[9] as any)._sum.totalAmount || 0;
     const totalPending = Math.max(0, totalOrderValue - totalRevenue);
 
-    // Optimized Chart Data (Last 7 Days) - Fetch and aggregate in JS for SQLite stability
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    sevenDaysAgo.setHours(0, 0, 0, 0);
+    // Optimized Chart Data (Daily, Monthly, Yearly)
+    const fiveYearsAgo = new Date();
+    fiveYearsAgo.setFullYear(fiveYearsAgo.getFullYear() - 4);
+    fiveYearsAgo.setMonth(0, 1);
+    fiveYearsAgo.setHours(0, 0, 0, 0);
 
     const chartRaw = await prisma.lead.findMany({
-      where: { createdAt: { gte: sevenDaysAgo } },
+      where: { createdAt: { gte: fiveYearsAgo } },
       select: { createdAt: true }
     });
 
+    // 1. Last 7 Days
     const last7Days = Array.from({ length: 7 }, (_, i) => {
       const d = new Date();
       d.setDate(d.getDate() - (6 - i));
@@ -150,11 +152,31 @@ export async function GET() {
       const count = chartRaw.filter(r => 
         r.createdAt.toISOString().split("T")[0] === dateStr
       ).length;
-      
       return { 
         date: new Date(dateStr).toLocaleDateString("en-US", { weekday: "short" }), 
         leads: count 
       };
+    });
+
+    // 2. Last 12 Months
+    const last12Months = Array.from({ length: 12 }, (_, i) => {
+      const d = new Date();
+      d.setMonth(d.getMonth() - (11 - i));
+      return { key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`, label: d.toLocaleDateString("en-US", { month: "short" }) };
+    });
+
+    const chartDataMonths = last12Months.map(m => {
+      const count = chartRaw.filter(r => r.createdAt.toISOString().slice(0, 7) === m.key).length;
+      return { date: m.label, leads: count };
+    });
+
+    // 3. Last 5 Years
+    const currentYear = new Date().getFullYear();
+    const last5Years = Array.from({ length: 5 }, (_, i) => currentYear - 4 + i);
+    
+    const chartDataYears = last5Years.map(year => {
+      const count = chartRaw.filter(r => r.createdAt.getFullYear() === year).length;
+      return { date: year.toString(), leads: count };
     });
 
     return NextResponse.json({
@@ -182,6 +204,8 @@ export async function GET() {
         packageStats
       },
       chartData,
+      chartDataMonths,
+      chartDataYears,
     });
   } catch (error: any) {
     console.error("[STATS_API_ERROR]", error);
