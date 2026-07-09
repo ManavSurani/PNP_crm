@@ -250,15 +250,15 @@ export default function CompletedProjectsPage() {
           </div>
         ) : (
           <div className="overflow-auto flex-1 scrollbar-thin scrollbar-thumb-slate-200" style={{ maxHeight: 'calc(100vh - 420px)' }}>
-            <table className="w-full divide-y divide-slate-200 table-fixed" style={{ minWidth: '800px' }}>
+            <table className="w-full divide-y divide-slate-200 table-fixed" style={{ minWidth: '1000px' }}>
               <thead className="bg-slate-50/50 sticky top-0 z-20 backdrop-blur-sm">
                 <tr>
                   <th scope="col" className="w-[25%] py-4 pl-8 pr-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Customer / Project</th>
                   <th scope="col" className="w-[20%] px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Service</th>
-                  <th scope="col" className="w-[15%] px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Completion</th>
-                  <th scope="col" className="w-[15%] px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Final Deal</th>
-                  <th scope="col" className="w-[15%] px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                  <th scope="col" className="w-[10%] relative py-4 pl-3 pr-8"><span className="sr-only">Actions</span></th>
+                  <th scope="col" className="w-[12%] px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Completion</th>
+                  <th scope="col" className="w-[10%] px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Final Deal</th>
+                  <th scope="col" className="w-[13%] px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                  <th scope="col" className="w-[20%] relative py-4 pl-3 pr-8"><span className="sr-only">Actions</span></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
@@ -334,7 +334,7 @@ export default function CompletedProjectsPage() {
                                }}
                                className="text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 border border-emerald-100"
                              >
-                               Open Workspace <ExternalLink className="h-3 w-3" />
+                               Open Profile <ExternalLink className="h-3 w-3" />
                              </button>
                              <button 
                                onClick={(e) => {
