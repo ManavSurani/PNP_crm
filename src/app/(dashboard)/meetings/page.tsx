@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { format, isPast, isToday } from "date-fns";
 import { 
   Calendar, MapPin, Clock, User, Phone, CheckCircle2, 
-  Loader2, Search, Filter, ExternalLink, Map, ChevronRight, ArrowLeft, RotateCcw
+  Loader2, Search, Filter, ExternalLink, Map, ChevronRight, ArrowLeft, RotateCcw,
+  Globe
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -57,9 +58,10 @@ export default function MeetingsPage() {
     return true;
   });
 
-  const pending = filtered.filter(m => m.status === "SCHEDULED");
-  const today = pending.filter(m => isToday(new Date(m.date)));
-  const upcoming = pending.filter(m => !isPast(new Date(m.date)) && !isToday(new Date(m.date)));
+  const pendingMeetings = meetings.filter(m => m.status === "SCHEDULED");
+  const todayCount = pendingMeetings.filter(m => isToday(new Date(m.date))).length;
+  const upcomingCount = pendingMeetings.filter(m => !isPast(new Date(m.date)) && !isToday(new Date(m.date))).length;
+  const overdueCount = pendingMeetings.filter(m => isPast(new Date(m.date)) && !isToday(new Date(m.date))).length;
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-10">
@@ -71,14 +73,42 @@ export default function MeetingsPage() {
           <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Site Visits & Consultations</h1>
           <p className="text-slate-500 text-sm mt-1 font-medium">Coordinate site visits, field measurements, and client discussions.</p>
         </div>
-        <div className="relative z-10 flex gap-4">
-          <div className="px-5 py-3 rounded-lg bg-emerald-50 border border-emerald-100 flex flex-col items-center min-w-[100px]">
-             <span className="text-xl font-bold text-emerald-600 leading-none">{today.length}</span>
-             <span className="text-[10px] font-bold text-emerald-600/60 uppercase tracking-wider mt-1">Today</span>
+        <div className="relative z-10 flex gap-3">
+          <div 
+            onClick={() => setFilterPriority(filterPriority === "TODAY" ? "ALL" : "TODAY")}
+            className={cn(
+              "px-5 py-3 rounded-xl flex flex-col items-center min-w-[100px] shadow-sm transition-all cursor-pointer active:scale-95 border",
+              filterPriority === "TODAY" 
+                ? "bg-indigo-600 border-indigo-500 shadow-indigo-100" 
+                : "bg-indigo-50/50 border-indigo-100 shadow-indigo-50/50"
+            )}
+          >
+             <span className={cn("text-xl font-black leading-none", filterPriority === "TODAY" ? "text-white" : "text-indigo-600")}>{todayCount}</span>
+             <span className={cn("text-[9px] font-bold uppercase tracking-widest mt-1.5", filterPriority === "TODAY" ? "text-indigo-100" : "text-indigo-400")}>Today</span>
           </div>
-          <div className="px-5 py-3 rounded-lg bg-indigo-50 border border-indigo-100 flex flex-col items-center min-w-[100px]">
-             <span className="text-xl font-bold text-primary leading-none">{upcoming.length}</span>
-             <span className="text-[10px] font-bold text-primary/60 uppercase tracking-wider mt-1">Upcoming</span>
+          <div 
+            onClick={() => setFilterPriority(filterPriority === "OVERDUE" ? "ALL" : "OVERDUE")}
+            className={cn(
+              "px-5 py-3 rounded-xl flex flex-col items-center min-w-[100px] shadow-sm transition-all cursor-pointer active:scale-95 border",
+              filterPriority === "OVERDUE" 
+                ? "bg-rose-600 border-rose-500 shadow-rose-100" 
+                : "bg-rose-50/50 border-rose-100 shadow-rose-50/50"
+            )}
+          >
+             <span className={cn("text-xl font-black leading-none", filterPriority === "OVERDUE" ? "text-white" : "text-rose-600")}>{overdueCount}</span>
+             <span className={cn("text-[9px] font-bold uppercase tracking-widest mt-1.5", filterPriority === "OVERDUE" ? "text-rose-100" : "text-rose-400")}>Overdue</span>
+          </div>
+          <div 
+            onClick={() => setFilterPriority(filterPriority === "UPCOMING" ? "ALL" : "UPCOMING")}
+            className={cn(
+              "px-5 py-3 rounded-xl flex flex-col items-center min-w-[100px] shadow-sm transition-all cursor-pointer active:scale-95 border",
+              filterPriority === "UPCOMING" 
+                ? "bg-amber-600 border-amber-500 shadow-amber-100" 
+                : "bg-amber-50/50 border-amber-100 shadow-amber-50/50"
+            )}
+          >
+             <span className={cn("text-xl font-black leading-none", filterPriority === "UPCOMING" ? "text-white" : "text-amber-600")}>{upcomingCount}</span>
+             <span className={cn("text-[9px] font-bold uppercase tracking-widest mt-1.5", filterPriority === "UPCOMING" ? "text-amber-100" : "text-amber-400")}>UPCOMING</span>
           </div>
         </div>
       </div>
@@ -98,18 +128,22 @@ export default function MeetingsPage() {
           />
         </div>
         <div className="relative w-full sm:w-56">
-          <Filter className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-          <select 
-            className="w-full pl-11 pr-10 py-3 bg-white border border-slate-200 rounded-xl font-semibold text-xs text-slate-600 shadow-sm hover:bg-slate-50 transition-all appearance-none outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary cursor-pointer"
-            value={filterPriority}
-            onChange={(e) => setFilterPriority(e.target.value as any)}
+          <button 
+            onClick={() => {
+              if (filterPriority === "ALL") setFilterPriority("UPCOMING");
+              else if (filterPriority === "UPCOMING") setFilterPriority("OVERDUE");
+              else if (filterPriority === "OVERDUE") setFilterPriority("TODAY");
+              else setFilterPriority("ALL");
+            }}
+            className={cn(
+              "w-full h-full min-h-[46px] rounded-xl border py-2 px-3 text-[10px] font-bold uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2",
+              filterPriority !== "ALL" 
+                ? "bg-indigo-600 text-white border-indigo-500 shadow-md" 
+                : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50 shadow-sm"
+            )}
           >
-            <option value="ALL">All Priorities</option>
-            <option value="TODAY">Today's Visits</option>
-            <option value="UPCOMING">Upcoming Visits</option>
-            <option value="OVERDUE">Overdue Visits</option>
-          </select>
-          <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none rotate-90" />
+            <Globe className="h-4 w-4" /> {filterPriority === "ALL" ? "All Distances" : `${filterPriority} ONLY`}
+          </button>
         </div>
         {(search !== "" || filterPriority !== "ALL") && (
           <button 
