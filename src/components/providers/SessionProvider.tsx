@@ -17,6 +17,16 @@ function SessionSecurityHandler() {
     // 1. Wait for session to load
     if (status === "loading") return;
     
+    // Handle unauthenticated state (e.g., session expired while active)
+    if (status === "unauthenticated" && pathname !== "/login") {
+      console.log("[Auth] Session expired or invalid. Enforcing logout...");
+      hasChecked.current = true;
+      signOut({ redirect: false }).then(() => {
+        window.location.href = "/login";
+      });
+      return;
+    }
+
     // 2. Only perform the "fresh window" check once per window lifecycle
     if (hasChecked.current) return;
 
@@ -58,7 +68,7 @@ export default function SessionProvider({
   children: React.ReactNode;
 }) {
   return (
-    <NextAuthSessionProvider>
+    <NextAuthSessionProvider refetchInterval={30} refetchOnWindowFocus={true}>
       <SessionSecurityHandler />
       {children}
     </NextAuthSessionProvider>
