@@ -231,7 +231,7 @@ export default function LeadsPage() {
                 <option value="WEBSITE">Website</option>
                 <option value="DIRECT_CALL">Direct Call</option>
                 <option value="WALK_IN">Walk In</option>
-                <option value="REFERENCE">Reference</option>
+                <option value="THROUGH_REFERENCE">Reference</option>
               </select>
             </div>
             <div className="min-w-[140px] flex-1">
