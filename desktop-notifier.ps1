@@ -1,11 +1,15 @@
 # desktop-notifier.ps1
-# Background script to update the desktop shortcut with live notification counts and badges
+# Background script to update the desktop shortcut with live badges AND send native Windows Toast Notifications
 
 $DesktopPath = [System.Environment]::GetFolderPath('Desktop')
 $ApiUrl = "http://localhost:3000/api/notifications?token=pnp_desktop_local_secret"
 $WshShell = New-Object -ComObject WScript.Shell
 $AppDir = $PSScriptRoot
 $BadgesDir = Join-Path $AppDir "public\badges_v2"
+
+# Initialize UWP classes for Toast Notifications
+[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
+[Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null
 
 # C# Helper for SHChangeNotify to refresh desktop icons
 $Source = @"
@@ -43,33 +47,58 @@ function Get-CrmShortcut {
     return $null
 }
 
-# Initial check
-if ($null -eq (Get-CrmShortcut)) {
-    exit
-}
+$previousIds = @()
+$isFirstRun = $true
 
 while ($true) {
     try {
-        # Fetch notifications with Cache-Buster Timestamp to bypass PowerShell caching
+        # Fetch notifications
         $UrlWithTimestamp = "$ApiUrl&_t=$([DateTimeOffset]::Now.ToUnixTimeMilliseconds())"
         $response = Invoke-RestMethod -Uri $UrlWithTimestamp -TimeoutSec 10 -ErrorAction Stop
         
+        $currentIds = @()
         $total = 0
         $followUps = 0
         $siteVisits = 0
         $overdue = 0
-
-        # Note: API returns a JSON array of notification objects
+        
         if ($null -ne $response) {
             foreach ($n in $response) {
+                $currentIds += $n.id
                 $total++
                 if ($n.category -eq "Follow-Ups") { $followUps++ }
                 elseif ($n.category -eq "Site Visits") { $siteVisits++ }
                 elseif ($n.category -eq "Overdue") { $overdue++ }
             }
+            
+            # --- TOAST NOTIFICATIONS (Only for BRAND NEW items after startup) ---
+            $newNotifications = $response | Where-Object { $_.id -notin $previousIds }
+            
+            if (-not $isFirstRun -and $newNotifications.Count -gt 0) {
+                foreach ($newNotif in $newNotifications) {
+                    $title = $newNotif.title
+                    $description = $newNotif.description
+                    
+                    $xmlString = @"
+<toast>
+  <visual>
+    <binding template="ToastGeneric">
+      <text>$title</text>
+      <text>$description</text>
+    </binding>
+  </visual>
+</toast>
+"@
+                    $xml = [Windows.Data.Xml.Dom.XmlDocument]::new()
+                    $xml.LoadXml($xmlString)
+                    $toast = [Windows.UI.Notifications.ToastNotification]::new($xml)
+                    $toast.ExpirationTime = [DateTimeOffset]::Now.AddHours(1)
+                    [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("PNP CRM").Show($toast)
+                }
+            }
         }
-
-        # Build tooltip description
+        
+        # --- DESKTOP ICON UPDATES ---
         $desc = "PNP CRM Notifications"
         $desc += "`nTotal: $total"
         if ($followUps -gt 0) { $desc += "`nFollow-Ups: $followUps" }
@@ -80,23 +109,18 @@ while ($true) {
             $desc = "PNP CRM Application`n(No pending notifications)"
         }
 
-        # Determine Icon Path
         $iconNum = $total
         if ($iconNum -gt 99) { $iconNum = 99 }
         if ($iconNum -lt 0) { $iconNum = 0 }
         
         $IconPath = Join-Path $BadgesDir "badge_$iconNum.ico"
-        
-        # Fallback to base icon if badge missing
         if (-not (Test-Path $IconPath)) {
             $IconPath = Join-Path $AppDir "public\crm_icon.ico"
         }
 
-        # Dynamically find the shortcut in case it was renamed
         $ShortcutPath = Get-CrmShortcut
         
         if ($null -ne $ShortcutPath) {
-            # Load shortcut and update description
             $Shortcut = $WshShell.CreateShortcut($ShortcutPath)
             
             $changed = $false
@@ -110,15 +134,19 @@ while ($true) {
                 $changed = $true
             }
             
-            # Only save and refresh if changed (minimizes disk writes and screen flashing)
             if ($changed) {
                 $Shortcut.Save()
                 try { (Get-Item $ShortcutPath).LastWriteTime = (Get-Date) } catch {}
                 Refresh-Desktop -FilePath $ShortcutPath
             }
         }
+        
+        # Update state
+        $previousIds = $currentIds
+        $isFirstRun = $false
+        
     } catch {
-        # Silently fail if server is unreachable or file is locked
+        # Silently fail if server is unreachable
     }
 
     Start-Sleep -Seconds 30

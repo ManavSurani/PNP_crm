@@ -1,3 +1,7 @@
+param(
+    [switch]$BackgroundOnly
+)
+
 # PNP CRM Native PowerShell Launcher
 # This script handles database setup, port management, and server startup.
 
@@ -26,7 +30,48 @@ if (-not (Test-Path (Join-Path $AppRoot "node_modules"))) {
 
 Write-Host "Environment OK. Starting server..." -ForegroundColor Green
 
-# 2. Aggressive Cleanup
+# 2. Check if server is already running
+Write-Host "Checking server status..." -ForegroundColor Gray
+$IsRunning = $false
+try {
+    $r = Invoke-WebRequest -Uri "http://localhost:$Port" -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
+    $IsRunning = $true
+} catch { }
+
+function Find-Browser {
+    $paths = @(
+        "${env:ProgramFiles}\Google\Chrome\Application\chrome.exe",
+        "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe",
+        "${env:LocalAppData}\Google\Chrome\Application\chrome.exe",
+        "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe",
+        "${env:ProgramFiles}\Microsoft\Edge\Application\msedge.exe"
+    )
+    foreach ($p in $paths) { if (Test-Path $p) { return $p } }
+    return $null
+}
+
+if ($IsRunning) {
+    if ($BackgroundOnly) {
+        Write-Host "Server is already running in background. Exiting quietly." -ForegroundColor Green
+        exit 0
+    } else {
+        Write-Host "Server is already running! Opening browser instantly..." -ForegroundColor Green
+        "Server is already running! Opening browser..." | Out-File $LogFile -Append
+        $browser = Find-Browser
+        if ($browser) {
+            $ProfileDir = Join-Path $env:TEMP "pnp_crm_session"
+            if (Test-Path $ProfileDir) { Remove-Item -Path $ProfileDir -Recurse -Force -ErrorAction SilentlyContinue }
+            Start-Process $browser -ArgumentList "--app=http://localhost:$Port", "--window-size=1280,800", "--user-data-dir=`"$ProfileDir`""
+        } else {
+            Start-Process "http://localhost:$Port"
+        }
+        # Wait 2 seconds to ensure browser launches before closing cmd window
+        Start-Sleep -Seconds 2
+        exit 0
+    }
+}
+
+# 3. Aggressive Cleanup (only if server not running)
 Write-Host "Cleaning up old processes..." -ForegroundColor Gray
 function Stop-CrmProcesses {
     $processes = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess
@@ -100,17 +145,6 @@ Start-Process -FilePath "cmd.exe" -ArgumentList $StartArgs -WorkingDirectory $Ap
 Start-Process -FilePath "powershell.exe" -ArgumentList "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$AppRoot\desktop-notifier.ps1`"" -WindowStyle Hidden
 
 # 7. Wait for Server to be Ready
-function Find-Browser {
-    $paths = @(
-        "${env:ProgramFiles}\Google\Chrome\Application\chrome.exe",
-        "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe",
-        "${env:LocalAppData}\Google\Chrome\Application\chrome.exe",
-        "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe",
-        "${env:ProgramFiles}\Microsoft\Edge\Application\msedge.exe"
-    )
-    foreach ($p in $paths) { if (Test-Path $p) { return $p } }
-    return $null
-}
 
 $url = "http://localhost:$Port"
 $ready = $false
@@ -134,20 +168,27 @@ while (-not $ready -and $tries -lt 60) { # 60 * 2s = 120s max
 
 # 8. Open Browser if ready
 if ($ready) {
-    "Server is ready! Opening browser..." | Out-File $LogFile -Append
-    $browser = Find-Browser
-    if ($browser) {
-        $ProfileDir = Join-Path $env:TEMP "pnp_crm_session"
-        if (Test-Path $ProfileDir) {
-            Remove-Item -Path $ProfileDir -Recurse -Force -ErrorAction SilentlyContinue
+    "Server is ready!" | Out-File $LogFile -Append
+    if (-not $BackgroundOnly) {
+        "Opening browser..." | Out-File $LogFile -Append
+        $browser = Find-Browser
+        if ($browser) {
+            $ProfileDir = Join-Path $env:TEMP "pnp_crm_session"
+            if (Test-Path $ProfileDir) {
+                Remove-Item -Path $ProfileDir -Recurse -Force -ErrorAction SilentlyContinue
+            }
+            Start-Process $browser -ArgumentList "--app=$url", "--window-size=1280,800", "--user-data-dir=`"$ProfileDir`""
+        } else {
+            Start-Process $url
         }
-        Start-Process $browser -ArgumentList "--app=$url", "--window-size=1280,800", "--user-data-dir=`"$ProfileDir`""
     } else {
-        Start-Process $url
+        "Background mode: Server running silently." | Out-File $LogFile -Append
     }
 } else {
     "Server failed to start within timeout." | Out-File $ErrFile -Append
 }
 
-Write-Host "`nPress Enter to close this window..." -ForegroundColor Yellow
-Read-Host
+if (-not $BackgroundOnly) {
+    Write-Host "`nPress Enter to close this window..." -ForegroundColor Yellow
+    Read-Host
+}
