@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { ClockTimePicker } from "@/components/ui/ClockTimePicker";
 
 type FollowUp = { 
   id: string; 
@@ -1017,8 +1018,9 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                     />
                   </Field>
                   <Field label="Visit Time">
-                    <input type="time" className={inputCls}
-                      value={meetingForm.time} onChange={e => setMeetingForm({ ...meetingForm, time: e.target.value })}
+                    <ClockTimePicker 
+                      value={meetingForm.time} 
+                      onChange={(val) => setMeetingForm({ ...meetingForm, time: val })} 
                     />
                   </Field>
                 </div>
@@ -1040,8 +1042,9 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
             {/* Conditional Time Picker */}
             {pickedStatus && (pickedStatus === "RESCHEDULE" || pickedStatus === "NEXT_DAY") && (
               <Field label="Follow-up Time (Optional)">
-                <input type="time" className={inputCls}
-                  value={followUpTime} onChange={e => setFollowUpTime(e.target.value)}
+                <ClockTimePicker 
+                  value={followUpTime} 
+                  onChange={(val) => setFollowUpTime(val)} 
                 />
               </Field>
             )}
@@ -1171,7 +1174,10 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-start-2">
                   <Field label="Proposed Time (Optional)">
-                    <input type="time" className={inputCls} value={meetingForm.time} onChange={e => setMeetingForm({ ...meetingForm, time: e.target.value })} />
+                    <ClockTimePicker 
+                      value={meetingForm.time} 
+                      onChange={(val) => setMeetingForm({ ...meetingForm, time: val })} 
+                    />
                   </Field>
                 </div>
                 <div className="col-start-1 row-start-1">
@@ -1254,7 +1260,10 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                   <input type="date" required className={inputCls} value={editMeetingDate} onChange={e => setEditMeetingDate(e.target.value)} />
                 </Field>
                 <Field label="Visit Time">
-                  <input type="time" className={inputCls} value={editMeetingTime} onChange={e => setEditMeetingTime(e.target.value)} />
+                  <ClockTimePicker 
+                    value={editMeetingTime} 
+                    onChange={(val) => setEditMeetingTime(val)} 
+                  />
                 </Field>
               </div>
             )}
@@ -1312,8 +1321,9 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                     />
                   </Field>
                   <Field label="Time (Optional)">
-                    <input type="time" className={inputCls}
-                      value={followUpTime} onChange={e => setFollowUpTime(e.target.value)}
+                    <ClockTimePicker 
+                      value={followUpTime} 
+                      onChange={(val) => setFollowUpTime(val)} 
                     />
                   </Field>
                 </div>

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import PinModal from "@/components/analytics/PinModal";
 import { cn } from "@/lib/utils";
+import { ClockTimePicker } from "@/components/ui/ClockTimePicker";
 import { format } from "date-fns";
 
 export default function SettingsPage() {
@@ -383,19 +384,20 @@ export default function SettingsPage() {
     }
   };
 
-  const handleSetSchedule = async () => {
+  const handleSetSchedule = async (timeToSave?: string) => {
+    const time = typeof timeToSave === "string" ? timeToSave : autoBackupTime;
     setIsSettingSchedule(true);
     setScheduleMessage({ type: "", text: "" });
     try {
       const res = await fetch("/api/settings/schedule", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ time: autoBackupTime }),
+        body: JSON.stringify({ time }),
       });
       const data = await res.json();
       if (res.ok) {
         setIsAutoBackupEnabled(true);
-        setScheduleMessage({ type: "success", text: `Scheduled daily at ${autoBackupTime} ✓` });
+        setScheduleMessage({ type: "success", text: `Scheduled daily at ${time} ✓` });
       } else {
         setScheduleMessage({ type: "error", text: data.error ?? "Failed to set schedule" });
       }
@@ -953,24 +955,16 @@ export default function SettingsPage() {
                   </div>
 
                   {isAutoBackupEnabled && (
-                    <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end animate-in fade-in slide-in-from-top-2 duration-300">
-                      <div className="space-y-1.5 flex-1">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">DAILY BACKUP TIME</label>
-                        <input
-                          type="time"
-                          value={autoBackupTime}
-                          onChange={e => setAutoBackupTime(e.target.value)}
-                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all"
-                        />
-                      </div>
-                      <button
-                        onClick={handleSetSchedule}
-                        disabled={isSettingSchedule}
-                        className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-700 active:scale-95 transition-all disabled:opacity-50 min-w-[160px] justify-center"
-                      >
-                        {isSettingSchedule ? <Loader2 className="h-4 w-4 animate-spin" /> : <Timer className="h-4 w-4" />}
-                        {isSettingSchedule ? "Saving..." : "Save Time"}
-                      </button>
+                    <div className="flex flex-col gap-1.5 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">DAILY BACKUP TIME</label>
+                      <ClockTimePicker
+                        value={autoBackupTime}
+                        onChange={(val) => {
+                          setAutoBackupTime(val);
+                          handleSetSchedule(val);
+                        }}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all"
+                      />
                     </div>
                   )}
 
