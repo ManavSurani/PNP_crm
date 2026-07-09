@@ -6,6 +6,10 @@ import crypto from "crypto";
 import AdmZip from "adm-zip";
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { exec } from "child_process";
+import { promisify } from "util";
+
+const execAsync = promisify(exec);
 
 const BACKUP_SECRET =
   process.env.BACKUP_SECRET ?? "PNP_CRM_ENTERPRISE_SECRET_2026_SECURE_V1";
@@ -152,6 +156,15 @@ export async function POST(req: Request) {
     // Verify the restored DB file actually landed correctly
     if (!fs.existsSync(dbPath)) {
       throw new Error("Database restore failed — crm.db not found after extraction");
+    }
+
+    // NEW STEP: Push the current schema to the restored database to add any missing columns.
+    // --skip-generate ensures we don't try to overwrite locked DLL files while Next.js is running.
+    // --accept-data-loss forces it through warnings.
+    try {
+      await execAsync("npx prisma db push --skip-generate --accept-data-loss");
+    } catch (pushErr: any) {
+      console.warn("[Restore] prisma db push warned/failed, proceeding anyway:", pushErr.stderr ?? pushErr.message);
     }
 
     // Reconnect Prisma BEFORE calling revalidatePath

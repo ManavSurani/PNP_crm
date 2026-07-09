@@ -51,13 +51,17 @@ model Session {
 }
 
 model SystemSetting {
-  id                     String   @id @default("global")
-  sessionMaxAge          Int      @default(2592000)
+  id                     String    @id @default("global")
+  sessionMaxAge          Int       @default(2592000)
   whatsappDispatchNumber String?
   analyticsPin           String?
-  isAnalyticsPinEnabled  Boolean  @default(false)
-  updatedAt              DateTime @updatedAt
+  isAnalyticsPinEnabled  Boolean   @default(false)
+  isAutoBackupEnabled    Boolean   @default(false)
+  autoBackupTime         String?
+  autoBackupLastRun      DateTime?
+  updatedAt              DateTime  @updatedAt
 }
+
 
 model PasswordResetToken {
   id        String   @id @default(cuid())

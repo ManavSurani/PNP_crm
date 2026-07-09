@@ -6,7 +6,8 @@ import {
   User, Shield, Smartphone, LogOut, Loader2, Save, 
   Key, Globe, Clock, Monitor, RefreshCcw, AlertCircle,
   Zap, Check, Settings as SettingsIcon, Database, Lock,
-  Trash2, MoreHorizontal, ExternalLink, AlertTriangle, Search, Filter, RotateCcw, Activity, MapPin, ChevronRight, Phone
+  Trash2, MoreHorizontal, ExternalLink, AlertTriangle, Search, Filter, RotateCcw, Activity, MapPin, ChevronRight, Phone,
+  Cloud, CloudDownload, Timer, CalendarClock
 } from "lucide-react";
 import PinModal from "@/components/analytics/PinModal";
 import { cn } from "@/lib/utils";
@@ -38,6 +39,17 @@ export default function SettingsPage() {
   // Backup & Restore States
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showRestoreModal, setShowRestoreModal] = useState(false);
+
+  // Auto-Backup & Cloud States
+  const [isAutoBackupEnabled, setIsAutoBackupEnabled] = useState(false);
+  const [autoBackupTime, setAutoBackupTime] = useState("23:00");
+  const [autoBackupLastRun, setAutoBackupLastRun] = useState<string | null>(null);
+  const [isSettingSchedule, setIsSettingSchedule] = useState(false);
+  const [isTogglingSchedule, setIsTogglingSchedule] = useState(false);
+  const [scheduleMessage, setScheduleMessage] = useState({ type: "", text: "" });
+  const [showCloudRestoreModal, setShowCloudRestoreModal] = useState(false);
+  const [isCollectingFromCloud, setIsCollectingFromCloud] = useState(false);
+  const [cloudMessage, setCloudMessage] = useState({ type: "", text: "" });
 
   // Analytics PIN States
   const [isAnalyticsPinEnabled, setIsAnalyticsPinEnabled] = useState(false);
@@ -125,6 +137,9 @@ export default function SettingsPage() {
       }
       setIsAnalyticsPinEnabled(data.isAnalyticsPinEnabled);
       setHasPinSetup(!!data.analyticsPin);
+      if (typeof data.isAutoBackupEnabled !== 'undefined') setIsAutoBackupEnabled(data.isAutoBackupEnabled);
+      if (data.autoBackupTime) setAutoBackupTime(data.autoBackupTime);
+      if (data.autoBackupLastRun) setAutoBackupLastRun(data.autoBackupLastRun);
     } catch (err) { console.error(err); }
   };
 
@@ -343,6 +358,7 @@ export default function SettingsPage() {
       const contentDisposition = response.headers.get("Content-Disposition") ?? "";
       const fileNameMatch = contentDisposition.match(/filename="(.+?)"/);
       const fileName = fileNameMatch?.[1] ?? "PNP-CRM-Backup.pnpcrm";
+      const cloudUploaded = response.headers.get("X-Cloud-Uploaded") === "true";
 
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -353,11 +369,100 @@ export default function SettingsPage() {
       a.remove();
       window.URL.revokeObjectURL(url);
 
-      setMessage({ type: "success", text: "Backup created successfully" });
+      // Refresh last run timestamp if cloud upload happened
+      if (cloudUploaded) {
+        setAutoBackupLastRun(new Date().toISOString());
+        setMessage({ type: "success", text: "Backup created & uploaded to cloud ☁️" });
+      } else {
+        setMessage({ type: "success", text: "Backup created successfully" });
+      }
     } catch (err: any) {
       setMessage({ type: "error", text: err.message ?? "Failed to create backup" });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSetSchedule = async () => {
+    setIsSettingSchedule(true);
+    setScheduleMessage({ type: "", text: "" });
+    try {
+      const res = await fetch("/api/settings/schedule", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ time: autoBackupTime }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setIsAutoBackupEnabled(true);
+        setScheduleMessage({ type: "success", text: `Scheduled daily at ${autoBackupTime} ✓` });
+      } else {
+        setScheduleMessage({ type: "error", text: data.error ?? "Failed to set schedule" });
+      }
+    } catch (err: any) {
+      setScheduleMessage({ type: "error", text: err.message ?? "Connection error" });
+    } finally {
+      setIsSettingSchedule(false);
+    }
+  };
+
+  const handleToggleSchedule = async () => {
+    setIsTogglingSchedule(true);
+    setScheduleMessage({ type: "", text: "" });
+    try {
+      if (isAutoBackupEnabled) {
+        // Turn OFF
+        const res = await fetch("/api/settings/schedule", { method: "DELETE" });
+        const data = await res.json();
+        if (res.ok) {
+          setIsAutoBackupEnabled(false);
+          setScheduleMessage({ type: "success", text: "Auto-backup schedule disabled" });
+        } else {
+          setScheduleMessage({ type: "error", text: data.error ?? "Failed to disable schedule" });
+        }
+      } else {
+        // Turn ON (just calls the POST to recreate with current time)
+        handleSetSchedule();
+      }
+    } catch (err: any) {
+      setScheduleMessage({ type: "error", text: "Connection error" });
+    } finally {
+      setIsTogglingSchedule(false);
+    }
+  };
+
+  const handleCloudRestore = async () => {
+    setIsCollectingFromCloud(true);
+    setShowCloudRestoreModal(false);
+    setCloudMessage({ type: "", text: "" });
+    try {
+      // Step 1: Fetch backup blob from R2
+      const cloudRes = await fetch("/api/settings/backup-cloud");
+      if (!cloudRes.ok) {
+        const data = await cloudRes.json().catch(() => ({}));
+        throw new Error(data.error ?? "Failed to fetch cloud backup");
+      }
+      const blob = await cloudRes.blob();
+      const file = new File([blob], "PNP-CRM-Cloud-Backup.pnpcrm", { type: "application/octet-stream" });
+
+      // Step 2: Send to restore API (same flow as existing Import Backup)
+      const formData = new FormData();
+      formData.append("file", file);
+      const restoreRes = await fetch("/api/settings/restore", {
+        method: "POST",
+        body: formData,
+      });
+      const restoreData = await restoreRes.json();
+
+      if (restoreRes.ok) {
+        setCloudMessage({ type: "success", text: "Cloud backup restored successfully. Refreshing..." });
+        setTimeout(() => window.location.reload(), 1500);
+      } else {
+        throw new Error(restoreData.error ?? "Restore failed");
+      }
+    } catch (err: any) {
+      setCloudMessage({ type: "error", text: err.message ?? "Cloud restore failed" });
+      setIsCollectingFromCloud(false);
     }
   };
 
@@ -812,10 +917,114 @@ export default function SettingsPage() {
                     </button>
                   </div>
                 </div>
-                
+
                 <div className="border-t border-slate-100" />
-                
-                {/* Restore Backup Section */}
+
+                {/* ── Auto-Backup Schedule Section ───────────────────────── */}
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-[11px] font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                        <CalendarClock className="h-3.5 w-3.5 text-primary" />
+                        AUTO-BACKUP SCHEDULE
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-1 max-w-[400px]">
+                        Set a daily time to automatically create and upload a backup to the cloud. Your PC must be ON at the scheduled time.
+                      </p>
+                    </div>
+                    {/* Toggle Switch */}
+                    <button
+                      onClick={handleToggleSchedule}
+                      disabled={isTogglingSchedule || isSettingSchedule}
+                      className={cn(
+                        "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+                        isAutoBackupEnabled ? "bg-emerald-500" : "bg-slate-200",
+                        (isTogglingSchedule || isSettingSchedule) && "opacity-50 cursor-not-allowed"
+                      )}
+                    >
+                      <span className="sr-only">Toggle Auto-Backup</span>
+                      <span
+                        className={cn(
+                          "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                          isAutoBackupEnabled ? "translate-x-5" : "translate-x-0"
+                        )}
+                      />
+                    </button>
+                  </div>
+
+                  {isAutoBackupEnabled && (
+                    <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="space-y-1.5 flex-1">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">DAILY BACKUP TIME</label>
+                        <input
+                          type="time"
+                          value={autoBackupTime}
+                          onChange={e => setAutoBackupTime(e.target.value)}
+                          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all"
+                        />
+                      </div>
+                      <button
+                        onClick={handleSetSchedule}
+                        disabled={isSettingSchedule}
+                        className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-700 active:scale-95 transition-all disabled:opacity-50 min-w-[160px] justify-center"
+                      >
+                        {isSettingSchedule ? <Loader2 className="h-4 w-4 animate-spin" /> : <Timer className="h-4 w-4" />}
+                        {isSettingSchedule ? "Saving..." : "Save Time"}
+                      </button>
+                    </div>
+                  )}
+
+                  {autoBackupLastRun && (
+                    <div className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50 border border-emerald-100 rounded-xl">
+                      <Cloud className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                      <span className="text-xs text-emerald-700 font-medium">
+                        Last cloud backup: {format(new Date(autoBackupLastRun), "dd MMM yyyy, hh:mm a")}
+                      </span>
+                    </div>
+                  )}
+
+                  {scheduleMessage.text && (
+                    <p className={`text-xs font-medium ${scheduleMessage.type === "success" ? "text-emerald-600" : "text-rose-600"}`}>
+                      {scheduleMessage.text}
+                    </p>
+                  )}
+                </div>
+
+                <div className="border-t border-slate-100" />
+
+                {/* ── Restore from Cloud Section ─────────────────────────── */}
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-[11px] font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                      <CloudDownload className="h-3.5 w-3.5 text-indigo-500" />
+                      RESTORE FROM CLOUD
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Fetch and restore the latest backup stored in Cloudflare R2. This will replace all current CRM data.
+                    </p>
+                  </div>
+
+                  {cloudMessage.text && (
+                    <p className={`text-xs font-medium ${cloudMessage.type === "success" ? "text-emerald-600" : "text-rose-600"}`}>
+                      {cloudMessage.text}
+                    </p>
+                  )}
+
+                  <div className="pt-2 flex justify-end">
+                    <button
+                      onClick={() => setShowCloudRestoreModal(true)}
+                      disabled={isCollectingFromCloud || isLoading}
+                      className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:shadow-lg hover:shadow-indigo-100 active:scale-95 transition-all disabled:opacity-50 min-w-[200px] justify-center"
+                    >
+                      {isCollectingFromCloud ? <Loader2 className="h-4 w-4 animate-spin" /> : <CloudDownload className="h-4 w-4" />}
+                      {isCollectingFromCloud ? "Restoring from Cloud..." : "Collect & Restore from Cloud"}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="border-t border-slate-100" />
+
+                {/* ── Import Backup Section (UNCHANGED) ─────────────────── */}
                 <div className="space-y-6">
                   <div>
                     <h3 className="text-[11px] font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
@@ -1068,6 +1277,52 @@ export default function SettingsPage() {
           </div>
           <h2 className="text-xl font-bold text-slate-900 mt-6 tracking-tight">Restoring Backup...</h2>
           <p className="text-slate-500 text-sm mt-2">Please do not close this window.</p>
+        </div>
+      )}
+
+      {/* Cloud Restore Confirmation Modal */}
+      {showCloudRestoreModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md p-8 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3 text-indigo-600 mb-6">
+              <div className="h-12 w-12 rounded-full bg-indigo-50 flex items-center justify-center">
+                <CloudDownload className="h-6 w-6" />
+              </div>
+              <h2 className="text-xl font-bold text-slate-900">Restore from Cloud?</h2>
+            </div>
+            <p className="text-slate-600 text-sm leading-relaxed mb-8">
+              This will replace all current CRM data, settings, and branding with the latest backup from Cloudflare R2. This cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                disabled={isCollectingFromCloud}
+                onClick={() => setShowCloudRestoreModal(false)}
+                className="flex-1 px-6 py-3 bg-slate-100 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-200 transition-all disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={isCollectingFromCloud}
+                onClick={handleCloudRestore}
+                className="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isCollectingFromCloud && <Loader2 className="h-4 w-4 animate-spin" />}
+                {isCollectingFromCloud ? "Restoring..." : "Restore Now"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cloud Restore Progress Overlay */}
+      {isCollectingFromCloud && !showCloudRestoreModal && (
+        <div className="fixed inset-0 z-[110] flex flex-col items-center justify-center bg-white/80 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="relative">
+            <div className="h-20 w-20 rounded-full border-4 border-indigo-100 border-t-indigo-600 animate-spin" />
+            <Cloud className="h-8 w-8 text-indigo-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-900 mt-6 tracking-tight">Restoring from Cloud...</h2>
+          <p className="text-slate-500 text-sm mt-2">Fetching backup from Cloudflare R2. Please wait.</p>
         </div>
       )}
 
