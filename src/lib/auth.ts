@@ -15,26 +15,45 @@ export const { handlers: { GET, POST }, auth, signIn, signOut } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" }
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
 
-        // Rate limit by email to prevent brute-force
-        const rateLimitKey = `login:${(credentials.email as string).toLowerCase()}`;
+        const emailStr = (credentials.email as string).toLowerCase();
+
+        // 1. IP Rate Limiting (Network Layer)
+        // Attempt to extract IP, fallback to email if running locally or headers missing
+        const forwardedFor = req?.headers?.get("x-forwarded-for");
+        const realIp = req?.headers?.get("x-real-ip");
+        const clientIp = forwardedFor ? forwardedFor.split(",")[0].trim() : (realIp || emailStr);
+        
+        const rateLimitKey = `login_ip:${clientIp}`;
         const rateCheck = checkRateLimit(rateLimitKey);
+        
         if (!rateCheck.allowed) {
           const minutes = Math.ceil((rateCheck.retryAfterMs ?? 0) / 60000);
           throw new Error(`TOO_MANY_ATTEMPTS:${minutes}`);
         }
 
+        // 2. Database Account Lockout (Application Layer)
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string }
+          where: { email: emailStr }
         });
 
         if (!user) {
           return null;
         }
+
+        // Check if user is locked
+        if (user.lockedUntil && new Date() < user.lockedUntil) {
+          const remainingMs = user.lockedUntil.getTime() - Date.now();
+          const minutes = Math.ceil(remainingMs / 60000);
+          throw new Error(`ACCOUNT_LOCKED:${minutes}`);
+        }
+
+        // If locked but time has passed, we will reset it upon successful login,
+        // or re-increment upon failure.
 
         const isPasswordValid = await bcrypt.compare(
           credentials.password as string,
@@ -42,11 +61,31 @@ export const { handlers: { GET, POST }, auth, signIn, signOut } = NextAuth({
         );
 
         if (!isPasswordValid) {
-          return null; // rate limiter already incremented
+          // Increment failed attempts
+          const newFailCount = user.failedLoginAttempts + 1;
+          const updateData: any = { failedLoginAttempts: newFailCount };
+          
+          if (newFailCount >= 5) {
+            // Lock for 15 minutes
+            updateData.lockedUntil = new Date(Date.now() + 15 * 60 * 1000);
+          }
+          
+          await prisma.user.update({
+            where: { id: user.id },
+            data: updateData
+          });
+
+          return null; // The rate limiter has also tracked this IP failure
         }
 
-        // Successful login — clear rate limit counter
+        // Successful login — clear network rate limit and DB lockout counters
         clearRateLimit(rateLimitKey);
+        if (user.failedLoginAttempts > 0 || user.lockedUntil) {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { failedLoginAttempts: 0, lockedUntil: null }
+          });
+        }
 
         return {
           id: user.id,

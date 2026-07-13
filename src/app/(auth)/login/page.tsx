@@ -38,10 +38,12 @@ export default function LoginForm() {
       });
 
       if (res?.error) {
-        // Parse rate-limit error from the thrown Error message
         if (res.error.includes("TOO_MANY_ATTEMPTS")) {
           const minutes = res.error.split(":")[1] || "15";
           setError(`Too many failed attempts. Try again in ${minutes} minute${minutes === "1" ? "" : "s"}.`);
+        } else if (res.error.includes("ACCOUNT_LOCKED")) {
+          const minutes = res.error.split(":")[1] || "15";
+          setError(`Account temporarily locked for security. Try again in ${minutes} minute${minutes === "1" ? "" : "s"}.`);
         } else {
           setError("Invalid credentials. Please verify your identity.");
         }

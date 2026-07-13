@@ -12,13 +12,15 @@ model User {
   name          String
   email         String         @unique
   password      String
-  role          String         @default("SALES_EXECUTIVE")
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  accounts      Account[]
-  executionLogs ExecutionLog[]
-  assignedLeads Lead[]
-  sessions      Session[]
+  role                String         @default("SALES_EXECUTIVE")
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  failedLoginAttempts Int            @default(0)
+  lockedUntil         DateTime?
+  accounts            Account[]
+  executionLogs       ExecutionLog[]
+  assignedLeads       Lead[]
+  sessions            Session[]
 }
 
 model Account {
