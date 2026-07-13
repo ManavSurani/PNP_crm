@@ -6,7 +6,7 @@ import { format } from "date-fns";
 import {
   Phone, MapPin, FileText, Clock, Zap, Loader2, Pencil, X, CheckCircle2,
   PhoneMissed, Calendar, Check, RotateCcw, Ban, AlertTriangle, ListTodo, Activity, Trash2,
-  Banknote, MessageSquare, ChevronRight, ArrowLeft, Globe, User
+  Banknote, MessageSquare, ChevronRight, ArrowLeft, Globe, User, MonitorSmartphone
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -38,7 +38,7 @@ type LeadDetails = {
 };
 
 type ModalType = 
-  | "EDIT" | "PICKED" | "NOT_PICKED" | "MEETING" | "CANCEL" | "REACTIVATE" | "CONVERT" | "COMPLETE_MEETING"
+  | "EDIT" | "PICKED" | "NOT_PICKED" | "MEETING" | "CANCEL" | "REACTIVATE" | "CONVERT" | "COMPLETE_MEETING" | "CALL"
   | null;
 
 const CANCEL_REASONS = [
@@ -516,6 +516,13 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
         </div>
         <div className="flex flex-col gap-2 md:items-end relative z-10">
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setActiveModal("CALL")}
+              className="h-9 w-9 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl flex items-center justify-center transition-all active:scale-90 shadow-md shadow-indigo-100 border border-indigo-200 group"
+              title="Direct Call"
+            >
+              <Phone className="h-4 w-4 fill-current" />
+            </button>
             <button
               onClick={() => {
                 window.open(`https://wa.me/${lead.contactNumber.replace(/\D/g, "")}`, "_blank");
@@ -1356,6 +1363,44 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
               />
             </div>
           </form>
+        </Modal>
+      )}
+
+      {/* ─── MODAL: DIRECT CALL INTEGRATION ─── */}
+      {activeModal === "CALL" && (
+        <Modal title="Initiating Direct Call" icon={<Phone className="h-5 w-5 text-indigo-500" />} color="primary" onClose={closeModal}>
+          <div className="p-8 space-y-6 text-center">
+            <div className="mx-auto h-16 w-16 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mb-2 shadow-sm border border-indigo-100">
+              <Phone className="h-8 w-8 animate-pulse" />
+            </div>
+            
+            <h3 className="text-xl font-bold text-slate-900 tracking-tight">Ready to dial?</h3>
+            
+            <p className="text-sm text-slate-500 leading-relaxed px-4">
+              Click <span className="font-semibold text-slate-700">Dial Now</span> to automatically place the call. 
+              <br /><br />
+              <span className="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Not connecting?</span><br />
+              Ensure your phone is linked to your PC.
+            </p>
+
+            <div className="flex flex-col gap-3 pt-4 border-t border-slate-100">
+              <a 
+                href={`tel:+91${lead.contactNumber.replace(/\D/g, "")}`}
+                onClick={() => setTimeout(closeModal, 300)}
+                className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-md shadow-indigo-100 border border-indigo-500/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+              >
+                <Phone className="h-5 w-5 fill-current" /> Dial Now
+              </a>
+              
+              <a 
+                href="ms-settings:mobile-devices-addphone-direct"
+                onClick={() => setTimeout(closeModal, 300)}
+                className="w-full py-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl font-semibold transition-all active:scale-95 flex items-center justify-center gap-2 text-sm"
+              >
+                <MonitorSmartphone className="h-4 w-4 text-slate-400" /> Check Phone Link on PC
+              </a>
+            </div>
+          </div>
         </Modal>
       )}
     </div>
