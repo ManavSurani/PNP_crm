@@ -160,10 +160,10 @@ export default function ReportsPage() {
           <div className="h-72 min-w-0">
             <ResponsiveContainer width="100%" height="100%">
               {timeframe === "months" ? (
-                <BarChart data={charts.revenueChart} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                <BarChart data={charts.revenueChart} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                   <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} tickFormatter={(value) => Intl.NumberFormat('en-IN', { notation: "compact" }).format(value)} />
                   <Tooltip 
                     cursor={{ fill: '#f8fafc' }}
                     formatter={(v: any) => [`₹${Number(v).toLocaleString()}`, "Revenue"]}
@@ -172,7 +172,7 @@ export default function ReportsPage() {
                   <Bar dataKey="revenue" fill="#4f46e5" radius={[4, 4, 0, 0]} maxBarSize={48} />
                 </BarChart>
               ) : (
-                <AreaChart data={charts.revenueChartYears} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                <AreaChart data={charts.revenueChartYears} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.3}/>
@@ -181,7 +181,7 @@ export default function ReportsPage() {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                   <XAxis dataKey="year" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} tickFormatter={(value) => Intl.NumberFormat('en-IN', { notation: "compact" }).format(value)} />
                   <Tooltip 
                     formatter={(v: any) => [`₹${Number(v).toLocaleString()}`, "Revenue"]}
                     contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontSize: '12px' }} 
