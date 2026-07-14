@@ -31,6 +31,7 @@ export default function NotificationBell() {
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [isExtended, setIsExtended] = useState(false);
+  const [overdueTab, setOverdueTab] = useState<"calls" | "visits">("calls");
   const router = useRouter();
 
   const fetchNotifications = async () => {
@@ -76,13 +77,45 @@ export default function NotificationBell() {
 
   const unreadCount = notifications.filter(n => !readIds.has(n.id)).length;
 
+  const overdueNotifications = notifications.filter(n => n.category === "Overdue");
+  const overdueCallsCount = overdueNotifications.filter(n => n.id.startsWith("fu-")).length;
+  const overdueVisitsCount = overdueNotifications.filter(n => n.id.startsWith("meet-")).length;
+
+  // Auto-switch overdue tab if one is empty
+  useEffect(() => {
+    if (activeTab === "Overdue") {
+      if (overdueCallsCount === 0 && overdueVisitsCount > 0 && overdueTab !== "visits") {
+        setOverdueTab("visits");
+      } else if (overdueVisitsCount === 0 && overdueCallsCount > 0 && overdueTab !== "calls") {
+        setOverdueTab("calls");
+      }
+    }
+  }, [activeTab, overdueCallsCount, overdueVisitsCount, overdueTab]);
+
   const filteredNotifications = notifications.filter(n => {
     if (activeTab === "All") return true;
     if (activeTab === "Follow-Ups") return n.category === "Follow-Ups";
     if (activeTab === "Site Visits") return n.category === "Site Visits";
-    if (activeTab === "Overdue") return n.category === "Overdue";
+    if (activeTab === "Overdue") {
+       if (n.category !== "Overdue") return false;
+       if (overdueCallsCount > 0 && overdueVisitsCount > 0) {
+           if (overdueTab === "calls") return n.id.startsWith("fu-");
+           if (overdueTab === "visits") return n.id.startsWith("meet-");
+       }
+       return true;
+    }
     return true;
   });
+
+  let footerText = "View All Activity";
+  let footerRoute = "";
+  if (activeTab === "Site Visits" || (activeTab === "Overdue" && (overdueCallsCount === 0 || overdueTab === "visits"))) {
+      footerText = "View Site Visits";
+      footerRoute = "/meetings";
+  } else if (activeTab === "Follow-Ups" || (activeTab === "Overdue" && (overdueVisitsCount === 0 || overdueTab === "calls"))) {
+      footerText = "View Follow-up Queue";
+      footerRoute = "/follow-ups";
+  }
 
   const markAllAsRead = () => {
     const allIds = new Set(notifications.map(n => n.id));
@@ -178,6 +211,24 @@ export default function NotificationBell() {
                 );
               })}
             </div>
+
+            {/* Overdue Sub-Tabs (Only if both exist) */}
+            {activeTab === "Overdue" && overdueCallsCount > 0 && overdueVisitsCount > 0 && (
+              <div className="flex bg-slate-100 p-1 mx-4 mt-2 rounded-lg relative z-10 transition-all duration-500 opacity-100">
+                <button 
+                  onClick={() => setOverdueTab("calls")} 
+                  className={cn("flex-1 py-1 text-[10px] font-bold rounded-md transition-all duration-300", overdueTab === "calls" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700")}
+                >
+                  Calls ({overdueCallsCount})
+                </button>
+                <button 
+                  onClick={() => setOverdueTab("visits")} 
+                  className={cn("flex-1 py-1 text-[10px] font-bold rounded-md transition-all duration-300", overdueTab === "visits" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700")}
+                >
+                  Visits ({overdueVisitsCount})
+                </button>
+              </div>
+            )}
           </div>
 
           {/* List */}
@@ -251,24 +302,20 @@ export default function NotificationBell() {
 
           {/* Footer */}
           {(!isExtended || activeTab !== "All") && (
-            <div className="p-3 bg-slate-50/50 border-top border-slate-100">
+            <div className="p-3 bg-slate-50/50 border-top border-slate-100 relative z-20">
               <button 
                 onClick={() => {
-                  if (activeTab === "Site Visits") {
+                  if (footerRoute) {
                     setIsOpen(false);
                     setIsExtended(false);
-                    router.push("/meetings");
-                  } else if (activeTab === "Overdue" || activeTab === "Follow-Ups") {
-                    setIsOpen(false);
-                    setIsExtended(false);
-                    router.push("/follow-ups");
+                    router.push(footerRoute);
                   } else {
                     setIsExtended(true);
                   }
                 }}
                 className="w-full py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-bold text-slate-600 hover:bg-white hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-sm flex items-center justify-center gap-2"
               >
-                <ExternalLink className="h-3 w-3" /> View All Activity
+                <ExternalLink className="h-3 w-3" /> {footerText}
               </button>
             </div>
           )}

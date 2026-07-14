@@ -61,6 +61,8 @@ while ($true) {
         $followUps = 0
         $siteVisits = 0
         $overdue = 0
+        $overdueCalls = 0
+        $overdueVisits = 0
         
         if ($null -ne $response) {
             foreach ($n in $response) {
@@ -68,7 +70,10 @@ while ($true) {
                 $total++
                 if ($n.category -eq "Follow-Ups") { $followUps++ }
                 elseif ($n.category -eq "Site Visits") { $siteVisits++ }
-                elseif ($n.category -eq "Overdue") { $overdue++ }
+                elseif ($n.category -eq "Overdue") { 
+                    $overdue++
+                    if ($n.id.StartsWith("fu-")) { $overdueCalls++ } else { $overdueVisits++ }
+                }
             }
             
             # --- TOAST NOTIFICATIONS (Only for BRAND NEW items after startup) ---
@@ -103,7 +108,13 @@ while ($true) {
         $desc += "`nTotal: $total"
         if ($followUps -gt 0) { $desc += "`nFollow-Ups: $followUps" }
         if ($siteVisits -gt 0) { $desc += "`nSite Visits: $siteVisits" }
-        if ($overdue -gt 0) { $desc += "`nOverdue: $overdue" }
+        if ($overdueCalls -gt 0 -and $overdueVisits -gt 0) {
+            $desc += "`nOverdue: Calls ($overdueCalls) | Visits ($overdueVisits)"
+        } elseif ($overdueCalls -gt 0) {
+            $desc += "`nOverdue Calls: $overdueCalls"
+        } elseif ($overdueVisits -gt 0) {
+            $desc += "`nOverdue Visits: $overdueVisits"
+        }
 
         if ($total -eq 0) {
             $desc = "PNP CRM Application`n(No pending notifications)"

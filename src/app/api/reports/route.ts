@@ -15,6 +15,7 @@ export async function GET() {
     const [
       todayFollowUps,
       overdueFollowUps,
+      overdueMeetings,
       todayMeetings,
       recentLeads,
       leadsByStatus,
@@ -30,25 +31,45 @@ export async function GET() {
       serviceData,
       conversionData,
     ] = await Promise.all([
-      // Today's pending follow-ups
+      // Today's pending follow-ups (only active pipeline leads)
       prisma.followUp.findMany({
         where: {
           nextCallDate: { gte: startOfDay, lte: endOfDay },
           completedDate: null,
-          lead: { isCancelled: false }
+          lead: { 
+            isCancelled: false,
+            status: { in: ["NEW_INQUIRY", "FOLLOW_UP"] }
+          }
         },
         include: { lead: { select: { id: true, customerName: true, contactNumber: true, serviceType: true } } },
         orderBy: { nextCallDate: "asc" },
       }),
-      // Overdue (past date, not completed)
+      // Overdue (past date, not completed, only active pipeline leads)
       prisma.followUp.findMany({
         where: {
           nextCallDate: { lt: startOfDay },
           completedDate: null,
-          lead: { isCancelled: false }
+          lead: { 
+            isCancelled: false,
+            status: { in: ["NEW_INQUIRY", "FOLLOW_UP"] }
+          }
         },
         include: { lead: { select: { id: true, customerName: true, contactNumber: true, status: true } } },
         orderBy: { nextCallDate: "asc" },
+        take: 10,
+      }),
+      // Overdue meetings
+      prisma.meeting.findMany({
+        where: {
+          date: { lt: startOfDay },
+          status: "SCHEDULED",
+          lead: { 
+            isCancelled: false,
+            status: { in: ["NEW_INQUIRY", "FOLLOW_UP", "MEETING_SCHEDULED"] }
+          }
+        },
+        include: { lead: { select: { id: true, customerName: true, contactNumber: true, status: true } } },
+        orderBy: { date: "asc" },
         take: 10,
       }),
       // Today's meetings
@@ -131,6 +152,7 @@ export async function GET() {
       alerts: {
         todayFollowUps,
         overdueFollowUps,
+        overdueMeetings,
         todayMeetings,
       },
       charts: {

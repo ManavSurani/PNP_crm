@@ -6,7 +6,7 @@ import { format } from "date-fns";
 import {
   TrendingUp, Phone, Calendar, AlertTriangle, CheckCircle2,
   Loader2, Clock, Target, BarChart3, Users, MessageCircle, ChevronRight, ArrowLeft,
-  Activity, Layers, Filter
+  Activity, Layers, Filter, MapPin
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -29,6 +29,7 @@ export default function ReportsPage() {
   const [data, setData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeChart, setActiveChart] = useState<number>(0);
+  const [activeOverdueTab, setActiveOverdueTab] = useState<"calls" | "visits">("calls");
 
   useEffect(() => {
     fetch("/api/reports")
@@ -91,27 +92,61 @@ export default function ReportsPage() {
           </div>
         </div>
 
-        {/* Overdue Follow-ups */}
-        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="bg-rose-50 p-2 rounded-lg"><AlertTriangle className="h-4 w-4 text-rose-600" /></div>
-            <div>
-              <p className="text-sm font-semibold text-slate-900">Missed Follow-Ups</p>
-              <p className="text-[10px] text-rose-500 font-semibold uppercase tracking-wider">{alerts.overdueFollowUps.length} Pending Recalls</p>
+        {/* Interactive Overdue Actions */}
+        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden flex flex-col">
+          <div className="flex items-center justify-between mb-6 relative z-20">
+            <div className="flex items-center gap-3">
+              <div className="bg-rose-50 p-2 rounded-lg">
+                {activeOverdueTab === "calls" ? <Phone className="h-4 w-4 text-rose-600" /> : <MapPin className="h-4 w-4 text-rose-600" />}
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-900 transition-all">
+                  {activeOverdueTab === "calls" ? "Missed Follow-Ups" : "Missed Site Visits"}
+                </p>
+                <p className="text-[10px] text-rose-500 font-semibold uppercase tracking-wider transition-all">
+                  {activeOverdueTab === "calls" ? `${alerts.overdueFollowUps?.length || 0} Pending Recalls` : `${alerts.overdueMeetings?.length || 0} Pending Visits`}
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex bg-slate-100 p-1 rounded-lg">
+              <button onClick={() => setActiveOverdueTab("calls")} className={cn("px-2 py-1 text-[10px] font-bold rounded-md transition-all", activeOverdueTab === "calls" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700")}>Calls</button>
+              <button onClick={() => setActiveOverdueTab("visits")} className={cn("px-2 py-1 text-[10px] font-bold rounded-md transition-all", activeOverdueTab === "visits" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700")}>Visits</button>
             </div>
           </div>
-          <div className="space-y-2.5 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
-            {alerts.overdueFollowUps.length === 0 ? (
-              <div className="py-8 text-center border border-dashed border-slate-100 rounded-lg text-[11px] text-slate-400 font-medium italic">Pipeline is up to date.</div>
-            ) : alerts.overdueFollowUps.map((f: any) => (
-              <Link href={`/leads/${f.lead?.id}`} key={f.id} className="flex items-center gap-3 p-2.5 bg-rose-50/30 hover:bg-rose-50 rounded-lg border border-rose-100 transition-all group">
-                <div className="h-8 w-8 bg-white rounded-md flex items-center justify-center text-rose-400 font-bold text-xs ring-1 ring-rose-200 group-hover:text-rose-600">{f.lead.customerName ? f.lead.customerName.charAt(0).toUpperCase() : "?"}</div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-slate-900 truncate">{f.lead.customerName || "Unknown Customer"}</p>
-                  <p className="text-[10px] text-rose-500 font-medium italic">Due: {format(new Date(f.nextCallDate), "dd MMM")}</p>
-                </div>
-              </Link>
-            ))}
+
+          <div className="flex-1 min-h-[12rem] relative">
+            <div className={cn("absolute inset-0 w-full transition-opacity duration-500 overflow-y-auto pr-2 custom-scrollbar", activeOverdueTab === "calls" ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none")}>
+              <div className="space-y-2.5">
+                {!alerts.overdueFollowUps || alerts.overdueFollowUps.length === 0 ? (
+                  <div className="py-8 text-center border border-dashed border-slate-100 rounded-lg text-[11px] text-slate-400 font-medium italic">Call pipeline is up to date.</div>
+                ) : alerts.overdueFollowUps.map((f: any) => (
+                  <Link href={`/leads/${f.lead?.id}`} key={f.id} className="flex items-center gap-3 p-2.5 bg-rose-50/30 hover:bg-rose-50 rounded-lg border border-rose-100 transition-all group">
+                    <div className="h-8 w-8 bg-white rounded-md flex items-center justify-center text-rose-400 font-bold text-xs ring-1 ring-rose-200 group-hover:text-rose-600">{f.lead.customerName ? f.lead.customerName.charAt(0).toUpperCase() : "?"}</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-slate-900 truncate">{f.lead.customerName || "Unknown Customer"}</p>
+                      <p className="text-[10px] text-rose-500 font-medium italic">Due: {format(new Date(f.nextCallDate), "dd MMM")}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div className={cn("absolute inset-0 w-full transition-opacity duration-500 overflow-y-auto pr-2 custom-scrollbar", activeOverdueTab === "visits" ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none")}>
+              <div className="space-y-2.5">
+                {!alerts.overdueMeetings || alerts.overdueMeetings.length === 0 ? (
+                  <div className="py-8 text-center border border-dashed border-slate-100 rounded-lg text-[11px] text-slate-400 font-medium italic">Visit pipeline is up to date.</div>
+                ) : alerts.overdueMeetings.map((m: any) => (
+                  <Link href={`/leads/${m.lead?.id}`} key={m.id} className="flex items-center gap-3 p-2.5 bg-rose-50/30 hover:bg-rose-50 rounded-lg border border-rose-100 transition-all group">
+                    <div className="h-8 w-8 bg-white rounded-md flex items-center justify-center text-rose-400 font-bold text-xs ring-1 ring-rose-200 group-hover:text-rose-600">{m.lead.customerName ? m.lead.customerName.charAt(0).toUpperCase() : "?"}</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-slate-900 truncate">{m.lead.customerName || "Unknown Customer"}</p>
+                      <p className="text-[10px] text-rose-500 font-medium italic">Due: {format(new Date(m.date), "dd MMM")}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 

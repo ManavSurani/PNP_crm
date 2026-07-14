@@ -6,7 +6,7 @@ import { format, isPast, isToday } from "date-fns";
 import { 
   Calendar, MapPin, Clock, User, Phone, CheckCircle2, 
   Loader2, Search, Filter, ExternalLink, Map, ChevronRight, ArrowLeft, RotateCcw,
-  Globe
+  Globe, AlertTriangle
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -182,6 +182,7 @@ export default function MeetingsPage() {
                 {filtered.map((m) => {
                   const scheduleDate = new Date(m.date);
                   const isTodayMeeting = isToday(scheduleDate);
+                  const isOverdue = m.status === "SCHEDULED" && !isTodayMeeting && isPast(scheduleDate);
 
                   return (
                     <tr 
@@ -217,6 +218,11 @@ export default function MeetingsPage() {
                                Active Today
                             </span>
                           )}
+                          {isOverdue && (
+                            <span className="inline-flex items-center gap-1 w-fit px-2 py-0.5 rounded-md bg-rose-50 text-rose-600 text-[9px] font-bold uppercase tracking-wider border border-rose-100 mt-1 shadow-sm">
+                               <AlertTriangle className="h-2.5 w-2.5" /> Missed Visit
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="px-3 py-5">
@@ -238,9 +244,12 @@ export default function MeetingsPage() {
                       <td className="px-3 py-5">
                         <div className="flex items-center gap-2">
                            <div className={cn("h-2 w-2 rounded-full shadow-[0_0_8px_rgba(0,0,0,0)] transition-all", 
+                              isOverdue ? "bg-rose-500 animate-pulse shadow-rose-500/50" :
                               m.status === "SCHEDULED" ? "bg-amber-400 animate-pulse shadow-amber-400/50" : "bg-emerald-500 shadow-emerald-500/50"
                            )} />
-                           <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{m.status}</span>
+                           <span className={cn("text-[10px] font-bold uppercase tracking-widest", isOverdue ? "text-rose-600" : "text-slate-500")}>
+                             {isOverdue ? "OVERDUE" : m.status}
+                           </span>
                         </div>
                       </td>
                       <td className="py-5 pr-6 text-right">
