@@ -67,6 +67,16 @@ export default function LeadsPage() {
 
   useEffect(() => {
     fetchLeads();
+    
+    // Auto-apply filters from URL to skip the need for useSearchParams
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const statusParam = params.get("status");
+      if (statusParam) {
+        setFilters(prev => ({ ...prev, status: statusParam }));
+        setShowFilters(true);
+      }
+    }
   }, []);
 
   // Remove global scrollbar for this page
@@ -114,7 +124,11 @@ export default function LeadsPage() {
       lead.contactNumber.includes(searchTerm) ||
       lead.serviceType.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = filters.status === "ALL" ? (lead.status !== "WON_ORDER" && lead.status !== "CANCELLED") : lead.status === filters.status;
+    const matchesStatus = filters.status === "ALL" 
+      ? (lead.status !== "WON_ORDER" && lead.status !== "CANCELLED") 
+      : filters.status === "ACTIVE"
+        ? (lead.status === "FOLLOW_UP" || lead.status === "MEETING_SCHEDULED")
+        : lead.status === filters.status;
     const matchesSource = filters.source === "ALL" || lead.inquirySource === filters.source;
     const matchesService = filters.service === "ALL" || lead.serviceType?.toLowerCase().replace(/_/g, " ") === filters.service.toLowerCase().replace(/_/g, " ");
 
@@ -213,6 +227,7 @@ export default function LeadsPage() {
               >
                 <option value="ALL">Active Only</option>
                 <option value="NEW_INQUIRY">New Inquiry</option>
+                <option value="ACTIVE">Current Pipeline</option>
                 <option value="FOLLOW_UP">Follow Up</option>
                 <option value="MEETING_SCHEDULED">Visit Scheduled</option>
               </select>

@@ -11,6 +11,7 @@ import {
   CartesianGrid, AreaChart, Area, LineChart, Line
 } from "recharts";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 export default function Dashboard() {
   const [stats, setStats] = useState<any>(null);
@@ -58,14 +59,14 @@ export default function Dashboard() {
     : 0;
 
   const KPIs = [
-    { title: "Total Leads", value: metrics.totalLeads, icon: Users, color: "text-indigo-600", bg: "bg-indigo-50" },
-    { title: "Follow-ups", value: null, icon: PhoneCall, color: "text-sky-600", bg: "bg-sky-50" },
-    { title: "Won Orders", value: metrics.wonOrders ?? 0, icon: Target, color: "text-emerald-600", bg: "bg-emerald-50" },
-    { title: "Completed Projects", value: metrics.completedProjects ?? 0, icon: CheckCircle2, color: "text-teal-600", bg: "bg-teal-50" },
-    { title: "Site Visits", value: metrics.totalMeetings, icon: MapPin, color: "text-slate-600", bg: "bg-slate-100" },
-    { title: "New Inquiries", value: metrics.newLeads, icon: MessageSquare, color: "text-amber-600", bg: "bg-amber-50" },
-    { title: "Current Leads", value: metrics.currentLeads, icon: TrendingUp, color: "text-violet-600", bg: "bg-violet-50" },
-    { title: "Canceled Archive", value: metrics.canceledArchive, icon: Trash2, color: "text-rose-600", bg: "bg-rose-50" },
+    { title: "Total Leads", value: metrics.totalLeads, icon: Users, color: "text-indigo-600", bg: "bg-indigo-50", link: "/leads" },
+    { title: "Follow-ups", value: null, icon: PhoneCall, color: "text-sky-600", bg: "bg-sky-50", link: "/follow-ups" },
+    { title: "Won Orders", value: metrics.wonOrders ?? 0, icon: Target, color: "text-emerald-600", bg: "bg-emerald-50", link: "/customers" },
+    { title: "Completed Projects", value: metrics.completedProjects ?? 0, icon: CheckCircle2, color: "text-teal-600", bg: "bg-teal-50", link: "/customers/completed" },
+    { title: "Site Visits", value: metrics.totalMeetings, icon: MapPin, color: "text-slate-600", bg: "bg-slate-100", link: "/meetings" },
+    { title: "New Inquiries", value: metrics.newLeads, icon: MessageSquare, color: "text-amber-600", bg: "bg-amber-50", link: "/leads?status=NEW_INQUIRY" },
+    { title: "Current Leads", value: metrics.currentLeads, icon: TrendingUp, color: "text-violet-600", bg: "bg-violet-50", link: "/leads?status=ACTIVE" },
+    { title: "Canceled Archive", value: metrics.canceledArchive, icon: Trash2, color: "text-rose-600", bg: "bg-rose-50", link: "/canceled" },
   ];
 
   return (
@@ -88,21 +89,21 @@ export default function Dashboard() {
       {/* KPI Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
         {KPIs.map((kpi, idx) => (
-          <div key={idx} className="bg-white p-5 rounded-xl border border-slate-200 hover:border-primary/30 hover:shadow-sm transition-all group min-h-[140px] flex flex-col justify-between">
+          <Link href={kpi.link} key={idx} className="bg-white p-5 rounded-xl border border-slate-200 hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group min-h-[140px] flex flex-col justify-between cursor-pointer">
             <div>
-               <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center mb-4 transition-transform group-hover:scale-105", kpi.bg, kpi.color)}>
+               <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110", kpi.bg, kpi.color)}>
                  <kpi.icon className="h-5 w-5" />
                </div>
-               <p className="text-xs font-bold text-slate-500 uppercase tracking-tight">{kpi.title}</p>
+               <p className="text-xs font-bold text-slate-500 uppercase tracking-tight group-hover:text-primary transition-colors">{kpi.title}</p>
             </div>
             
             {kpi.title === "Follow-ups" ? (
               <div className="grid grid-cols-3 mt-auto pt-3 border-t border-slate-100/50 -mx-2">
-                <div className="flex flex-col items-center border-r border-slate-100 last:border-0 px-1">
+                <div className="flex flex-col items-center border-r border-slate-100 last:border-0 px-1 group-hover:border-primary/10 transition-colors">
                   <span className="text-[11px] font-black text-indigo-600 leading-none">{metrics.todayFollowUps}</span>
                   <span className="text-[7px] font-bold text-indigo-400 uppercase tracking-tighter mt-1">Today</span>
                 </div>
-                <div className="flex flex-col items-center border-r border-slate-100 last:border-0 px-1">
+                <div className="flex flex-col items-center border-r border-slate-100 last:border-0 px-1 group-hover:border-primary/10 transition-colors">
                   <span className={cn("text-[11px] font-black leading-none", metrics.overdueFollowUps > 0 ? "text-rose-600" : "text-slate-400")}>
                     {metrics.overdueFollowUps}
                   </span>
@@ -116,7 +117,7 @@ export default function Dashboard() {
             ) : (
               <p className="text-xl font-bold text-slate-900 mt-1">{kpi.value}</p>
             )}
-          </div>
+          </Link>
         ))}
       </div>
 
