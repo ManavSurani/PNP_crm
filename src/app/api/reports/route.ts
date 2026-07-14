@@ -19,7 +19,15 @@ export async function GET() {
       recentLeads,
       leadsByStatus,
       leadsBySource,
-      monthlyRevenue,
+      recentLeadsData,
+      recentFollowUpsData,
+      recentMeetingsData,
+      totalInquiries,
+      activeFollowUps,
+      completedSiteVisits,
+      wonProjects,
+      completedProjects,
+      serviceData,
       conversionData,
     ] = await Promise.all([
       // Today's pending follow-ups
@@ -64,45 +72,60 @@ export async function GET() {
       prisma.lead.groupBy({ where: { isCancelled: false }, by: ["status"], _count: { _all: true } }),
       // Count by inquiry source
       prisma.lead.groupBy({ where: { isCancelled: false }, by: ["inquirySource"], _count: { _all: true }, orderBy: { _count: { inquirySource: "desc" } } }),
-      // Last 5 years revenue - Unified via LeadTransaction
-      prisma.leadTransaction.findMany({
-        where: { 
-          type: "RECEIVED",
-          createdAt: { gte: new Date(new Date().setFullYear(new Date().getFullYear() - 4)) },
-          lead: { isCancelled: false }
-        },
-        select: { amount: true, createdAt: true },
-      }),
+      // 1. System Pulse Data
+      prisma.lead.findMany({ where: { createdAt: { gte: new Date(new Date().setMonth(new Date().getMonth() - 5)) }, isCancelled: false }, select: { createdAt: true } }),
+      prisma.followUp.findMany({ where: { createdAt: { gte: new Date(new Date().setMonth(new Date().getMonth() - 5)) } }, select: { createdAt: true } }),
+      prisma.meeting.findMany({ where: { createdAt: { gte: new Date(new Date().setMonth(new Date().getMonth() - 5)) } }, select: { createdAt: true } }),
+      
+      // 2. Global Funnel Data
+      prisma.lead.count({ where: { isCancelled: false } }),
+      prisma.lead.count({ where: { status: "FOLLOW_UP", isCancelled: false } }),
+      prisma.meeting.count({ where: { status: "COMPLETED" } }),
+      prisma.lead.count({ where: { status: "WON_ORDER", isCancelled: false } }),
+      prisma.lead.count({ where: { isProjectCompleted: true, isCancelled: false } }),
+
+      // 3. Service Demand Data
+      prisma.lead.findMany({ where: { createdAt: { gte: new Date(new Date().setMonth(new Date().getMonth() - 5)) }, isCancelled: false }, select: { serviceType: true, createdAt: true } }),
+
       // Conversion: leads that reached WON_ORDER vs total
       prisma.lead.count({ where: { status: "WON_ORDER", isCancelled: false } }),
     ]);
 
-    // Build 6-month revenue chart
+    // Build 6-month key array
     const months = Array.from({ length: 6 }, (_, i) => {
       const d = new Date();
       d.setMonth(d.getMonth() - (5 - i));
       return { key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`, label: d.toLocaleDateString("en-US", { month: "short" }) };
     });
 
-    const revenueChart = months.map(m => ({
-      month: m.label,
-      revenue: monthlyRevenue
-        .filter(p => p.createdAt.toISOString().slice(0, 7) === m.key)
-        .reduce((s, p) => s + p.amount, 0),
-    }));
+    // 1. Process System Pulse
+    const systemPulse = months.map(m => {
+      const lCount = recentLeadsData.filter((x: any) => x.createdAt.toISOString().slice(0, 7) === m.key).length;
+      const fCount = recentFollowUpsData.filter((x: any) => x.createdAt.toISOString().slice(0, 7) === m.key).length;
+      const mCount = recentMeetingsData.filter((x: any) => x.createdAt.toISOString().slice(0, 7) === m.key).length;
+      return { month: m.label, activity: lCount + fCount + mCount, leads: lCount, tasks: fCount + mCount };
+    });
 
-    // Build 5-year revenue chart
-    const currentYear = new Date().getFullYear();
-    const last5Years = Array.from({ length: 5 }, (_, i) => currentYear - 4 + i);
-    
-    const revenueChartYears = last5Years.map(year => ({
-      year: year.toString(),
-      revenue: monthlyRevenue
-        .filter(p => p.createdAt.getFullYear() === year)
-        .reduce((s, p) => s + p.amount, 0),
-    }));
+    // 2. Process Global Funnel
+    const globalFunnel = [
+      { stage: "Total Inquiries", value: totalInquiries, fill: "#3b82f6" },
+      { stage: "Active Follow-ups", value: activeFollowUps, fill: "#f59e0b" },
+      { stage: "Site Visits Done", value: completedSiteVisits, fill: "#8b5cf6" },
+      { stage: "Won Projects", value: wonProjects, fill: "#10b981" },
+      { stage: "Completed Work", value: completedProjects, fill: "#6366f1" },
+    ];
 
-    const totalLeads = leadsByStatus.reduce((s, l) => s + l._count._all, 0);
+    // 3. Process Service Demand
+    const allServices = Array.from(new Set(serviceData.map((s: any) => s.serviceType)));
+    const serviceDemand = months.map(m => {
+      const monthData: any = { month: m.label };
+      allServices.forEach(srv => {
+        monthData[srv as string] = serviceData.filter((x: any) => x.createdAt.toISOString().slice(0, 7) === m.key && x.serviceType === srv).length;
+      });
+      return monthData;
+    });
+
+    const totalLeads = leadsByStatus.reduce((s: any, l: any) => s + l._count._all, 0);
 
     return NextResponse.json({
       alerts: {
@@ -111,9 +134,11 @@ export async function GET() {
         todayMeetings,
       },
       charts: {
-        revenueChart,
-        revenueChartYears,
-        leadsByStatus: leadsByStatus.map(l => ({ status: l.status, count: l._count._all })),
+        systemPulse,
+        globalFunnel,
+        serviceDemand,
+        allServices,
+        leadsByStatus: leadsByStatus.map((l: any) => ({ status: l.status, count: l._count._all })),
         leadsBySource: leadsBySource.map(l => ({ source: l.inquirySource, count: l._count._all })),
       },
       recentLeads,

@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import {
   TrendingUp, Phone, Calendar, AlertTriangle, CheckCircle2,
-  Loader2, Clock, Target, BarChart3, Users, MessageCircle, ChevronRight, ArrowLeft
+  Loader2, Clock, Target, BarChart3, Users, MessageCircle, ChevronRight, ArrowLeft,
+  Activity, Layers, Filter
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  CartesianGrid, PieChart as RechartsPie, Cell, Pie, Legend, AreaChart, Area
+  CartesianGrid, PieChart as RechartsPie, Cell, Pie, Legend, AreaChart, Area,
+  LineChart, Line, ComposedChart
 } from "recharts";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -26,7 +28,7 @@ export default function ReportsPage() {
   const router = useRouter();
   const [data, setData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [timeframe, setTimeframe] = useState<"months" | "years">("months");
+  const [activeChart, setActiveChart] = useState<number>(0);
 
   useEffect(() => {
     fetch("/api/reports")
@@ -140,56 +142,108 @@ export default function ReportsPage() {
 
       {/* ─── CHARTS ROW ──────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Revenue Analytics */}
-        <div className="lg:col-span-2 bg-white p-8 rounded-xl border border-slate-200 shadow-sm">
-          <div className="flex items-center justify-between mb-8">
+        {/* Global Reports Carousel */}
+        <div className="lg:col-span-2 bg-white p-8 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+          
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
             <div className="flex items-center gap-3">
-              <div className="bg-primary/10 p-2 rounded-lg"><TrendingUp className="h-5 w-5 text-primary" /></div>
+              <div className={cn("p-2 rounded-lg transition-colors", activeChart === 0 ? "bg-indigo-50" : activeChart === 1 ? "bg-amber-50" : "bg-emerald-50")}>
+                {activeChart === 0 && <Activity className="h-5 w-5 text-indigo-600" />}
+                {activeChart === 1 && <Filter className="h-5 w-5 text-amber-600" />}
+                {activeChart === 2 && <Layers className="h-5 w-5 text-emerald-600" />}
+              </div>
               <div>
-                <h2 className="text-base font-semibold text-slate-900">Revenue Performance</h2>
-                <p className="text-xs text-slate-400 font-medium">Monthly collection trajectory</p>
+                <h2 className="text-base font-semibold text-slate-900 transition-all">
+                  {activeChart === 0 && "Global System Pulse"}
+                  {activeChart === 1 && "Global Business Funnel"}
+                  {activeChart === 2 && "Global Service Demand"}
+                </h2>
+                <p className="text-xs text-slate-400 font-medium transition-all">
+                  {activeChart === 0 && "Total operations and team activity over time"}
+                  {activeChart === 1 && "End-to-end CRM lifecycle drop-off rate"}
+                  {activeChart === 2 && "Long-term trajectory of service inquiries"}
+                </p>
               </div>
             </div>
-            <button 
-              onClick={() => setTimeframe(timeframe === "months" ? "years" : "months")}
-              className="px-3 py-1 bg-slate-50 hover:bg-slate-100 rounded-lg border border-slate-200 text-xs font-medium text-slate-500 transition-colors cursor-pointer active:scale-95"
-            >
-               {timeframe === "months" ? "Months" : "Years"}
-            </button>
+            
+            <div className="flex bg-slate-100 p-1 rounded-lg">
+              <button onClick={() => setActiveChart(0)} className={cn("px-3 py-1.5 text-[11px] font-bold rounded-md transition-all", activeChart === 0 ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700")}>System Pulse</button>
+              <button onClick={() => setActiveChart(1)} className={cn("px-3 py-1.5 text-[11px] font-bold rounded-md transition-all", activeChart === 1 ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700")}>Global Funnel</button>
+              <button onClick={() => setActiveChart(2)} className={cn("px-3 py-1.5 text-[11px] font-bold rounded-md transition-all", activeChart === 2 ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700")}>Service Demand</button>
+            </div>
           </div>
-          <div className="h-72 min-w-0">
-            <ResponsiveContainer width="100%" height="100%">
-              {timeframe === "months" ? (
-                <BarChart data={charts.revenueChart} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
+
+          <div className="h-72 min-w-0 relative">
+            <div className={cn("absolute inset-0 transition-opacity duration-500", activeChart === 0 ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none")}>
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={charts.systemPulse} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                   <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} tickFormatter={(value) => Intl.NumberFormat('en-IN', { notation: "compact" }).format(value)} />
+                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
                   <Tooltip 
                     cursor={{ fill: '#f8fafc' }}
-                    formatter={(v: any) => [`₹${Number(v).toLocaleString()}`, "Revenue"]}
                     contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontSize: '12px' }} 
                   />
-                  <Bar dataKey="revenue" fill="#4f46e5" radius={[4, 4, 0, 0]} maxBarSize={48} />
+                  <Legend wrapperStyle={{ fontSize: '11px' }} />
+                  <Bar dataKey="leads" name="New Leads" fill="#818cf8" radius={[4, 4, 0, 0]} maxBarSize={32} />
+                  <Line type="monotone" dataKey="tasks" name="Team Tasks (Calls/Meetings)" stroke="#4f46e5" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className={cn("absolute inset-0 transition-opacity duration-500", activeChart === 1 ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none")}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart layout="vertical" data={charts.globalFunnel} margin={{ top: 5, right: 30, left: 30, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
+                  <XAxis type="number" hide />
+                  <YAxis type="category" dataKey="stage" tick={{ fontSize: 11, fill: '#1e293b', fontWeight: 600 }} axisLine={false} tickLine={false} />
+                  <Tooltip 
+                    cursor={{ fill: '#f8fafc' }}
+                    formatter={(v: any, n: any, props: any) => [v, props.payload.stage]}
+                    contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontSize: '12px' }} 
+                  />
+                  <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={28}>
+                    {charts.globalFunnel?.map((entry: any, index: number) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Bar>
                 </BarChart>
-              ) : (
-                <AreaChart data={charts.revenueChartYears} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
+              </ResponsiveContainer>
+            </div>
+
+            <div className={cn("absolute inset-0 transition-opacity duration-500", activeChart === 2 ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none")}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={charts.serviceDemand} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                   <defs>
-                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
-                    </linearGradient>
+                    {charts.allServices?.map((srv: string, i: number) => (
+                      <linearGradient key={`grad-${i}`} id={`colorSrv${i}`} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={["#10b981", "#3b82f6", "#f59e0b", "#6366f1", "#ec4899"][i % 5]} stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor={["#10b981", "#3b82f6", "#f59e0b", "#6366f1", "#ec4899"][i % 5]} stopOpacity={0}/>
+                      </linearGradient>
+                    ))}
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                  <XAxis dataKey="year" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} tickFormatter={(value) => Intl.NumberFormat('en-IN', { notation: "compact" }).format(value)} />
+                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
                   <Tooltip 
-                    formatter={(v: any) => [`₹${Number(v).toLocaleString()}`, "Revenue"]}
                     contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontSize: '12px' }} 
                   />
-                  <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#4f46e5" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
+                  <Legend wrapperStyle={{ fontSize: '11px' }} formatter={(v) => String(v).replace(/_/g, " ")} />
+                  {charts.allServices?.map((srv: string, i: number) => (
+                    <Area 
+                      key={`area-${i}`}
+                      type="monotone" 
+                      dataKey={srv} 
+                      name={srv}
+                      stroke={["#10b981", "#3b82f6", "#f59e0b", "#6366f1", "#ec4899"][i % 5]} 
+                      strokeWidth={2} 
+                      fillOpacity={1} 
+                      fill={`url(#colorSrv${i})`} 
+                    />
+                  ))}
                 </AreaChart>
-              )}
-            </ResponsiveContainer>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
 
