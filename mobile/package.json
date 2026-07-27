@@ -4,8 +4,11 @@
   "description": "PNP CRM Mobile App - Android APK powered by Capacitor",
   "private": true,
   "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
     "sync": "npx cap sync android",
-    "build:android": "npx cap build android",
+    "build:android": "npm run build && npx cap sync android",
     "open:android": "npx cap open android",
     "copy": "npx cap copy android"
   },
@@ -17,10 +20,18 @@
     "@capacitor/network": "^7.0.0",
     "@capacitor/storage": "^1.2.5",
     "@capacitor/preferences": "^7.0.0",
-    "@capacitor-community/sqlite": "^7.0.0"
+    "@capacitor-community/sqlite": "^7.0.0",
+    "lucide-react": "^0.468.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zustand": "^5.0.2"
   },
   "devDependencies": {
     "@capacitor/cli": "^7.0.0",
-    "typescript": "^5.0.0"
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.0.0",
+    "vite": "^6.0.3"
   }
 }
