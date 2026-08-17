@@ -86,6 +86,8 @@ function Stop-CrmProcesses {
     Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe'" | Where-Object { $_.CommandLine -like "*desktop-notifier.ps1*" } | ForEach-Object {
         Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
     }
+    # Kill existing ngrok tunnels if any
+    Get-Process -Name "ngrok" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 }
 
 Stop-CrmProcesses
@@ -130,11 +132,11 @@ $dateString = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 if (Test-Path (Join-Path $AppRoot ".next\BUILD_ID")) {
     Write-Host "Starting in PRODUCTION mode (Fast)..." -ForegroundColor Green
     "Production mode detected (Valid build found)." | Out-File $LogFile -Append
-    $StartArgs = "/c npx next start -p $Port"
+    $StartArgs = "/c node node_modules\next\dist\bin\next start -p $Port"
 } else {
     Write-Host "Starting in DEVELOPMENT mode (Slow)..." -ForegroundColor Yellow
     "Development mode active (No valid production build found)." | Out-File $LogFile -Append
-    $StartArgs = "/c npx next dev --turbopack -p $Port"
+    $StartArgs = "/c npx.cmd next dev --turbopack -p $Port"
 }
 
 Write-Host "Waiting for server to become ready..." -ForegroundColor Cyan
@@ -143,6 +145,50 @@ Start-Process -FilePath "cmd.exe" -ArgumentList $StartArgs -WorkingDirectory $Ap
 
 # Launch Desktop Notifier Background Service
 Start-Process -FilePath "powershell.exe" -ArgumentList "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$AppRoot\desktop-notifier.ps1`"" -WindowStyle Hidden
+
+# Launch Mobile Sync Tunnel (Checks Internet First)
+$NgrokExe = "C:\ngrok\ngrok.exe"
+$NgrokDomain = "research-reshuffle-bagful.ngrok-free.dev"
+if (Test-Path $NgrokExe) {
+    $hasInternet = $false
+    try {
+        $testPing = Invoke-WebRequest -Uri "https://1.1.1.1" -Method Head -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
+        $hasInternet = $true
+    } catch {
+        try {
+            $testPing2 = Invoke-WebRequest -Uri "https://dns.google" -Method Head -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
+            $hasInternet = $true
+        } catch { }
+    }
+
+    if ($hasInternet) {
+        Write-Host "Internet detected. Starting mobile sync tunnel in background..." -ForegroundColor Green
+        "Internet OK: Starting Ngrok tunnel in background." | Out-File $LogFile -Append
+        Start-Process -FilePath $NgrokExe -ArgumentList "http --url=$NgrokDomain $Port" -WindowStyle Hidden
+    } else {
+        Write-Host "No internet detected. Running in local offline mode." -ForegroundColor Yellow
+        "No Internet: Skipping tunnel. Local offline mode active." | Out-File $LogFile -Append
+        # Show native Windows Toast Notification
+        try {
+            [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
+            [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null
+            $template = @"
+<toast>
+    <visual>
+        <binding template="ToastGeneric">
+            <text>PNP CRM — Offline Mode</text>
+            <text>No internet connection detected. The CRM is running in offline mode. Click 'Connect' in the sidebar when internet returns.</text>
+        </binding>
+    </visual>
+</toast>
+"@
+            $xml = New-Object Windows.Data.Xml.Dom.XmlDocument
+            $xml.LoadXml($template)
+            $toast = [Windows.UI.Notifications.ToastNotification]::new($xml)
+            [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("PNP CRM").Show($toast)
+        } catch { }
+    }
+}
 
 # 7. Wait for Server to be Ready
 

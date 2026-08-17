@@ -316,6 +316,15 @@ export async function getPendingFollowUps(): Promise<LocalFollowUp[]> {
   return (result.values ?? []) as LocalFollowUp[];
 }
 
+export async function markFollowUpsSynced(mobileIds: string[]): Promise<void> {
+  if (!db || mobileIds.length === 0) return;
+  const placeholders = mobileIds.map(() => '?').join(',');
+  await db.run(
+    `UPDATE local_follow_ups SET syncStatus = 'SYNCED' WHERE mobileId IN (${placeholders})`,
+    mobileIds
+  );
+}
+
 export async function getAllFollowUps(): Promise<LocalFollowUp[]> {
   if (!db) return [];
   const result = await db.query(`
@@ -345,14 +354,6 @@ export async function getFollowUpCountByLead(leadMobileId: string): Promise<numb
   return result.values?.[0]?.count ?? 0;
 }
 
-export async function markFollowUpsSynced(mobileIds: string[]): Promise<void> {
-  if (!db || mobileIds.length === 0) return;
-  const placeholders = mobileIds.map(() => '?').join(',');
-  await db.run(
-    `UPDATE local_follow_ups SET syncStatus = 'SYNCED' WHERE mobileId IN (${placeholders})`,
-    mobileIds
-  );
-}
 
 // ── Visit Operations ─────────────────────────────────────────────────────────
 
@@ -429,6 +430,12 @@ export async function updateVisitStatus(mobileId: string, status: 'COMPLETED' | 
   );
 }
 
+export async function getPendingVisits(): Promise<LocalVisit[]> {
+  if (!db) return [];
+  const result = await db.query("SELECT * FROM local_visits WHERE syncStatus = 'PENDING';");
+  return (result.values ?? []) as LocalVisit[];
+}
+
 export async function markVisitsSynced(mobileIds: string[]): Promise<void> {
   if (!db || mobileIds.length === 0) return;
   const placeholders = mobileIds.map(() => '?').join(',');
@@ -438,10 +445,11 @@ export async function markVisitsSynced(mobileIds: string[]): Promise<void> {
   );
 }
 
-export async function getPendingVisits(): Promise<LocalVisit[]> {
-  if (!db) return [];
-  const result = await db.query("SELECT * FROM local_visits WHERE syncStatus = 'PENDING';");
-  return (result.values ?? []) as LocalVisit[];
+export async function deleteSyncedRecords(): Promise<void> {
+  if (!db) return;
+  await db.run("DELETE FROM local_leads WHERE syncStatus = 'SYNCED';");
+  await db.run("DELETE FROM local_follow_ups WHERE syncStatus = 'SYNCED';");
+  await db.run("DELETE FROM local_visits WHERE syncStatus = 'SYNCED';");
 }
 
 // ── Lead Notes (Activity Timeline) ──────────────────────────────────────────

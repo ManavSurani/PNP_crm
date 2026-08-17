@@ -18,7 +18,8 @@ import {
   Layers,
   ChevronDown,
   ChevronRight,
-  FolderCheck
+  FolderCheck,
+  RefreshCw,
 } from "lucide-react";
 import BrandLogo from "./BrandLogo";
 import { cn } from "@/lib/utils";
@@ -62,6 +63,50 @@ const groups = [
 export default function Sidebar() {
   const pathname = usePathname();
   const [expandedGroups, setExpandedGroups] = useState<string[]>(["LEADS", "CUSTOMERS", "ANALYTICS", "SYSTEM"]);
+  const [tunnelStatus, setTunnelStatus] = useState<{ online: boolean; url: string | null; loading: boolean }>({
+    online: false,
+    url: null,
+    loading: true,
+  });
+  const [connecting, setConnecting] = useState(false);
+
+  const fetchTunnelStatus = async () => {
+    try {
+      const res = await fetch("/api/system/tunnel");
+      if (res.ok) {
+        const data = await res.json();
+        setTunnelStatus({ online: data.online, url: data.url, loading: false });
+      } else {
+        setTunnelStatus({ online: false, url: null, loading: false });
+      }
+    } catch {
+      setTunnelStatus({ online: false, url: null, loading: false });
+    }
+  };
+
+  useEffect(() => {
+    fetchTunnelStatus();
+    const interval = setInterval(fetchTunnelStatus, 15000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleConnectTunnel = async () => {
+    setConnecting(true);
+    try {
+      const res = await fetch("/api/system/tunnel", { method: "POST" });
+      const data = await res.json();
+      if (data.success && data.online) {
+        setTunnelStatus({ online: true, url: data.url, loading: false });
+      } else {
+        alert(data.error || "Could not connect to internet. Please check your network.");
+        setTunnelStatus({ online: false, url: null, loading: false });
+      }
+    } catch {
+      alert("Connection attempt failed. Please check internet.");
+    } finally {
+      setConnecting(false);
+    }
+  };
 
   // Auto-expand group if it contains the active route
   useEffect(() => {
@@ -73,7 +118,7 @@ export default function Sidebar() {
         setExpandedGroups(prev => [...prev, group.title]);
       }
     });
-  }, [pathname]);
+  }, [pathname, expandedGroups]);
 
   const toggleGroup = (title: string) => {
     setExpandedGroups(prev => 
@@ -94,7 +139,6 @@ export default function Sidebar() {
         <nav className="flex-1 space-y-6 px-4">
           {groups.map((group) => {
             const isExpanded = expandedGroups.includes(group.title);
-            
             return (
               <div key={group.title} className="space-y-1">
                 <button
@@ -112,8 +156,7 @@ export default function Sidebar() {
                 {isExpanded && (
                   <div className="space-y-1 animate-in slide-in-from-top-1 duration-200">
                     {group.items.map((item) => {
-                      // Fix: Use longest match to prevent multiple active items (e.g., /customers vs /customers/completed)
-                      const allMatches = groups.flatMap(g => g.items).filter(i => 
+                      const allMatches = groups.flatMap(g => g.items).filter(i =>
                         pathname === i.href || (i.href !== "/" && pathname.startsWith(i.href + "/")) || (i.href !== "/" && pathname === i.href)
                       );
                       const bestMatch = allMatches.sort((a, b) => b.href.length - a.href.length)[0];
@@ -153,13 +196,48 @@ export default function Sidebar() {
       </div>
 
       <div className="p-4 mt-auto border-t border-white/5">
-         <div className="bg-white/5 rounded-2xl p-4 border border-white/5">
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Cloud Synced</p>
-            <div className="flex items-center gap-2">
-               <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-               <p className="text-[11px] text-slate-300 font-medium">System Ready</p>
+        <div className="bg-white/5 rounded-2xl p-3.5 border border-white/5 space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Mobile Sync Tunnel</p>
+            {tunnelStatus.online ? (
+              <span className="text-[9px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                ACTIVE
+              </span>
+            ) : (
+              <span className="text-[9px] font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded-full">
+                OFFLINE
+              </span>
+            )}
+          </div>
+          
+          <div className="flex items-center justify-between pt-0.5">
+            <div className="flex items-center gap-2 min-w-0">
+              <div
+                className={cn(
+                  "h-2 w-2 rounded-full flex-shrink-0",
+                  tunnelStatus.online
+                    ? "bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]"
+                    : "bg-rose-500"
+                )}
+              />
+              <p className="text-[11px] text-slate-200 font-medium truncate">
+                {tunnelStatus.online ? "Tunnel Online" : "Offline Mode"}
+              </p>
             </div>
-         </div>
+
+            {!tunnelStatus.online && (
+              <button
+                onClick={handleConnectTunnel}
+                disabled={connecting}
+                className="flex items-center gap-1 text-[10px] font-semibold text-indigo-300 hover:text-white bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-500/30 px-2 py-1 rounded-lg transition-all disabled:opacity-50 cursor-pointer"
+                title="Retry connecting Ngrok tunnel"
+              >
+                <RefreshCw className={cn("h-3 w-3", connecting && "animate-spin")} />
+                {connecting ? "Connecting..." : "Connect"}
+              </button>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

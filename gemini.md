@@ -404,3 +404,32 @@ A: Created the Master Implementation Prompt (system_synchronized_finance_prompt.
 
 Q: can you explain what is role of typscript,javascript and node js language roll in this project only explain me
 A: Explained the specific roles of Node.js (as the execution runtime for Next.js and database scripts), TypeScript (for full static type-safety across UI pages and backend API routes), and JavaScript/ES Modules (for database utilities and configurations).
+
+---
+
+### Session: Mobile Sync System, Ngrok Tunneling & Smart Offline/Online Manager
+
+Q: how this sync data system which we created will work give me ans in step by step instruction and i only need ans how did this work and what step should i follow to done this thing to send this data into my desktop crm
+A: Provided detailed step-by-step instructions on how the offline SQLite to Desktop CRM sync engine operates, including setting up tunneling, configuring sync secrets, and initiating sync batches.
+
+Q: is there a free solution for permanent tunnel URLs instead of paid Cloudflare named tunnels?
+A: Evaluated and compared free options including Ngrok free static domains, Cloudflare named tunnels, and Tailscale Funnel. Recommended Ngrok static domain for zero-cost permanent URL and rapid 5-minute setup.
+
+Q: create a detailed HTML report comparing Ngrok, Cloudflare Tunnel, and Tailscale for client presentation
+A: Created a presentation-ready evaluation report (C:\Vs\tunnel_comparison_report.html) featuring side-by-side matrices, privacy & encryption ratings, DDoS protection breakdown, and clear recommendation rationale.
+
+Q: what if we send encrypted data which can only be decrypted by our desktop CRM?
+A: Explained application-layer AES-256-GCM payload encryption, demonstrating how it eliminates third-party transit inspection risks regardless of tunnel provider.
+
+Q: can the mobile app work online-first when CRM is open, and offline fallback when PC is closed?
+A: Outlined the hybrid real-time with offline fallback architecture: immediate sync when PC is reachable, automatic offline queuing in local SQLite when offline, and background auto-sync when online.
+
+Q: fix mobile sync authentication and connection testing issues
+A: Implemented x-mobile-sync-key authentication headers, added Sync Secret Key input in Settings, updated SyncHub to mark synced records, and upgraded mobile networking to native Android CapacitorHttp engine to bypass WebView CORS preflight blocks.
+
+Q: can we make desktop CRM automatically start Ngrok in background on launch, with offline detection and reconnect button?
+A: Built the Smart Offline/Online Tunnel Manager:
+1. start-crm.ps1: Detects internet connectivity on startup. If online, silently starts Ngrok; if offline, fires a native Windows toast notification and runs CRM in local offline mode (0 MB RAM wasted).
+2. src/app/api/system/tunnel/route.ts: New endpoint to check live tunnel status and start/reconnect Ngrok on demand.
+3. src/components/layout/Sidebar.tsx: Interactive sidebar widget showing live status (🟢 Tunnel Online / 🔴 Offline Mode) with a one-click [⚡ Connect] reconnect button.
+4. Preserved all existing background services (desktop-notifier.ps1, uto-backup.mjs, database).

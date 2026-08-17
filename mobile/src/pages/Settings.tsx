@@ -8,6 +8,8 @@ import { ArrowLeft, Wifi, WifiOff, Trash2, Download, Upload, Info } from 'lucide
 import { MobileLayout } from '../components/MobileLayout';
 import { FormInput, ActionButton } from '../components/FormInput';
 import { useAppStore } from '../store/appStore';
+import { deleteSyncedRecords } from '../db/sqlite';
+import { CapacitorHttp } from '@capacitor/core';
 
 const APP_VERSION = '1.0.0 (Phase 4)';
 
@@ -16,6 +18,7 @@ export const Settings: React.FC = () => {
 
   const [staffName, setStaffName] = useState(localStorage.getItem('pnp_staff_name') ?? '');
   const [tunnelUrl, setTunnelUrl] = useState(localStorage.getItem('pnp_tunnel_url') ?? '');
+  const [syncSecret, setSyncSecret] = useState(localStorage.getItem('pnp_sync_secret') ?? '');
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<'idle' | 'ok' | 'fail'>('idle');
 
@@ -25,6 +28,7 @@ export const Settings: React.FC = () => {
   const saveProfile = () => {
     localStorage.setItem('pnp_staff_name', staffName.trim());
     localStorage.setItem('pnp_tunnel_url', tunnelUrl.trim());
+    localStorage.setItem('pnp_sync_secret', syncSecret.trim());
     addToast('✅ Settings saved!', 'success');
   };
 
@@ -33,12 +37,34 @@ export const Settings: React.FC = () => {
       addToast('Enter a tunnel URL first.', 'error');
       return;
     }
+    if (!syncSecret.trim()) {
+      addToast('Enter a Sync Secret Key first.', 'error');
+      return;
+    }
     setTesting(true);
     setTestResult('idle');
     try {
-      const res = await fetch(`${tunnelUrl.trim()}/api/mobile/sync`, { method: 'GET', signal: AbortSignal.timeout(5000) });
-      setTestResult(res.status < 500 ? 'ok' : 'fail');
-      addToast(res.status < 500 ? '✅ Connection successful!' : '❌ Server error — check tunnel.', res.status < 500 ? 'success' : 'error');
+      const cleanUrl = tunnelUrl.trim().replace(/\/+$/, '');
+      const res = await CapacitorHttp.get({
+        url: `${cleanUrl}/api/mobile/sync`,
+        headers: {
+          'x-mobile-sync-key': syncSecret.trim(),
+          'ngrok-skip-browser-warning': 'true',
+        },
+        connectTimeout: 10000,
+        readTimeout: 10000,
+      });
+
+      if (res.status === 200) {
+        setTestResult('ok');
+        addToast('✅ Connection successful!', 'success');
+      } else if (res.status === 401) {
+        setTestResult('fail');
+        addToast('❌ Invalid Sync Secret Key.', 'error');
+      } else {
+        setTestResult('fail');
+        addToast(`❌ Server returned error (HTTP ${res.status}).`, 'error');
+      }
     } catch {
       setTestResult('fail');
       addToast('❌ Could not reach the tunnel URL.', 'error');
@@ -47,10 +73,14 @@ export const Settings: React.FC = () => {
     }
   };
 
-  const clearSyncedData = () => {
+  const clearSyncedData = async () => {
     if (!confirm('This will remove all SYNCED records from this device. Pending items will be kept. Continue?')) return;
-    // In production: DELETE FROM local_leads WHERE syncStatus = 'SYNCED', etc.
-    addToast('✅ Synced data cleared from device.', 'success');
+    try {
+      await deleteSyncedRecords();
+      addToast('✅ Synced data cleared from device.', 'success');
+    } catch {
+      addToast('❌ Failed to clear synced data.', 'error');
+    }
   };
 
   const exportData = () => {
@@ -99,7 +129,8 @@ export const Settings: React.FC = () => {
         <div style={{ backgroundColor: '#1e293b', borderRadius: '16px', padding: '18px' }}>
           <p style={{ color: '#4f46e5', fontSize: '11px', fontWeight: '700', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 16px' }}>Connection Settings</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <FormInput label="Cloudflare Tunnel URL" value={tunnelUrl} onChange={(v) => { setTunnelUrl(v); setTestResult('idle'); }} placeholder="https://xxxx.trycloudflare.com" />
+            <FormInput label="Cloudflare / Ngrok Tunnel URL" value={tunnelUrl} onChange={(v) => { setTunnelUrl(v); setTestResult('idle'); }} placeholder="https://xxxx.ngrok-free.app" />
+            <FormInput label="Sync Secret Key" value={syncSecret} onChange={(v) => { setSyncSecret(v); setTestResult('idle'); }} placeholder="Enter your sync secret key" />
             <button
               onClick={testConnection}
               disabled={testing}

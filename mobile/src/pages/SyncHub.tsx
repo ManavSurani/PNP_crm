@@ -8,7 +8,8 @@ import { ArrowLeft, RefreshCw, CheckCircle, XCircle, WifiOff, Clock, Users, Phon
 import { MobileLayout } from '../components/MobileLayout';
 import { ActionButton } from '../components/FormInput';
 import { useAppStore } from '../store/appStore';
-import { getDashboardStats, getPendingLeads, getPendingFollowUps, getPendingVisits } from '../db/sqlite';
+import { getDashboardStats, getPendingLeads, getPendingFollowUps, getPendingVisits, markLeadsSynced, markFollowUpsSynced, markVisitsSynced, type LocalLead, type LocalFollowUp, type LocalVisit } from '../db/sqlite';
+import { CapacitorHttp } from '@capacitor/core';
 
 interface SyncLog {
   id: string;
@@ -35,6 +36,7 @@ export const SyncHub: React.FC = () => {
   const [pendingVisits, setPendingVisits] = useState(0);
   const [syncLog, setSyncLog] = useState<SyncLog[]>([]);
   const tunnelUrl = localStorage.getItem('pnp_tunnel_url') ?? '';
+  const syncSecret = localStorage.getItem('pnp_sync_secret') ?? '';
 
   const loadPending = useCallback(async () => {
     try {
@@ -47,7 +49,7 @@ export const SyncHub: React.FC = () => {
       setStats(s);
       setPendingSyncCount(l.length + f.length + v.length);
     } catch {
-      setPendingLeads(3); setPendingFU(2); setPendingVisits(1);
+      setPendingLeads(0); setPendingFU(0); setPendingVisits(0);
     }
     setSyncLog(loadSyncLog());
   }, [setStats, setPendingSyncCount]);
@@ -61,18 +63,38 @@ export const SyncHub: React.FC = () => {
       if (!tunnelUrl) addToast('No tunnel URL configured. Go to Settings first.', 'error');
       return;
     }
+    if (!syncSecret) {
+      addToast('No Sync Secret Key configured. Go to Settings first.', 'error');
+      return;
+    }
     setSyncState('syncing');
 
     try {
       const [leads, fus, visits] = await Promise.all([getPendingLeads(), getPendingFollowUps(), getPendingVisits()]);
 
-      const res = await fetch(`${tunnelUrl}/api/mobile/sync`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ leads, followUps: fus, visits }),
+      const cleanUrl = tunnelUrl.trim().replace(/\/+$/, '');
+      const res = await CapacitorHttp.post({
+        url: `${cleanUrl}/api/mobile/sync`,
+        headers: {
+          'Content-Type': 'application/json',
+          'x-mobile-sync-key': syncSecret.trim(),
+          'ngrok-skip-browser-warning': 'true',
+        },
+        data: { leads, followUps: fus, visits },
+        connectTimeout: 15000,
+        readTimeout: 15000,
       });
 
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (res.status >= 400) {
+        throw new Error(`HTTP ${res.status}: ${res.data?.error || 'Sync rejected by server'}`);
+      }
+
+      // Mark records as SYNCED so they are not re-sent next time
+      await Promise.all([
+        markLeadsSynced(leads.map((l: LocalLead) => l.mobileId)),
+        markFollowUpsSynced(fus.map((f: LocalFollowUp) => f.mobileId)),
+        markVisitsSynced(visits.map((v: LocalVisit) => v.mobileId)),
+      ]);
 
       const logEntry: SyncLog = {
         id: `log-${Date.now()}`,
