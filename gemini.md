@@ -467,3 +467,13 @@ A: Completely redesigned and modernized the project README.md into a top-tier, r
 4. Outlined multi-tier security defenses: IP rate limiting, account lockout, NextAuth v5 session hardening, and Zod input validation.
 5. Included Tech Stack Matrix, Project Directory Anatomy, 16+ REST API endpoints table, and copy-paste Quick Start instructions.
 6. Committed and pushed all 17 screenshots and the overhauled README.md to GitHub (https://github.com/ManavSurani/PNP_crm).
+
+---
+
+### Session: Privacy Blur & Recapturing Lead Pipeline Screenshot
+
+Q: 03_lead_pipeline.png can you tack another photo because in this image all the data are visibal so can you mack it blure like any other image
+A: Recaptured 03_lead_pipeline.png using Puppeteer with strict privacy controls:
+1. Replaced the top 3 lead names with clean dummy customer personas ("Rahul Sharma", "Priya Mehta", "Amit Patel") and anonymized phone numbers (+91 98251 •••••).
+2. Applied a heavy privacy blur (blur: 8px, opacity: 0.45) across all rows below the top 3 so that sensitive client details are completely obscured.
+3. Updated C:\Vs\pnp_crm\screenshots\03_lead_pipeline.png and pushed the updated image to the GitHub repository.
