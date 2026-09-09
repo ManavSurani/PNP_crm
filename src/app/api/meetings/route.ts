@@ -73,6 +73,7 @@ export async function GET(request: Request) {
         status: "SCHEDULED",
         lead: {
           isCancelled: false,
+          isArchived: false,
           status: {
             not: "WON_ORDER"
           }

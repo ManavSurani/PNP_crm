@@ -54,7 +54,7 @@ const groups = [
   {
     title: "SYSTEM",
     items: [
-      { name: "Canceled Archive", href: "/canceled", icon: Trash2 },
+      { name: "Canceled Records", href: "/canceled", icon: Trash2 },
       { name: "General Settings", href: "/settings", icon: Settings },
     ]
   }

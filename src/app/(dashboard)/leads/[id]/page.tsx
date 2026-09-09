@@ -6,7 +6,7 @@ import { format } from "date-fns";
 import {
   Phone, MapPin, FileText, Clock, Zap, Loader2, Pencil, X, CheckCircle2,
   PhoneMissed, Calendar, Check, RotateCcw, Ban, AlertTriangle, ListTodo, Activity, Trash2,
-  Banknote, MessageSquare, ChevronRight, ArrowLeft, Globe, User, MonitorSmartphone
+  Banknote, MessageSquare, ChevronRight, ArrowLeft, Globe, User, MonitorSmartphone, Star, Archive
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -30,6 +30,9 @@ type LeadDetails = {
   id: string; customerName: string; contactNumber: string; alternateNumber: string | null;
   fullAddress: string | null; inquirySource: string; referenceName?: string | null; serviceType: string;
   status: string; isCancelled: boolean; cancelReason: string | null;
+  isHotLead: boolean;
+  isArchived?: boolean;
+  archivedAt?: string | null;
   createdAt: string; budgetRange: string | null; requirementDetails: string | null;
   siteLocation: string | null; landmark: string | null; preferredVisitTime: string | null;
   assignedStaff?: { id: string; name: string } | null;
@@ -89,6 +92,10 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [newName, setNewName] = useState("");
+  const [conversionName, setConversionName] = useState("");
+  const [conversionError, setConversionError] = useState("");
+
+  const isUnnamed = !lead?.customerName || !lead.customerName.trim() || lead.customerName.trim().toLowerCase() === "unnamed lead" || lead.customerName.trim().toLowerCase() === "unnamed";
 
   const handleSaveName = async () => {
     if (!newName.trim() || newName === lead?.customerName) {
@@ -120,6 +127,10 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
       const res = await fetch(`/api/leads/${id}`);
       if (!res.ok) throw new Error("Lead not found");
       const data = await res.json();
+      if (data.status === "WON_ORDER") {
+        router.replace(`/customers/${id}`);
+        return;
+      }
       setLead(data);
       setEditForm(data);
     } catch (e) {
@@ -148,6 +159,8 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
     setMeetingForm({ address: "", date: "", time: "", notes: "" });
     setEditError(null);
     setIsEditingAddress(false);
+    setConversionName("");
+    setConversionError("");
   };
 
   const post = async (url: string, body: object) => {
@@ -236,9 +249,19 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
         });
       } else {
         if (meetingOutcome === "CONVERT") {
-          if (!window.confirm("Are you sure you want to convert this lead to a customer?")) {
-            setIsSubmitting(false);
-            return;
+          if (isUnnamed) {
+            const trimmed = conversionName.trim();
+            if (!trimmed || trimmed.toLowerCase() === "unnamed lead" || trimmed.toLowerCase() === "unnamed") {
+              setConversionError("Please enter a valid customer or lead name.");
+              alert("Please enter a valid customer or lead name before converting to a customer.");
+              setIsSubmitting(false);
+              return;
+            }
+          } else {
+            if (!window.confirm("Are you sure you want to convert this lead to a customer?")) {
+              setIsSubmitting(false);
+              return;
+            }
           }
         } else if (meetingOutcome === "NOT_INTERESTED") {
           if (!window.confirm("Are you sure this person is not interested? This will cancel the lead.")) {
@@ -270,7 +293,15 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
         const data = await completeRes.json();
 
         if (meetingOutcome === "CONVERT") {
-          const res = await fetch(`/api/leads/${id}/convert`, { method: "POST" });
+          const payload = (isUnnamed && conversionName.trim()) 
+            ? { customerName: conversionName.trim() } 
+            : undefined;
+
+          const res = await fetch(`/api/leads/${id}/convert`, { 
+            method: "POST",
+            headers: payload ? { "Content-Type": "application/json" } : undefined,
+            body: payload ? JSON.stringify(payload) : undefined,
+          });
           if (res.ok) {
             closeModal();
             router.push(`/customers/${id}`);
@@ -356,22 +387,80 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
   };
 
   const handleConvertToCustomer = async () => {
+    if (isUnnamed) {
+      const trimmed = conversionName.trim();
+      if (!trimmed || trimmed.toLowerCase() === "unnamed lead" || trimmed.toLowerCase() === "unnamed") {
+        setConversionError("Please enter a valid customer or lead name.");
+        return;
+      }
+    }
+
     setIsSubmitting(true);
+    setConversionError("");
     try {
-      const res = await fetch(`/api/leads/${id}/convert`, { method: "POST" });
+      const payload = (isUnnamed && conversionName.trim()) 
+        ? { customerName: conversionName.trim() } 
+        : undefined;
+
+      const res = await fetch(`/api/leads/${id}/convert`, { 
+        method: "POST",
+        headers: payload ? { "Content-Type": "application/json" } : undefined,
+        body: payload ? JSON.stringify(payload) : undefined,
+      });
       if (res.ok) {
         closeModal();
-        fetchLead();
         window.dispatchEvent(new CustomEvent("refresh-notifications"));
+        router.push(`/customers/${id}`);
+        return;
       } else {
         const error = await res.json();
+        setConversionError(error.details || error.error || "Conversion failed");
         alert(`Conversion Failed: ${error.details || error.error || "Unknown Error"}`);
       }
     } catch (e) {
       console.error(e);
+      setConversionError("Network error. Please try again.");
       alert(`Network Error: ${String(e)}`);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleToggleHotLead = async () => {
+    if (!lead) return;
+    const newVal = !lead.isHotLead;
+    // Optimistic UI update for instant feedback
+    setLead(prev => prev ? { ...prev, isHotLead: newVal } : prev);
+    try {
+      await fetch(`/api/leads/${id}/hot`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isHotLead: newVal }),
+      });
+    } catch {
+      // Revert if API fails
+      setLead(prev => prev ? { ...prev, isHotLead: !newVal } : prev);
+    }
+  };
+
+  const handleReactivateLead = async () => {
+    if (!lead) return;
+    try {
+      const res = await fetch(`/api/leads/${id}/reactivate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reactivationNote: "Reactivated from Lead Profile" })
+      });
+      if (res.ok) {
+        fetchLead();
+        window.dispatchEvent(new CustomEvent("refresh-notifications"));
+      } else {
+        const err = await res.json();
+        alert(`Failed to reactivate: ${err.error || "Unknown error"}`);
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Network error while reactivating lead");
     }
   };
 
@@ -436,8 +525,10 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
         </button>
 
         <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 tracking-widest uppercase">
-          {lead.isCancelled ? (
-            <Link href="/canceled" className="hover:text-rose-600 transition-colors text-rose-400/80">Canceled Archive</Link>
+          {lead.isArchived ? (
+            <Link href="/interested" className="hover:text-indigo-600 transition-colors text-indigo-600 font-bold">Archived Leads</Link>
+          ) : lead.isCancelled ? (
+            <Link href="/canceled" className="hover:text-rose-600 transition-colors text-rose-400/80">Canceled Records</Link>
           ) : (
             <Link href="/leads" className="hover:text-emerald-600 transition-colors text-indigo-400/80">Lead Pipeline</Link>
           )}
@@ -450,8 +541,16 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
       <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-48 h-48 bg-primary rounded-full blur-[100px] opacity-5 -mr-24 -mt-24" />
         <div className="flex items-center gap-6 relative z-10">
-          <div className="h-16 w-16 bg-slate-100 rounded-xl flex shrink-0 items-center justify-center border border-slate-200">
-            <span className="text-2xl font-bold text-slate-800 uppercase">{lead.customerName ? lead.customerName.charAt(0) : "?"}</span>
+          {/* Header Avatar Container */}
+          <div className="relative h-16 w-16 shrink-0">
+            <div className="h-16 w-16 bg-slate-100 rounded-xl flex items-center justify-center border border-slate-200">
+              <span className="text-2xl font-bold text-slate-800 uppercase">{lead.customerName ? lead.customerName.charAt(0) : "?"}</span>
+            </div>
+            {lead.isHotLead && (
+              <span className="absolute -bottom-1.5 -right-1.5 bg-amber-400 rounded-full p-1 shadow-sm border-2 border-white">
+                <Star className="h-3 w-3 text-white fill-white" />
+              </span>
+            )}
           </div>
           <div>
             {isEditingName ? (
@@ -546,20 +645,51 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .018 5.393 0 12.03c0 2.122.541 4.195 1.57 6.04L0 24l6.104-1.602a11.83 11.83 0 005.937 1.57h.005c6.632 0 12.029-5.392 12.033-12.031a11.82 11.82 0 00-3.376-8.411z" />
               </svg>
             </button>
-            <span className={cn(
-              "inline-flex items-center rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wider border",
-              lead.status === "NEW_INQUIRY" ? "bg-amber-50 text-amber-700 border-amber-200" :
-              lead.status === "WON_ORDER" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
-              lead.status === "CANCELLED" ? "bg-rose-50 text-rose-700 border-rose-200" :
-              lead.status === "MEETING_SCHEDULED" ? "bg-indigo-50 text-indigo-700 border-indigo-200" :
-              "bg-sky-50 text-sky-700 border-sky-200"
-            )}>
-              {lead.status === "NEW_INQUIRY" ? "New Lead" :
-               lead.status === "WON_ORDER" ? "Project Started" :
-               lead.status === "MEETING_SCHEDULED" ? "Visit Booked" :
-               lead.status === "FOLLOW_UP" ? "In Pipeline" :
-               lead.status.replace(/_/g, " ")}
-            </span>
+
+            {/* Hot Lead Toggle Button (NEW) */}
+            <button
+              onClick={handleToggleHotLead}
+              title={lead.isHotLead ? "Remove Hot Lead" : "Mark as Hot Lead"}
+              className={cn(
+                "h-9 w-9 rounded-xl flex items-center justify-center transition-all active:scale-90 border",
+                lead.isHotLead
+                  ? "bg-amber-400 text-white border-amber-300 shadow-md shadow-amber-100"
+                  : "bg-white text-slate-400 border-slate-200 hover:border-amber-300 hover:text-amber-400"
+              )}
+            >
+              <Star className={cn("h-5 w-5", lead.isHotLead ? "fill-white" : "")} />
+            </button>
+
+            {lead.isArchived && (
+              <button
+                onClick={handleReactivateLead}
+                title="Reactivate Lead from Archive"
+                className="h-9 px-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl flex items-center gap-1.5 transition-all active:scale-90 border border-indigo-200 text-xs font-bold shadow-sm cursor-pointer"
+              >
+                <RotateCcw className="h-3.5 w-3.5" /> Reactivate
+              </button>
+            )}
+
+            {lead.isArchived ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wider border bg-indigo-50 text-indigo-700 border-indigo-200">
+                <Archive className="h-3 w-3" /> Archived (Passive)
+              </span>
+            ) : (
+              <span className={cn(
+                "inline-flex items-center rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wider border",
+                lead.status === "NEW_INQUIRY" ? "bg-amber-50 text-amber-700 border-amber-200" :
+                lead.status === "WON_ORDER" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                lead.status === "CANCELLED" ? "bg-rose-50 text-rose-700 border-rose-200" :
+                lead.status === "MEETING_SCHEDULED" ? "bg-indigo-50 text-indigo-700 border-indigo-200" :
+                "bg-sky-50 text-sky-700 border-sky-200"
+              )}>
+                {lead.status === "NEW_INQUIRY" ? "New Lead" :
+                 lead.status === "WON_ORDER" ? "Project Started" :
+                 lead.status === "MEETING_SCHEDULED" ? "Visit Booked" :
+                 lead.status === "FOLLOW_UP" ? "In Pipeline" :
+                 lead.status.replace(/_/g, " ")}
+              </span>
+            )}
           </div>
           {lead.cancelReason && <p className="text-[10px] text-rose-500 font-medium italic">Reason: {lead.cancelReason}</p>}
         </div>
@@ -613,7 +743,14 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                 >
                   <Calendar className="h-4 w-4 text-indigo-600" /> Schedule Site Visit
                 </button>
-                <button onClick={() => setActiveModal("CONVERT")} className="w-full bg-indigo-50 text-indigo-700 hover:bg-indigo-100 py-3 rounded-lg text-[11px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all border border-indigo-200 mt-2 shadow-sm relative overflow-hidden group">
+                <button 
+                  onClick={() => {
+                    setConversionName(isUnnamed ? "" : (lead.customerName || ""));
+                    setConversionError("");
+                    setActiveModal("CONVERT");
+                  }} 
+                  className="w-full bg-indigo-50 text-indigo-700 hover:bg-indigo-100 py-3 rounded-lg text-[11px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all border border-indigo-200 mt-2 shadow-sm relative overflow-hidden group"
+                >
                   <Zap className="h-4 w-4 text-indigo-500 group-hover:scale-110 transition-transform" /> Convert to Customer
                 </button>
 
@@ -978,6 +1115,7 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                   { val: "MEETING", label: "Book Site Visit" },
                   { val: "NEXT_DAY", label: "Next Day" },
                   { val: "RESCHEDULE", label: "Wants Recall" },
+                  { val: "ARCHIVE", label: "Archive Lead" },
                   { val: "CANCELLED", label: "Not Interested" },
                 ].map(opt => {
                   const hasSuccessfulCall = lead.followUps.some(f => f.outcome === "PICKED" && f.completedDate);
@@ -1069,6 +1207,11 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                   {CANCEL_REASONS.map(r => <option key={r}>{r}</option>)}
                 </select>
               </Field>
+            )}
+            {pickedStatus === "ARCHIVE" && (
+              <div className="p-3 bg-amber-50/80 rounded-xl border border-amber-200 text-xs text-amber-800 flex items-center gap-2 animate-in fade-in">
+                <span>📦 Lead will be moved to <strong>Passive Archive</strong>. No follow-up reminders will be created until customer contacts us.</span>
+              </div>
             )}
             </div>
             <ModalFooter onClose={closeModal} isSubmitting={isSubmitting} label="Record Activity"
@@ -1167,12 +1310,66 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
             handleConvertToCustomer();
           }}>
             <div className="p-8 space-y-6">
-              <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-4 text-center">
-                <CheckCircle2 className="h-8 w-8 text-emerald-500 mx-auto mb-2" />
-                <p className="text-sm font-semibold text-emerald-800">Ready to formalize this relationship?</p>
-                <p className="text-xs text-emerald-600 mt-1">This will move the lead out of your active pipeline and into the Customer Directory.</p>
-              </div>
-              <ModalFooter onClose={closeModal} isSubmitting={isSubmitting} label="Confirm Conversion" />
+              {isUnnamed ? (
+                <div className="space-y-4">
+                  <div className="bg-amber-50 border border-amber-200/80 rounded-xl p-4 text-left">
+                    <div className="flex items-start gap-3">
+                      <span className="text-xl">⚠️</span>
+                      <div>
+                        <p className="text-sm font-bold text-amber-900">Unnamed Lead Detected</p>
+                        <p className="text-xs text-amber-700 mt-0.5">
+                          This lead does not have a name yet. Please enter the customer or lead name below to store and convert them into the Customer Directory.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5 text-left">
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                      <User className="h-3.5 w-3.5 text-indigo-600" /> Customer / Lead Name <span className="text-rose-500">*</span>
+                    </label>
+                    <input 
+                      type="text" 
+                      required 
+                      autoFocus 
+                      placeholder="e.g. Rahul Sharma" 
+                      value={conversionName} 
+                      onChange={e => { setConversionName(e.target.value); setConversionError(""); }} 
+                      className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all shadow-sm"
+                    />
+                    {conversionError && (
+                      <p className="text-xs text-rose-600 font-medium mt-1">{conversionError}</p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4 text-left">
+                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-5">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                      <div className="space-y-1.5">
+                        <p className="text-xs font-bold text-amber-900 uppercase tracking-wider">
+                          Irreversible Customer Conversion
+                        </p>
+                        <p className="text-xs text-slate-600 leading-relaxed">
+                          Once a lead is converted to a customer, it <strong className="text-slate-900 font-semibold">cannot go back to the active lead pipeline</strong>. In the future, this record can only be deactivated (stored in Canceled Records) or permanently deleted.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs text-slate-600 flex items-center justify-between">
+                    <span>Converting Customer:</span>
+                    <span className="font-bold text-slate-900">{lead.customerName}</span>
+                  </div>
+                </div>
+              )}
+              <ModalFooter 
+                onClose={closeModal} 
+                isSubmitting={isSubmitting} 
+                label={isUnnamed ? "Save Name & Convert" : "Convert to Customer"} 
+                disabled={isUnnamed && !conversionName.trim()}
+              />
             </div>
           </form>
         </Modal>
@@ -1358,6 +1555,48 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                 </Field>
               )}
 
+              {meetingOutcome === "CONVERT" && isUnnamed && (
+                <div className="space-y-2 p-4 bg-amber-50 border border-amber-200/80 rounded-xl text-left">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">⚠️</span>
+                    <p className="text-xs font-bold text-amber-900 uppercase tracking-wider">
+                      Customer Name Required Before Conversion
+                    </p>
+                  </div>
+                  <p className="text-[11px] text-amber-700">
+                    This lead is currently unnamed. Please assign a name to formalize customer conversion.
+                  </p>
+                  <input 
+                    type="text" 
+                    required 
+                    autoFocus 
+                    placeholder="Enter customer / lead name..." 
+                    value={conversionName} 
+                    onChange={e => { setConversionName(e.target.value); setConversionError(""); }} 
+                    className="w-full px-3.5 py-2.5 bg-white border border-amber-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all shadow-sm"
+                  />
+                  {conversionError && (
+                    <p className="text-xs text-rose-600 font-medium">{conversionError}</p>
+                  )}
+                </div>
+              )}
+
+              {meetingOutcome === "CONVERT" && !isUnnamed && (
+                <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl text-left">
+                  <div className="flex items-start gap-2.5">
+                    <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs font-bold text-amber-900 uppercase tracking-wider">
+                        Irreversible Customer Conversion
+                      </p>
+                      <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                        Converting <strong className="text-slate-900">{lead.customerName}</strong> will finalize them as a customer. Once converted, this record cannot go back to the active lead pipeline.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <Field label="Summary Notes (Optional)">
                 <textarea rows={3} className={inputCls} placeholder="Add any details about the outcome..."
                   value={noteContent} onChange={e => setNoteContent(e.target.value)} />
@@ -1366,7 +1605,8 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
               <ModalFooter onClose={closeModal} isSubmitting={isSubmitting} label="Complete Visit" 
                 disabled={
                   !meetingOutcome || 
-                  ((meetingOutcome === "RECALL" || meetingOutcome === "RESCHEDULE") && !followUpDate)
+                  ((meetingOutcome === "RECALL" || meetingOutcome === "RESCHEDULE") && !followUpDate) ||
+                  (meetingOutcome === "CONVERT" && isUnnamed && !conversionName.trim())
                 }
               />
             </div>

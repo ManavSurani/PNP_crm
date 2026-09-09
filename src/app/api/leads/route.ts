@@ -11,13 +11,15 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
+    const isArchivedParam = searchParams.get("archived") === "true";
 
     const leads = await (prisma.lead as any).findMany({
       where: {
         ...(status ? { status: status as any } : {}),
-        isCancelled: false
+        isCancelled: false,
+        isArchived: isArchivedParam
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: isArchivedParam ? { archivedAt: "desc" } : { createdAt: "desc" },
       select: {
         id: true,
         customerName: true,
@@ -29,6 +31,11 @@ export async function GET(request: Request) {
         serviceType: true,
         priority: true,
         status: true,
+        isHotLead: true,
+        isArchived: true,
+        archivedAt: true,
+        budgetRange: true,
+        requirementDetails: true,
         assignedStaffId: true,
         createdAt: true,
         updatedAt: true,

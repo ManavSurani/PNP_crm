@@ -94,6 +94,9 @@ model Lead {
   landmark            String?
   preferredVisitTime  String?
   isCancelled         Boolean            @default(false)
+  isHotLead           Boolean            @default(false)
+  isArchived          Boolean            @default(false)
+  archivedAt          DateTime?
   cancelReason        String?
   isFinanciallyClosed Boolean            @default(false)
   isProjectCompleted  Boolean            @default(false)

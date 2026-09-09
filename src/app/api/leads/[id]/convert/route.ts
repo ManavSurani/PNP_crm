@@ -12,13 +12,41 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const params = await context.params;
     const { id } = params;
 
+    let body: any = {};
+    try {
+      body = await request.json();
+    } catch {
+      // Optional body
+    }
+
+    const currentLead = await prisma.lead.findUnique({
+      where: { id },
+      select: { customerName: true },
+    });
+
+    if (!currentLead) {
+      return NextResponse.json({ error: "Lead not found" }, { status: 404 });
+    }
+
+    const providedName = typeof body.customerName === "string" ? body.customerName.trim() : "";
+    const isCurrentlyUnnamed = !currentLead.customerName || !currentLead.customerName.trim() || currentLead.customerName.trim().toLowerCase() === "unnamed lead" || currentLead.customerName.trim().toLowerCase() === "unnamed";
+
+    if (isCurrentlyUnnamed && (!providedName || providedName.toLowerCase() === "unnamed lead" || providedName.toLowerCase() === "unnamed")) {
+      return NextResponse.json({ error: "A valid customer name is required before converting to a customer." }, { status: 400 });
+    }
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+
+    const updateData: any = { status: "WON_ORDER", isCancelled: false };
+    if (providedName) {
+      updateData.customerName = providedName;
+    }
 
     // Update lead status
     const updatedLead = await prisma.lead.update({
       where: { id },
-      data: { status: "WON_ORDER", isCancelled: false },
+      data: updateData,
     });
 
     // Check if a project already exists (idempotent)

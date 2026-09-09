@@ -25,14 +25,14 @@ export async function POST(
       // 1. Fetch current lead state to determine restoration target
       const currentLead = await tx.lead.findUnique({
         where: { id },
-        select: { status: true }
+        select: { status: true, isArchived: true }
       });
 
       if (!currentLead) throw new Error("Lead not found");
 
       // 2. Determine new status: 
       // If it's a Customer (WON_ORDER), keep it. 
-      // If it's a Lead (CANCELLED), move to FOLLOW_UP.
+      // If it's a Lead (CANCELLED or ARCHIVED), move to FOLLOW_UP.
       const newStatus = currentLead.status === "WON_ORDER" ? "WON_ORDER" : "FOLLOW_UP";
 
       const lead = await tx.lead.update({
@@ -40,6 +40,8 @@ export async function POST(
         data: {
           status: newStatus as any,
           isCancelled: false,
+          isArchived: false,
+          archivedAt: null,
           cancelReason: null,
           reactivatedAt: new Date(),
           reactivationNote: reactivationNote || null,
@@ -50,7 +52,9 @@ export async function POST(
       await tx.leadNote.create({
         data: {
           leadId: id,
-          content: `🔄 Lead Reactivated. ${reactivationNote ? `Reason: ${reactivationNote}` : ""}`,
+          content: currentLead.isArchived
+            ? `🔄 Lead Reactivated from Archive. ${reactivationNote ? `Reason: ${reactivationNote}` : ""}`
+            : `🔄 Lead Reactivated. ${reactivationNote ? `Reason: ${reactivationNote}` : ""}`,
         },
       });
 

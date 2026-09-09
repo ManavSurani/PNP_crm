@@ -66,7 +66,7 @@ export async function GET(request: Request) {
       let type = "LEAD";
 
       if (lead.isCancelled) {
-        location = "Canceled Archive";
+        location = "Canceled Records";
         href = `/leads/${lead.id}`;
         type = "CANCELED";
       } else if (lead.isProjectCompleted) {

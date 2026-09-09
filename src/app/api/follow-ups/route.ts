@@ -13,6 +13,7 @@ export async function GET(request: Request) {
         completedDate: null,
         lead: {
           isCancelled: false,
+          isArchived: false,
           status: {
             not: "WON_ORDER"
           }
@@ -111,6 +112,7 @@ export async function POST(request: Request) {
       let scheduledCallDate: Date | null = null;
       let scheduledCallTime: string | null = followUpTime || null;
       let isCancelled = false;
+      let isArchived = false;
       let finalCancelReason: string | null = null;
 
       if (outcome === "NOT_PICKED") {
@@ -149,6 +151,9 @@ export async function POST(request: Request) {
           leadStatusUpdate = "CANCELLED";
           isCancelled = true;
           finalCancelReason = cancelReason || "Customer Cancelled";
+        } else if (pickedStatus === "ARCHIVE") {
+          isArchived = true;
+          scheduledCallDate = null;
         } else if (pickedStatus === "NEXT_DAY") {
           leadStatusUpdate = "FOLLOW_UP";
           const tomorrow = new Date();
@@ -159,7 +164,7 @@ export async function POST(request: Request) {
           leadStatusUpdate = "FOLLOW_UP";
         }
 
-        if (followUpDate) {
+        if (followUpDate && pickedStatus !== "ARCHIVE") {
           scheduledCallDate = new Date(followUpDate);
         }
       } else if (outcome === "CANCELLED") {
@@ -194,8 +199,8 @@ export async function POST(request: Request) {
         }
       });
 
-      // 4. If a future call was scheduled and NOT cancelled, create a NEW PENDING record
-      if (scheduledCallDate && !isCancelled) {
+      // 4. If a future call was scheduled and NOT cancelled or archived, create a NEW PENDING record
+      if (scheduledCallDate && !isCancelled && !isArchived) {
         await tx.followUp.create({
           data: {
             leadId,
@@ -209,15 +214,26 @@ export async function POST(request: Request) {
       }
 
       // 5. Update Lead Status
-      await tx.lead.update({
+      await (tx.lead as any).update({
         where: { id: leadId },
         data: {
           status: leadStatusUpdate as any,
           isCancelled,
+          isArchived,
+          archivedAt: isArchived ? new Date() : undefined,
           cancelReason: finalCancelReason,
           fullAddress: (pickedStatus === "MEETING" && meetingAddress) ? meetingAddress : undefined
         }
       });
+
+      if (isArchived) {
+        await tx.leadNote.create({
+          data: {
+            leadId,
+            content: "📦 Lead moved to Passive Archive from Call Log (Customer will call back)"
+          }
+        });
+      }
       
       // 6. Handle Meeting Creation
       if (pickedStatus === "MEETING" && meetingAddress && meetingDate) {

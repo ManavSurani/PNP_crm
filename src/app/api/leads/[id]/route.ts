@@ -55,6 +55,9 @@ export async function GET(
         isFinanciallyClosed: true,
         // @ts-ignore - newly added
         isProjectCompleted: true,
+        isHotLead: true,
+        isArchived: true,
+        archivedAt: true,
       }
     });
 
@@ -84,7 +87,8 @@ export async function PUT(
       customerName, projectName, contactNumber, alternateNumber, fullAddress, 
       landmark, requirementDetails, inquirySource, referenceName, serviceType, 
       status, priority, assignedStaffId, budgetRange,
-      siteLocation, preferredVisitTime, initialDealAmount, initialDealNotes, isCancelled, cancelReason
+      siteLocation, preferredVisitTime, initialDealAmount, initialDealNotes, isCancelled, cancelReason,
+      isHotLead
     } = body;
 
     const updateData: any = {};
@@ -130,6 +134,7 @@ export async function PUT(
       }
     }
     if (budgetRange !== undefined) updateData.budgetRange = budgetRange;
+    if (isHotLead !== undefined) updateData.isHotLead = Boolean(isHotLead);
 
     // Handle Project Name Update
     if (projectName !== undefined) {

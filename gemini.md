@@ -490,3 +490,100 @@ A: Executed a comprehensive repository audit and cleanup:
 4. Removed empty API folders (src/app/api/cleanup and src/app/api/debug).
 5. Fixed .gitignore to ignore node_modules at any depth (including mobile/node_modules) and removed 9,285 accidental node_modules files from Git tracking index without deleting local files.
 6. Preserved all critical assets: Gemini invoice watermark image, 100 desktop shortcut notification badge icons, launcher scripts, database, and embedded README screenshots.
+
+---
+
+### Session: Hot Lead (?) Feature Integration
+
+Q: read this files to and i want to apply this changes into our this project so can you mack a detail plan for this to how to apply this thing into our project and i don't want you to miss any singal thing from this file and details like check 2 time and apply the ruels like only needed code only should be change other than this should not be tuched any other you think for this so give me detail plan for this
+A: Created a comprehensive, double-verified implementation plan to integrate the Hot Lead (?) feature strictly following HOT_LEAD_CHANGES.md with zero unnecessary code alterations. The plan covers adding the isHotLead field to Prisma schema, creating the PATCH /api/leads/[id]/hot route, updating the GET/PUT leads API routes, implementing the star toggle and avatar badge in the Lead Details page, and adding the filter/sort/avatar badge in the Lead Pipeline page.
+
+Q: ok do this after the changes are done okey so include this into plan to and in this plan also add the rules like other than this should not be change or not write any other uneesary code or anything according to md file change made only that changes only add this type of rules into plan with this comment
+A: Updated the implementation plan with strict guardrails ensuring zero unnecessary code, exact line placement from HOT_LEAD_CHANGES.md, and zero unrelated file modifications. Added the post-change deployment sequence (database push, prisma client generation, tsc check, stopping old node process, next build production compilation, and server restart on port 3000) directly into the plan.
+
+Q: [Approve Implementation Plan & Apply Hot Lead Changes]
+A: Executed the Hot Lead (?) feature integration according to HOT_LEAD_CHANGES.md with zero unrelated file touches:
+1. Added isHotLead boolean field to Lead model in prisma/schema.prisma.
+2. Created PATCH /api/leads/[id]/hot route with auth session checks and Prisma update.
+3. Updated GET /api/leads to include isHotLead in query projections.
+4. Updated GET and PUT /api/leads/[id] to select, destructure, and persist isHotLead.
+5. Added Star toggle button next to WhatsApp button and avatar badge in /leads/[id]/page.tsx.
+6. Updated /leads/page.tsx with ? Hot Lead filter option, avatar badges, and status sorting prioritizing hot leads.
+7. Synced database via prisma db push, regenerated Prisma Client, passed tsc --noEmit with 0 errors, compiled production build (52 routes) via next build, and restarted production server live on http://localhost:3000 (HTTP 200 OK).
+
+---
+
+### Session: Passively Active Archived Leads Architecture
+
+Q: did you see currently when i click on archive lead than goes to cancel page i don't want that like i want an page for this archive into intrested leads page because this type of lead is what we say this type of lead call us here we don't want their unessary follow up and anything in short this is not an cancel lead also not an active lead also not an follow up inshort this type of lead are we called are like pasivli active and for this i want an page like interest lead with in interestet lead page like when i click on title in left side corner then show me archive lead page and this also if any follow up and metting scadual and all are show then when comes into this archive page then mack this an inactive like cancel page and when i reactive this then show the follow up and meeting and all again in this log successful form also need button like interested like this button for archive and want to add this there to so first understend what i am saying and mack it detail plan for this
+A: Prepared a detailed architectural implementation plan separating Archive from Cancel:
+1. Defined 'Archived Lead' as passively active (leads who will call us back, so we do not generate daily follow-up tasks or clutter active queues).
+2. Added isArchived and archivedAt fields to Prisma schema.
+3. Created an intuitive toggle in the header of the Interested Leads page (/interested) to switch between '? Interested Leads' and '?? Archived Leads'.
+4. Added 'Archive Lead' option in the 'Log Successful Call' modal pipeline outcomes.
+5. Filtered out archived leads from /follow-ups and /meetings queues to keep daily tasks clean.
+6. Implemented a 1-click Reactivate workflow that restores the lead, its meetings, follow-ups, and logs to the active pipeline.
+
+Q: can you devide this massive task into phases also can you add rules in this so other thing should not be tuch or add any uneesary thing so add rules like this into our project and give me plan again
+A: Structured the implementation plan into 5 distinct sequential phases with strict guardrails:
+- Strict Rules: Zero unnecessary code, zero unrelated file touches, strict data preservation (Canceled Archive completely untouched).
+- Phase 1: Database schema (isArchived, archivedAt) & Core Archive/Reactivate APIs.
+- Phase 2: Queue isolation (/follow-ups & /meetings) & Call Log Modal outcome integration.
+- Phase 3: Interested Leads Page (/interested) in-page dual view (Interested vs Archived).
+- Phase 4: Pipeline table 3-dots Archive modal & Lead Details profile header.
+- Phase 5: TypeScript audit, Next.js production compilation, and live server restart.
+
+Q: [Execute Phased Implementation: Passively Active Archived Leads]
+A: Successfully implemented all 5 phases of the Passively Active Archived Leads feature with strict non-destructive compliance:
+1. Database Schema: Added isArchived (Boolean) and archivedAt (DateTime?) to model Lead in prisma/schema.prisma and pushed with prisma db push.
+2. Archive & Reactivate APIs: Created POST /api/leads/[id]/archive, updated /api/leads/[id]/reactivate to handle archived leads, and updated GET /api/leads with ?archived=true support.
+3. Daily Queue Isolation: Filtered isArchived: false in /api/follow-ups and /api/meetings to ensure archived leads never clutter active queues.
+4. Call Log Outcome Integration: Added 'Archive Lead' to the Pipeline Outcome grid in the Log Successful Call modal (/leads/[id]).
+5. Dual View in Interested Leads (/interested): Created an in-page switcher between '? Interested Leads' and '?? Archived Leads' with live counts, search, and one-click Reactivate buttons on each card.
+6. Pipeline 3-Dots Menu & Profile Header: Separated Archive from Delete in /leads table with dedicated ArchiveConfirmationModal; added Archived (Passive) badge and Reactivate button to lead profile header.
+7. Verification & Production Rebuild: Passed tsc --noEmit with 0 errors, built Next.js production bundle (52 routes), and relaunched production server live on http://localhost:3000 (HTTP 200 OK).
+
+---
+
+### Session: Unnamed Lead Customer Conversion Guard & Canceled Archive Renaming
+
+Q: here you can see i can also diractly convert lead to customer here i want a thing like before converting a customer i want to check that this lead should not be an unnamed if this is unnamed then open little box where i can put my customer or lead name and store them then convert to customer ok that's it so for this can you create a detail plan with rules like only this part only should change other than this should not be tuched also don't write any uneesary code and all also in this plan i want you to change the page Canceled Archive to canceled or any other name only name want to change which show in this image because we create a archive a seprate page like thing in intrested so if you have any suggestion for this then give me into plan and give me detail plan inlcude all the thing which mention in above don't miss any thing thna this give me detail plan
+A: Prepared a detailed, strict-boundary implementation plan covering:
+1. Strict guardrails ensuring zero unnecessary code and non-destructive changes.
+2. Unnamed Lead Conversion Guard in `/leads/[id]`: checks if customerName is empty or 'Unnamed Lead'; if unnamed, displays an input box inside the Convert modal requiring customer name input, saves the name atomically to the database, and converts to customer. If already named, retains standard confirmation.
+3. Server-side atomic name updating in `POST /api/leads/[id]/convert`.
+4. Renaming suggestions for 'Canceled Archive' (e.g. 'Canceled', 'Canceled Records', 'Canceled Hub') to resolve naming collision with the newly created 'Archived Leads' tab in Interested Leads, updating the page header and sidebar while preserving underlying `/canceled` routes.
+5. Full verification plan with TypeScript audit and Next.js production build.
+
+Q: i read this plan plan is correct work on this two comment and add this thing which i mention in this comment into this plan also i want this messive task to devide into phases so it is easy to install so work on that and devide final plan to phases
+A: Updated the implementation plan with the user's confirmed decisions and structured the entire execution into 4 sequential phases:
+1. Locked in 'Canceled Records' as the confirmed replacement for 'Canceled Archive' across the UI, navigation, and API location tags.
+2. Expanded the Unnamed Lead conversion guard to both conversion workflows: the direct Action Center button and the Site Visit Outcome completion modal.
+3. Structured into 4 distinct phases:
+   - Phase 1: Backend Atomic API support in /api/leads/[id]/convert.
+   - Phase 2: Frontend Unnamed Lead Conversion Guard in /leads/[id]/page.tsx.
+   - Phase 3: Renaming 'Canceled Archive' to 'Canceled Records' across page header, sidebar, dashboard, and modals.
+   - Phase 4: TypeScript audit, Next.js production build, and server relaunch.
+
+Q: [Approve Implementation Plan & Apply Changes: Unnamed Lead Conversion Guard & Canceled Records Renaming]
+A: Executed all 4 phases with strict non-destructive compliance:
+1. Phase 1 (Backend Atomic Conversion): Added customerName payload support and unnamed lead validation to POST /api/leads/[id]/convert, rejecting unnamed conversions without a name and persisting new customer names atomically.
+2. Phase 2 (Frontend Conversion Guard): Integrated the unnamed lead check and name input box in /leads/[id]/page.tsx across both the direct Action Center 'Convert to Customer' modal and the Site Visit Outcome completion modal.
+3. Phase 3 (Canceled Records Renaming): Renamed 'Canceled Archive' to 'Canceled Records' across /canceled page header, Sidebar navigation, dashboard KPI card, delete confirmation modals, breadcrumb links, and duplicate/search location tags, keeping the /canceled URL route stable.
+4. Phase 4 (Verification & Production Relaunch): Passed npx tsc --noEmit with 0 errors, compiled all 52 routes cleanly via npm run build, and restarted the production server live on http://localhost:3000 (HTTP 200 OK).
+
+---
+
+### Session: Post-Conversion Customer Redirection & Irreversible Verification Box
+
+Q: when i convert my lead to customer then show me this page like i don't want to see this page which show in image at all like when i click on convert to customer through convert to customer button or after metting scadual inshort in any way when i covert my lead to customer then this page show me i don't want to see this page also i want something 2 time varification thing like when i click on covert to customer then i want some small box like thing exectly like in above where you show for unnamed lead thing like this but there i don't have to write anything there only show them instruction that if any way one time any lead convert to customer then that lead can't go back to lead pipline then this customer lead may delete permently or may deactivet and store into cance customer thing this sentences show and give them button convert to customer again that's it if there in any way come unnemed thing then don't show this box other wise show this box first undertstand this full thing and create a detail plan for this with rules which we disscuss in above plan add that rules into this plan to also mack this plan into phases
+A: Created a detailed, phased implementation plan with strict guardrails:
+1. Elimination of Deactivated Screen: Redirecting immediately to the Customer Hub (/customers/[id]) upon lead conversion (both direct button and site visit outcome) and adding a route guard in fetchLead so any attempt to access /leads/[id] for a converted lead immediately forwards to /customers/[id].
+2. Two-Tier Verification Modal: If unnamed, displays the name capture input box; if named, displays a small warning box with explicit irreversible instructions (cannot return to lead pipeline, can only be deactivated or deleted in the future) and a 'Convert to Customer' button without requiring text entry.
+3. Phased into 3 sequential steps: Phase 1 (Redirection & Route Guard), Phase 2 (Two-Tier Verification Box), and Phase 3 (TypeScript audit, Next.js build, and server relaunch).
+
+Q: [Approve Implementation Plan & Apply Changes: Post-Conversion Redirection & Irreversible Verification Box]
+A: Executed all 3 phases with strict non-destructive compliance:
+1. Phase 1 (Post-Conversion Customer Redirection & Route Guard): Updated handleConvertToCustomer to navigate directly to /customers/[id] on successful conversion, and added an automatic route guard in fetchLead so that any visit to /leads/[id] for a converted customer (status === 'WON_ORDER') immediately replaces the route with /customers/[id], completely eliminating the read-only 'Lead Deactivated' screen.
+2. Phase 2 (Two-Tier Verification Box): If unnamed, displays the customer name capture field. If named, displays the dedicated Irreversible Customer Conversion verification card explaining that the record cannot return to the lead pipeline and can only be deactivated or deleted, with a 'Convert to Customer' button requiring no text typing. Applied the same warning to the Site Visit Outcome modal.
+3. Phase 3 (Audit & Production Deployment): Passed npx tsc --noEmit with 0 errors, compiled all 52 routes cleanly via npm run build, and verified the production server running live on http://localhost:3000 (HTTP 200 OK).

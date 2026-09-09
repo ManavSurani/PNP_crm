@@ -66,7 +66,7 @@ export default function Dashboard() {
     { title: "Site Visits", value: metrics.totalMeetings, icon: MapPin, color: "text-slate-600", bg: "bg-slate-100", link: "/meetings" },
     { title: "New Inquiries", value: metrics.newLeads, icon: MessageSquare, color: "text-amber-600", bg: "bg-amber-50", link: "/leads?status=NEW_INQUIRY" },
     { title: "Current Leads", value: metrics.currentLeads, icon: TrendingUp, color: "text-violet-600", bg: "bg-violet-50", link: "/leads?status=ACTIVE" },
-    { title: "Canceled Archive", value: metrics.canceledArchive, icon: Trash2, color: "text-rose-600", bg: "bg-rose-50", link: "/canceled" },
+    { title: "Canceled Records", value: metrics.canceledArchive, icon: Trash2, color: "text-rose-600", bg: "bg-rose-50", link: "/canceled" },
   ];
 
   return (

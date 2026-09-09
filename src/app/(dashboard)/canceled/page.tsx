@@ -99,7 +99,7 @@ export default function CanceledArchivePage() {
         <div className="absolute top-0 right-0 w-48 h-48 bg-rose-500 rounded-full blur-[100px] opacity-5 -mr-24 -mt-24" />
         <div className="relative z-10">
           <h1 className="text-2xl font-semibold text-slate-900 tracking-tight flex items-center gap-3">
-            <Trash2 className="h-6 w-6 text-rose-500" /> Canceled Archive
+            <Trash2 className="h-6 w-6 text-rose-500" /> Canceled Records
           </h1>
           <p className="text-slate-500 text-sm mt-1">Review and reactivate lost opportunities or canceled deployments.</p>
         </div>

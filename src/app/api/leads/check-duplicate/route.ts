@@ -46,7 +46,7 @@ export async function GET(request: Request) {
     const results = matches.map(m => {
       let location = "Lead Pipeline";
       if (m.isCancelled) {
-        location = "Canceled Archive";
+        location = "Canceled Records";
       } else if (m.status === "WON_ORDER") {
         location = "Customer Directory";
       } else if (m.status === "FOLLOW_UP") {

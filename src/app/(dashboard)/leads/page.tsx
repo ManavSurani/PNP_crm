@@ -6,7 +6,7 @@ import { format } from "date-fns";
 import { 
   Plus, Search, MoreHorizontal, User, Phone, MapPin, Loader2, 
   Filter, ArrowUpDown, ChevronRight, Activity, Zap, X, CheckCircle2, Check,
-  Trash2, Pencil, ExternalLink, AlertTriangle, RotateCcw, ArrowLeft
+  Trash2, Pencil, ExternalLink, AlertTriangle, RotateCcw, ArrowLeft, Star, Archive
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -21,6 +21,7 @@ type Lead = {
   referenceName?: string | null;
   serviceType: string;
   status: string;
+  isHotLead: boolean;
   createdAt: string;
   assignedStaff?: { name: string } | null;
 };
@@ -43,6 +44,8 @@ export default function LeadsPage() {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [editLead, setEditLead] = useState<Lead | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [archiveId, setArchiveId] = useState<string | null>(null);
+  const [isArchiving, setIsArchiving] = useState(false);
   const [permanentDeleteId, setPermanentDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -118,17 +121,35 @@ export default function LeadsPage() {
     }
   };
 
+  const handleArchive = async () => {
+    if (!archiveId) return;
+    setIsArchiving(true);
+    try {
+      const res = await fetch(`/api/leads/${archiveId}/archive`, { method: "POST" });
+      if (res.ok) {
+        fetchLeads();
+        setArchiveId(null);
+        window.dispatchEvent(new CustomEvent("refresh-notifications"));
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsArchiving(false);
+    }
+  };
+
   const filteredLeads = leads.filter((lead) => {
     const matchesSearch = 
       lead.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.contactNumber.includes(searchTerm) ||
       lead.serviceType.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = filters.status === "ALL" 
-      ? (lead.status !== "WON_ORDER" && lead.status !== "CANCELLED") 
-      : filters.status === "ACTIVE"
-        ? (lead.status === "FOLLOW_UP" || lead.status === "MEETING_SCHEDULED")
-        : lead.status === filters.status;
+    // SUPPORT HOT_LEAD FILTER OPTION
+    const matchesStatus = 
+      filters.status === "HOT_LEAD" ? lead.isHotLead :
+      filters.status === "ALL" ? (lead.status !== "WON_ORDER" && lead.status !== "CANCELLED") :
+      filters.status === "ACTIVE" ? (lead.status === "FOLLOW_UP" || lead.status === "MEETING_SCHEDULED") :
+      lead.status === filters.status;
     const matchesSource = filters.source === "ALL" || lead.inquirySource === filters.source;
     const matchesService = filters.service === "ALL" || lead.serviceType?.toLowerCase().replace(/_/g, " ") === filters.service.toLowerCase().replace(/_/g, " ");
 
@@ -139,6 +160,9 @@ export default function LeadsPage() {
     if (sortBy === "A-Z") return a.customerName.localeCompare(b.customerName);
     if (sortBy === "Z-A") return b.customerName.localeCompare(a.customerName);
     if (sortBy === "STATUS") {
+      // HOT LEADS ALWAYS APPEAR FIRST AT THE TOP
+      if (a.isHotLead !== b.isHotLead) return a.isHotLead ? -1 : 1;
+
       const priority: Record<string, number> = {
         "NEW_INQUIRY": 1,
         "FOLLOW_UP": 2,
@@ -226,6 +250,7 @@ export default function LeadsPage() {
                 onChange={e => setFilters({...filters, status: e.target.value})}
               >
                 <option value="ALL">Active Only</option>
+                <option value="HOT_LEAD">⭐ Hot Lead</option>
                 <option value="NEW_INQUIRY">New Inquiry</option>
                 <option value="ACTIVE">Current Pipeline</option>
                 <option value="FOLLOW_UP">Follow Up</option>
@@ -336,9 +361,17 @@ export default function LeadsPage() {
                         <div className="flex items-center h-full">
                           <div className={cn("w-1 self-stretch shrink-0", getStatusBorder(lead.status).replace('border-l-', 'bg-'))} />
                           <div className="flex items-center pl-7">
-                            <div className="h-10 w-10 flex-shrink-0 bg-slate-100 rounded-lg flex items-center justify-center text-slate-600 font-semibold border border-slate-200">
-                            {lead.customerName ? lead.customerName.charAt(0) : "?"}
-                          </div>
+                            {/* Avatar with overlapping Star badge */}
+                            <div className="relative h-10 w-10 flex-shrink-0">
+                              <div className="h-10 w-10 bg-slate-100 rounded-lg flex items-center justify-center text-slate-600 font-semibold border border-slate-200">
+                                {lead.customerName ? lead.customerName.charAt(0) : "?"}
+                              </div>
+                              {lead.isHotLead && (
+                                <span className="absolute -bottom-1 -right-1 bg-amber-400 rounded-full p-0.5 border border-white shadow-sm">
+                                  <Star className="h-2.5 w-2.5 text-white fill-white" />
+                                </span>
+                              )}
+                            </div>
                           <div className="ml-4">
                             <div className="text-sm font-semibold text-slate-900 group-hover:text-primary transition-colors flex items-center gap-2">
                               {lead.customerName || "Unknown Customer"}
@@ -418,10 +451,10 @@ export default function LeadsPage() {
                                    </button>
                                    <div className="h-px bg-slate-100 my-1" />
                                    <button 
-                                     onClick={() => { setDeleteId(lead.id); setOpenMenuId(null); }}
+                                     onClick={() => { setArchiveId(lead.id); setOpenMenuId(null); }}
                                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold hover:bg-slate-50 text-slate-600 rounded-lg transition-colors text-left"
                                    >
-                                     <RotateCcw className="h-3.5 w-3.5 text-slate-400" /> Archive Lead
+                                     <Archive className="h-3.5 w-3.5 text-slate-400" /> Archive Lead
                                    </button>
                                    <button 
                                      onClick={() => { setPermanentDeleteId(lead.id); setOpenMenuId(null); }}
@@ -457,6 +490,13 @@ export default function LeadsPage() {
           setEditLead(null);
           fetchLeads();
         }}
+      />
+
+      <ArchiveConfirmationModal
+        isOpen={!!archiveId}
+        isLoading={isArchiving}
+        onClose={() => setArchiveId(null)}
+        onConfirm={handleArchive}
       />
 
       <DeleteConfirmationModal
@@ -805,6 +845,41 @@ function CreateOrEditModal({ isOpen, lead, onClose, onSuccess }: { isOpen: boole
   );
 }
 
+function ArchiveConfirmationModal({ isOpen, isLoading, onClose, onConfirm }: { isOpen: boolean, isLoading: boolean, onClose: () => void, onConfirm: () => void }) {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/20 backdrop-blur-sm animate-in fade-in duration-300">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 animate-in zoom-in-95">
+        <div className="p-8 text-center">
+          <div className="bg-indigo-50 h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-5">
+            <Archive className="h-8 w-8 text-indigo-600" />
+          </div>
+          <h3 className="text-xl font-semibold text-slate-900">Archive Lead (Passive Lead)</h3>
+          <p className="mt-2 text-slate-500 font-medium leading-relaxed px-4 text-sm">
+            Move this lead to <span className="text-slate-900 font-bold">Passive Archive</span>? Active follow-ups and meetings will be paused until reactivated. You can access it anytime from Interested Leads.
+          </p>
+          <div className="mt-8 flex flex-col gap-2">
+             <button 
+               disabled={isLoading} 
+               onClick={onConfirm}
+               className="w-full bg-indigo-600 hover:bg-indigo-700 py-3 rounded-lg text-white font-semibold text-sm transition-all active:scale-95 flex items-center justify-center gap-2"
+             >
+               {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Archive className="h-4 w-4" />}
+               Move to Archive
+             </button>
+             <button 
+               onClick={onClose}
+               className="w-full bg-slate-50 hover:bg-slate-100 py-3 rounded-lg text-slate-600 font-semibold text-sm transition-colors"
+             >
+               Cancel
+             </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DeleteConfirmationModal({ isOpen, isLoading, onClose, onConfirm }: { isOpen: boolean, isLoading: boolean, onClose: () => void, onConfirm: () => void }) {
   if (!isOpen) return null;
   return (
@@ -814,9 +889,9 @@ function DeleteConfirmationModal({ isOpen, isLoading, onClose, onConfirm }: { is
           <div className="bg-rose-50 h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-5">
             <AlertTriangle className="h-8 w-8 text-rose-500" />
           </div>
-          <h3 className="text-xl font-semibold text-slate-900">Archive Lead</h3>
+          <h3 className="text-xl font-semibold text-slate-900">Move to Canceled Records?</h3>
           <p className="mt-2 text-slate-500 font-medium leading-relaxed px-4 text-sm">
-            Are you sure you want to remove this lead? It will be moved to the <span className="text-slate-900 font-bold">Canceled Archive</span> for safety. You can permanently delete it from there later.
+            Are you sure you want to cancel this lead? It will be moved to <span className="text-slate-900 font-bold">Canceled Records</span> for safety. You can permanently delete it from there later.
           </p>
           <div className="mt-8 flex flex-col gap-2">
              <button 
@@ -825,7 +900,7 @@ function DeleteConfirmationModal({ isOpen, isLoading, onClose, onConfirm }: { is
                className="w-full bg-rose-600 hover:bg-rose-700 py-3 rounded-lg text-white font-semibold text-sm transition-all active:scale-95 flex items-center justify-center gap-2"
              >
                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-               Move to Archive
+               Move to Canceled
              </button>
              <button 
                onClick={onClose}
