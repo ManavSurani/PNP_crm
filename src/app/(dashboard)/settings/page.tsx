@@ -7,12 +7,13 @@ import {
   Key, Globe, Clock, Monitor, RefreshCcw, AlertCircle,
   Zap, Check, Settings as SettingsIcon, Database, Lock,
   Trash2, MoreHorizontal, ExternalLink, AlertTriangle, Search, Filter, RotateCcw, Activity, MapPin, ChevronRight, Phone,
-  Cloud, CloudDownload, Timer, CalendarClock
+  Cloud, CloudDownload, Timer, CalendarClock, Palette, Sun, Moon, Laptop, Keyboard, Sparkles
 } from "lucide-react";
 import PinModal from "@/components/analytics/PinModal";
 import { cn } from "@/lib/utils";
 import { ClockTimePicker } from "@/components/ui/ClockTimePicker";
 import { format } from "date-fns";
+import { useTheme, type ThemeMode } from "@/components/providers/ThemeProvider";
 
 export default function SettingsPage() {
   const { data: session, update } = useSession();
@@ -507,6 +508,7 @@ export default function SettingsPage() {
   const tabs = [
     { id: "profile", label: "Identity Profile", icon: User },
     { id: "system", label: "System Config", icon: SettingsIcon },
+    { id: "appearance", label: "Theme & Appearance", icon: Palette },
     { id: "security", label: "Advanced Security", icon: Shield },
     { id: "customer-cleanup", label: "Customer Clean Up", icon: Trash2 },
     { id: "backup", label: "Backup & Restore", icon: Database },
@@ -515,11 +517,11 @@ export default function SettingsPage() {
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-20 font-sans">
       {/* Header */}
-      <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm relative overflow-hidden transition-colors">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary rounded-full blur-[100px] opacity-5 -mr-32 -mt-32" />
         <div className="relative z-10">
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">System Configuration</h1>
-          <p className="text-slate-500 text-sm mt-1 font-medium">Manage your identity, active sessions, and global security policies.</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">System Configuration</h1>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1 font-medium">Manage your identity, active sessions, and global security policies.</p>
         </div>
       </div>
 
@@ -531,10 +533,10 @@ export default function SettingsPage() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200",
+                "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer",
                 activeTab === tab.id 
-                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" 
-                  : "text-slate-500 hover:bg-white hover:text-slate-900 border border-transparent hover:border-slate-100"
+                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100 dark:shadow-[0_0_15px_rgba(99,102,241,0.3)]" 
+                  : "text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-white border border-transparent hover:border-slate-100 dark:hover:border-slate-800"
               )}
             >
               <tab.icon className="h-4 w-4" />
@@ -557,10 +559,10 @@ export default function SettingsPage() {
 
           {activeTab === "profile" && (
             isIdentityUnlocked ? (
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2">
-              <div className="p-6 border-b border-slate-100 bg-slate-50/50">
-                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
-                  <User className="h-4 w-4 text-primary" /> Profile Credentials
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/8 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2">
+              <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-[#161f32]/60">
+                <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
+                  <User className="h-4 w-4 text-primary dark:text-indigo-400" /> Profile Credentials
                 </h2>
               </div>
               <form onSubmit={handleProfileSubmit} className="p-8 space-y-6">
@@ -569,7 +571,7 @@ export default function SettingsPage() {
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
                     <input
                       type="text"
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-4 focus:ring-primary/5 focus:border-primary outline-none transition-all"
+                      className="w-full px-4 py-3 bg-slate-50 dark:bg-[#161f32] border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium text-slate-900 dark:text-slate-100 focus:bg-white dark:focus:bg-[#111827] focus:ring-4 focus:ring-primary/5 dark:focus:ring-indigo-500/10 focus:border-primary dark:focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600"
                       value={profileForm.name}
                       onChange={e => setProfileForm({ ...profileForm, name: e.target.value })}
                     />
@@ -578,15 +580,15 @@ export default function SettingsPage() {
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
                     <input
                       type="email"
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-4 focus:ring-primary/5 focus:border-primary outline-none transition-all"
+                      className="w-full px-4 py-3 bg-slate-50 dark:bg-[#161f32] border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium text-slate-900 dark:text-slate-100 focus:bg-white dark:focus:bg-[#111827] focus:ring-4 focus:ring-primary/5 dark:focus:ring-indigo-500/10 focus:border-primary dark:focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600"
                       value={profileForm.email}
                       onChange={e => setProfileForm({ ...profileForm, email: e.target.value })}
                     />
                   </div>
                 </div>
 
-                <div className="pt-6 border-t border-slate-100 space-y-6">
-                  <h3 className="text-[11px] font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                <div className="pt-6 border-t border-slate-100 dark:border-slate-800 space-y-6">
+                  <h3 className="text-[11px] font-bold text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
                     <Key className="h-3.5 w-3.5 text-amber-500" /> Change Password
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -595,7 +597,7 @@ export default function SettingsPage() {
                       <input
                         type="password"
                         placeholder="••••••••"
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-4 focus:ring-primary/5 focus:border-primary outline-none transition-all"
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-[#161f32] border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium text-slate-900 dark:text-slate-100 focus:bg-white dark:focus:bg-[#111827] focus:ring-4 focus:ring-primary/5 dark:focus:ring-indigo-500/10 focus:border-primary dark:focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600"
                         value={profileForm.currentPassword}
                         onChange={e => setProfileForm({ ...profileForm, currentPassword: e.target.value })}
                       />
@@ -605,7 +607,7 @@ export default function SettingsPage() {
                       <input
                         type="password"
                         placeholder="••••••••"
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-4 focus:ring-primary/5 focus:border-primary outline-none transition-all"
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-[#161f32] border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium text-slate-900 dark:text-slate-100 focus:bg-white dark:focus:bg-[#111827] focus:ring-4 focus:ring-primary/5 dark:focus:ring-indigo-500/10 focus:border-primary dark:focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600"
                         value={profileForm.newPassword}
                         onChange={e => setProfileForm({ ...profileForm, newPassword: e.target.value })}
                       />
@@ -616,7 +618,7 @@ export default function SettingsPage() {
                 <div className="pt-4 flex justify-end">
                   <button
                     disabled={isLoading}
-                    className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl text-sm font-bold hover:shadow-lg hover:shadow-primary/20 active:scale-95 transition-all disabled:opacity-50"
+                    className="flex items-center gap-2 px-6 py-3 bg-primary dark:bg-indigo-600 hover:bg-indigo-700 dark:hover:bg-indigo-500 text-white rounded-xl text-sm font-bold hover:shadow-lg hover:shadow-primary/20 active:scale-95 transition-all disabled:opacity-50"
                   >
                     {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                     Save Changes
@@ -625,11 +627,11 @@ export default function SettingsPage() {
               </form>
             </div>
             ) : (
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-16 flex flex-col items-center justify-center text-center animate-in zoom-in-95">
-                <div className="h-20 w-20 bg-slate-900 rounded-3xl flex items-center justify-center shadow-2xl mb-6 shadow-slate-900/20">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/8 shadow-sm p-16 flex flex-col items-center justify-center text-center animate-in zoom-in-95">
+                <div className="h-20 w-20 bg-slate-900 dark:bg-[#161f32] border border-transparent dark:border-slate-800 rounded-3xl flex items-center justify-center shadow-2xl mb-6 shadow-slate-900/20">
                   <Lock className="h-8 w-8 text-white" />
                 </div>
-                <h3 className="text-xl font-black text-slate-900 uppercase tracking-widest">Access Restricted</h3>
+                <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-widest">Access Restricted</h3>
                 <p className="text-xs font-bold text-slate-400 mt-3 max-w-sm uppercase leading-relaxed tracking-wider">
                   Security PIN verification required to access Identity Profile settings.
                 </p>
@@ -639,7 +641,7 @@ export default function SettingsPage() {
                     setPinModalMode("verify");
                     setShowPinModal(true);
                   }}
-                  className="mt-8 bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-indigo-200 transition-all active:scale-95 flex items-center gap-2"
+                  className="mt-8 bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-indigo-500/20 transition-all active:scale-95 flex items-center gap-2"
                 >
                   <Shield className="h-4 w-4" /> Unlock Tab
                 </button>
@@ -648,38 +650,38 @@ export default function SettingsPage() {
           )}
 
           {activeTab === "system" && (
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2">
-              <div className="p-6 border-b border-slate-100 bg-slate-50/50">
-                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
-                  <Globe className="h-4 w-4 text-emerald-600" /> System Configuration
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/8 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2">
+              <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-[#161f32]/60">
+                <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /> System Configuration
                 </h2>
               </div>
               <div className="p-8 space-y-6">
-                <div className="bg-slate-50/50 border border-slate-100 p-6 rounded-xl space-y-4">
+                <div className="bg-slate-50/50 dark:bg-[#161f32]/40 border border-slate-100 dark:border-slate-800 p-6 rounded-xl space-y-4">
                   <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center">
-                       <Zap className="h-4 w-4 text-emerald-600" />
+                    <div className="h-8 w-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-100 dark:border-emerald-800/60 flex items-center justify-center">
+                       <Zap className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-slate-900">Recovery &amp; WhatsApp Dispatch Number</p>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Password Recovery + Communication Gateway</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white">Recovery &amp; WhatsApp Dispatch Number</p>
+                      <p className="text-[10px] text-slate-400 dark:text-slate-400 font-bold uppercase tracking-wider">Password Recovery + Communication Gateway</p>
                     </div>
                   </div>
                   
                   <div className="space-y-2 pt-2">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Phone Number</label>
+                    <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">Phone Number</label>
                     <div className="flex gap-2">
                       <input 
                         type="text"
                         placeholder="e.g. 8799544606"
-                        className="flex-1 px-4 py-3 bg-white rounded-xl border border-slate-200 text-sm font-semibold focus:border-primary outline-none transition-all"
+                        className="flex-1 px-4 py-3 bg-white dark:bg-[#161f32] rounded-xl border border-slate-200 dark:border-slate-800 text-sm font-semibold text-slate-900 dark:text-slate-100 focus:border-primary dark:focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600"
                         value={dispatchNumber}
                         onChange={(e) => {
                           setDispatchNumber(e.target.value.replace(/\D/g, "").slice(0, 10));
                         }}
                       />
                       {dispatchNumber === originalDispatchNumber && originalDispatchNumber !== "" ? (
-                        <div className="px-6 py-3 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-xl flex items-center justify-center gap-2 shadow-sm animate-in zoom-in-95 duration-200">
+                        <div className="px-6 py-3 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 rounded-xl flex items-center justify-center gap-2 shadow-sm animate-in zoom-in-95 duration-200">
                           <Check className="h-4 w-4" />
                           <span className="text-xs font-bold uppercase tracking-wider">Saved</span>
                         </div>
@@ -687,19 +689,19 @@ export default function SettingsPage() {
                         <button 
                           onClick={handleSystemSave}
                           disabled={isLoading || (originalDispatchNumber !== "" && dispatchNumber === originalDispatchNumber)}
-                          className="px-6 py-3 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 active:scale-95 transition-all shadow-md shadow-indigo-100 border border-indigo-500 disabled:opacity-50 flex items-center justify-center gap-2"
+                          className="px-6 py-3 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 active:scale-95 transition-all shadow-md shadow-indigo-500/20 border border-indigo-500 disabled:opacity-50 flex items-center justify-center gap-2"
                         >
                           {isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                           {originalDispatchNumber === "" ? "Save" : "Save Changes"}
                         </button>
                       )}
                     </div>
-                    <div className="mt-3 p-3 bg-amber-50 border border-amber-100 rounded-lg space-y-1.5">
-                      <p className="text-[10px] text-amber-800 font-bold uppercase tracking-wider">How this number is used</p>
-                      <p className="text-[10px] text-amber-700 leading-relaxed">
+                    <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-800/40 rounded-lg space-y-1.5">
+                      <p className="text-[10px] text-amber-800 dark:text-amber-300 font-bold uppercase tracking-wider">How this number is used</p>
+                      <p className="text-[10px] text-amber-700 dark:text-amber-400 leading-relaxed">
                         <span className="font-bold">🔑 Forgot Password:</span> On the Login page, clicking "Forgot Password?" asks for this number to verify identity before allowing a password reset. Set this first, otherwise password recovery will not work.
                       </p>
-                      <p className="text-[10px] text-amber-700 leading-relaxed">
+                      <p className="text-[10px] text-amber-700 dark:text-amber-400 leading-relaxed">
                         <span className="font-bold">💬 WhatsApp Dispatch:</span> Clicking the WhatsApp button on a Lead page forwards the lead's contact to this number.
                       </p>
                     </div>
@@ -710,33 +712,37 @@ export default function SettingsPage() {
             </div>
           )}
 
+          {activeTab === "appearance" && (
+            <AppearanceTabSection />
+          )}
+
           {activeTab === "security" && (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2">
               {/* Session Timeout */}
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-                  <h2 className="text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-indigo-600" /> Session Expiration
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/8 shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-[#161f32]/60 flex items-center justify-between">
+                  <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-indigo-600 dark:text-indigo-400" /> Session Expiration
                   </h2>
                 </div>
                 <div className="p-8 space-y-6">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div className="max-w-md">
-                      <p className="text-sm font-semibold text-slate-900">Configurable Timeout</p>
-                      <p className="text-xs text-slate-500 mt-1">Define how long a user session remains active before requiring re-authentication.</p>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white">Configurable Timeout</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Define how long a user session remains active before requiring re-authentication.</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <select 
-                        className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold focus:ring-2 focus:ring-primary/10 outline-none"
+                        className="px-4 py-2 bg-slate-50 dark:bg-[#161f32] border border-slate-200 dark:border-slate-800 rounded-lg text-sm font-bold text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary/10 dark:focus:ring-indigo-500/20 outline-none"
                         value={sessionTimeout}
                         onChange={e => setSessionTimeout(parseInt(e.target.value))}
                         disabled={session?.user?.role !== "ADMIN"}
                       >
-                        <option value={300}>5 Minutes</option>
-                        <option value={3600}>1 Hour</option>
-                        <option value={86400}>24 Hours</option>
-                        <option value={604800}>7 Days</option>
-                        <option value={2592000}>30 Days</option>
+                        <option value={300} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">5 Minutes</option>
+                        <option value={3600} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">1 Hour</option>
+                        <option value={86400} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">24 Hours</option>
+                        <option value={604800} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">7 Days</option>
+                        <option value={2592000} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">30 Days</option>
                       </select>
                       {session?.user?.role === "ADMIN" && (
                          <button 
@@ -749,7 +755,7 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   {session?.user?.role !== "ADMIN" && (
-                    <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg flex items-center gap-2 text-amber-700 text-[10px] font-bold uppercase tracking-wider">
+                    <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-800/40 rounded-lg flex items-center gap-2 text-amber-700 dark:text-amber-400 text-[10px] font-bold uppercase tracking-wider">
                       <AlertCircle className="h-3.5 w-3.5" /> Only administrators can modify global timeout policies.
                     </div>
                   )}
@@ -757,14 +763,14 @@ export default function SettingsPage() {
               </div>
 
               {/* Active Devices */}
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-                  <h2 className="text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
-                    <Monitor className="h-4 w-4 text-emerald-600" /> Logged Devices
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/8 shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-[#161f32]/60 flex items-center justify-between">
+                  <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
+                    <Monitor className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /> Logged Devices
                   </h2>
                   <button 
                     onClick={terminateAllOthers}
-                    className="text-[10px] font-bold text-rose-600 uppercase tracking-widest hover:bg-rose-50 px-3 py-1.5 rounded-lg transition-colors border border-transparent hover:border-rose-100"
+                    className="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-widest hover:bg-rose-50 dark:hover:bg-rose-950/40 px-3 py-1.5 rounded-lg transition-colors border border-transparent hover:border-rose-100 dark:hover:border-rose-900/40"
                   >
                     Logout All Others
                   </button>
@@ -772,22 +778,22 @@ export default function SettingsPage() {
                 <div className="p-4">
                   <div className="grid grid-cols-1 gap-3">
                     {activeSessions.map((s) => (
-                      <div key={s.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100 hover:border-indigo-100 transition-all group">
+                      <div key={s.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-[#161f32]/60 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-indigo-100 dark:hover:border-indigo-500/30 transition-all group">
                         <div className="flex items-center gap-4">
                           <div className={cn(
                             "h-10 w-10 rounded-lg flex items-center justify-center border transition-all",
-                            s.sessionToken === session?.sessionToken ? "bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-100" : "bg-white text-slate-400 border-slate-100"
+                            s.sessionToken === session?.sessionToken ? "bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-500/20" : "bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-400 border-slate-100 dark:border-slate-700"
                           )}>
                             {s.userAgent?.includes("Mobile") ? <Smartphone className="h-5 w-5" /> : <Monitor className="h-5 w-5" />}
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
-                              <p className="text-xs font-bold text-slate-900 uppercase tracking-tight">{s.userAgent || "Unknown Device"}</p>
+                              <p className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-tight">{s.userAgent || "Unknown Device"}</p>
                               {s.sessionToken === session?.sessionToken && (
                                 <span className="px-1.5 py-0.5 bg-emerald-500 text-white text-[8px] font-bold rounded-md uppercase tracking-widest">Current</span>
                               )}
                             </div>
-                            <p className="text-[10px] text-slate-400 font-medium mt-0.5 tracking-wide">
+                            <p className="text-[10px] text-slate-400 dark:text-slate-400 font-medium mt-0.5 tracking-wide">
                               Last active: {format(new Date(s.lastActive), "MMM dd, hh:mm a")} • {s.ipAddress || "Active IP"}
                             </p>
                           </div>
@@ -795,7 +801,7 @@ export default function SettingsPage() {
                         {s.sessionToken !== session?.sessionToken && (
                           <button 
                             onClick={() => terminateSession(s.id)}
-                            className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+                            className="p-2 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-all"
                           >
                             <LogOut className="h-4 w-4" />
                           </button>
@@ -803,24 +809,24 @@ export default function SettingsPage() {
                       </div>
                     ))}
                     {activeSessions.length === 0 && (
-                      <div className="py-12 text-center text-slate-400 font-medium text-xs">No session data synchronized.</div>
+                      <div className="py-12 text-center text-slate-400 dark:text-slate-500 font-medium text-xs">No session data synchronized.</div>
                     )}
                   </div>
                 </div>
               </div>
 
               {/* Analytics PIN Security */}
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-                  <h2 className="text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
-                    <Lock className="h-4 w-4 text-primary" /> Business Analytics Security
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/8 shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-[#161f32]/60 flex items-center justify-between">
+                  <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
+                    <Lock className="h-4 w-4 text-primary dark:text-indigo-400" /> Business Analytics Security
                   </h2>
                 </div>
                 <div className="p-8 space-y-6">
-                   <div className="flex items-center justify-between p-6 bg-slate-50 rounded-xl border border-slate-100">
+                   <div className="flex items-center justify-between p-6 bg-slate-50 dark:bg-[#161f32]/60 rounded-xl border border-slate-100 dark:border-slate-800">
                       <div className="space-y-1">
-                        <p className="text-sm font-bold text-slate-900">PIN Protection</p>
-                        <p className="text-[10px] text-slate-500 font-medium leading-relaxed max-w-xs uppercase tracking-wider">
+                        <p className="text-sm font-bold text-slate-900 dark:text-white">PIN Protection</p>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-xs uppercase tracking-wider">
                           Require a 4-digit PIN to access Business Analytics.
                         </p>
                       </div>
@@ -832,7 +838,7 @@ export default function SettingsPage() {
                               setPinPurpose("configure");
                               setShowPinModal(true);
                             }}
-                            className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline"
+                            className="text-[10px] font-black text-primary dark:text-indigo-400 uppercase tracking-widest hover:underline"
                           >
                             Change PIN
                           </button>
@@ -852,7 +858,7 @@ export default function SettingsPage() {
                           }}
                           className={cn(
                             "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-                            isAnalyticsPinEnabled ? "bg-primary" : "bg-slate-200"
+                            isAnalyticsPinEnabled ? "bg-primary dark:bg-indigo-600" : "bg-slate-200 dark:bg-slate-700"
                           )}
                         >
                           <span className={cn(
@@ -869,40 +875,40 @@ export default function SettingsPage() {
           )}
 
           {activeTab === "backup" && (
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2">
-              <div className="p-6 border-b border-slate-100 bg-slate-50/50">
-                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
-                  <Database className="h-4 w-4 text-primary" /> Backup & Restore
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/8 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2">
+              <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-[#161f32]/60">
+                <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
+                  <Database className="h-4 w-4 text-primary dark:text-indigo-400" /> Backup &amp; Restore
                 </h2>
-                <p className="text-slate-500 text-[10px] font-medium mt-1 uppercase tracking-wider">Securely export and restore your PNP CRM database and configuration.</p>
+                <p className="text-slate-500 dark:text-slate-400 text-[10px] font-medium mt-1 uppercase tracking-wider">Securely export and restore your PNP CRM database and configuration.</p>
               </div>
               
               <div className="p-8 space-y-10">
                 {/* Create Backup Section */}
                 <div className="space-y-6">
                   <div>
-                    <h3 className="text-[11px] font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                    <h3 className="text-[11px] font-bold text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
                       CREATE SECURE BACKUP
                     </h3>
-                    <p className="text-xs text-slate-500 mt-1">Export all CRM business data into an encrypted restore file.</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Export all CRM business data into an encrypted restore file.</p>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">BACKUP FORMAT</label>
+                      <label className="text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest ml-1">BACKUP FORMAT</label>
                       <input
                         type="text"
                         readOnly
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none text-slate-500"
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-[#161f32] border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium outline-none text-slate-500 dark:text-slate-400"
                         value="Encrypted .pnpcrm File"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">INCLUDED DATA</label>
+                      <label className="text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest ml-1">INCLUDED DATA</label>
                       <input
                         type="text"
                         readOnly
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none text-slate-500"
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-[#161f32] border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium outline-none text-slate-500 dark:text-slate-400"
                         value="Customers, Leads, Projects, Payments, Analytics"
                       />
                     </div>
@@ -912,7 +918,7 @@ export default function SettingsPage() {
                     <button
                       onClick={handleCreateBackup}
                       disabled={isLoading}
-                      className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl text-sm font-bold hover:shadow-lg hover:shadow-primary/20 active:scale-95 transition-all disabled:opacity-50 min-w-[160px] justify-center"
+                      className="flex items-center gap-2 px-6 py-3 bg-primary dark:bg-indigo-600 hover:bg-indigo-700 dark:hover:bg-indigo-500 text-white rounded-xl text-sm font-bold hover:shadow-lg hover:shadow-primary/20 active:scale-95 transition-all disabled:opacity-50 min-w-[160px] justify-center"
                     >
                       {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                       {isLoading ? "Creating Backup..." : "Create Backup"}
@@ -920,17 +926,17 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                <div className="border-t border-slate-100" />
+                <div className="border-t border-slate-100 dark:border-slate-800" />
 
                 {/* ── Auto-Backup Schedule Section ───────────────────────── */}
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-[11px] font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
-                        <CalendarClock className="h-3.5 w-3.5 text-primary" />
+                      <h3 className="text-[11px] font-bold text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
+                        <CalendarClock className="h-3.5 w-3.5 text-primary dark:text-indigo-400" />
                         AUTO-BACKUP SCHEDULE
                       </h3>
-                      <p className="text-xs text-slate-500 mt-1 max-w-[400px]">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-[400px]">
                         Set a daily time to automatically create and upload a backup to the cloud. Your PC must be ON at the scheduled time.
                       </p>
                     </div>
@@ -940,7 +946,7 @@ export default function SettingsPage() {
                       disabled={isTogglingSchedule || isSettingSchedule}
                       className={cn(
                         "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-                        isAutoBackupEnabled ? "bg-emerald-500" : "bg-slate-200",
+                        isAutoBackupEnabled ? "bg-emerald-500" : "bg-slate-200 dark:bg-slate-700",
                         (isTogglingSchedule || isSettingSchedule) && "opacity-50 cursor-not-allowed"
                       )}
                     >
@@ -956,50 +962,50 @@ export default function SettingsPage() {
 
                   {isAutoBackupEnabled && (
                     <div className="flex flex-col gap-1.5 animate-in fade-in slide-in-from-top-2 duration-300">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">DAILY BACKUP TIME</label>
+                      <label className="text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest ml-1">DAILY BACKUP TIME</label>
                       <ClockTimePicker
                         value={autoBackupTime}
                         onChange={(val) => {
                           setAutoBackupTime(val);
                           handleSetSchedule(val);
                         }}
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all"
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-[#161f32] border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium text-slate-900 dark:text-slate-100 outline-none focus:border-primary dark:focus:border-indigo-500 focus:ring-2 focus:ring-primary/10 transition-all"
                       />
                     </div>
                   )}
 
                   {autoBackupLastRun && (
-                    <div className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50 border border-emerald-100 rounded-xl">
-                      <Cloud className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                      <span className="text-xs text-emerald-700 font-medium">
+                    <div className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-800/50 rounded-xl">
+                      <Cloud className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                      <span className="text-xs text-emerald-700 dark:text-emerald-300 font-medium">
                         Last cloud backup: {format(new Date(autoBackupLastRun), "dd MMM yyyy, hh:mm a")}
                       </span>
                     </div>
                   )}
 
                   {scheduleMessage.text && (
-                    <p className={`text-xs font-medium ${scheduleMessage.type === "success" ? "text-emerald-600" : "text-rose-600"}`}>
+                    <p className={`text-xs font-medium ${scheduleMessage.type === "success" ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
                       {scheduleMessage.text}
                     </p>
                   )}
                 </div>
 
-                <div className="border-t border-slate-100" />
+                <div className="border-t border-slate-100 dark:border-slate-800" />
 
                 {/* ── Restore from Cloud Section ─────────────────────────── */}
                 <div className="space-y-6">
                   <div>
-                    <h3 className="text-[11px] font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
-                      <CloudDownload className="h-3.5 w-3.5 text-indigo-500" />
+                    <h3 className="text-[11px] font-bold text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
+                      <CloudDownload className="h-3.5 w-3.5 text-indigo-500 dark:text-indigo-400" />
                       RESTORE FROM CLOUD
                     </h3>
-                    <p className="text-xs text-slate-500 mt-1">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                       Fetch and restore the latest backup stored in Cloudflare R2. This will replace all current CRM data.
                     </p>
                   </div>
 
                   {cloudMessage.text && (
-                    <p className={`text-xs font-medium ${cloudMessage.type === "success" ? "text-emerald-600" : "text-rose-600"}`}>
+                    <p className={`text-xs font-medium ${cloudMessage.type === "success" ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
                       {cloudMessage.text}
                     </p>
                   )}
@@ -1008,23 +1014,23 @@ export default function SettingsPage() {
                     <button
                       onClick={() => setShowCloudRestoreModal(true)}
                       disabled={isCollectingFromCloud || isLoading}
-                      className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:shadow-lg hover:shadow-indigo-100 active:scale-95 transition-all disabled:opacity-50 min-w-[200px] justify-center"
+                      className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 active:scale-95 transition-all disabled:opacity-50 min-w-[200px] justify-center shadow-lg shadow-indigo-500/20"
                     >
                       {isCollectingFromCloud ? <Loader2 className="h-4 w-4 animate-spin" /> : <CloudDownload className="h-4 w-4" />}
-                      {isCollectingFromCloud ? "Restoring from Cloud..." : "Collect & Restore from Cloud"}
+                      {isCollectingFromCloud ? "Restoring from Cloud..." : "Collect &amp; Restore from Cloud"}
                     </button>
                   </div>
                 </div>
 
-                <div className="border-t border-slate-100" />
+                <div className="border-t border-slate-100 dark:border-slate-800" />
 
                 {/* ── Import Backup Section (UNCHANGED) ─────────────────── */}
                 <div className="space-y-6">
                   <div>
-                    <h3 className="text-[11px] font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                    <h3 className="text-[11px] font-bold text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
                       RESTORE BACKUP
                     </h3>
-                    <p className="text-xs text-slate-500 mt-1">Import and restore a previously exported PNP CRM backup.</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Import and restore a previously exported PNP CRM backup.</p>
                   </div>
                   
                   <div className="space-y-4">
@@ -1038,10 +1044,10 @@ export default function SettingsPage() {
                       />
                       <label
                         htmlFor="backup-upload"
-                        className="flex items-center justify-between w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium cursor-pointer hover:border-primary transition-all group"
+                        className="flex items-center justify-between w-full px-4 py-3 bg-slate-50 dark:bg-[#161f32] border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium cursor-pointer hover:border-primary dark:hover:border-indigo-500 transition-all group"
                       >
-                        <span className="text-slate-500">{selectedFile ? selectedFile.name : "No backup file selected"}</span>
-                        <span className="text-[10px] font-bold text-primary uppercase tracking-widest px-3 py-1 bg-primary/5 rounded-lg">Select File</span>
+                        <span className="text-slate-500 dark:text-slate-300">{selectedFile ? selectedFile.name : "No backup file selected"}</span>
+                        <span className="text-[10px] font-bold text-primary dark:text-indigo-400 uppercase tracking-widest px-3 py-1 bg-primary/5 dark:bg-indigo-500/10 rounded-lg">Select File</span>
                       </label>
                     </div>
                     
@@ -1049,7 +1055,7 @@ export default function SettingsPage() {
                       <button
                         onClick={() => setShowRestoreModal(true)}
                         disabled={!selectedFile || isLoading}
-                        className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:shadow-lg hover:shadow-indigo-100 active:scale-95 transition-all disabled:opacity-50 min-w-[160px] justify-center"
+                        className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 active:scale-95 transition-all disabled:opacity-50 min-w-[160px] justify-center shadow-lg shadow-indigo-500/20"
                       >
                         {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
                         Import Backup
@@ -1063,12 +1069,12 @@ export default function SettingsPage() {
 
           {activeTab === "customer-cleanup" && (
             isAnalyticsPinEnabled && !isCleanupUnlocked ? (
-              <div className="flex flex-col items-center justify-center py-32 bg-white rounded-2xl border border-slate-200 shadow-sm animate-in fade-in zoom-in-95 duration-300">
-                 <div className="h-16 w-16 bg-slate-900 rounded-2xl flex items-center justify-center mb-6 shadow-xl rotate-3">
+              <div className="flex flex-col items-center justify-center py-32 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/8 shadow-sm animate-in fade-in zoom-in-95 duration-300">
+                 <div className="h-16 w-16 bg-slate-900 dark:bg-[#161f32] border border-transparent dark:border-slate-800 rounded-2xl flex items-center justify-center mb-6 shadow-xl rotate-3">
                     <Lock className="h-8 w-8 text-white" />
                  </div>
-                 <h3 className="text-base font-bold text-slate-900 uppercase tracking-widest">Access Restricted</h3>
-                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1 mb-8 max-w-xs text-center leading-relaxed">
+                 <h3 className="text-base font-bold text-slate-900 dark:text-white uppercase tracking-widest">Access Restricted</h3>
+                 <p className="text-[10px] text-slate-400 dark:text-slate-400 font-bold uppercase tracking-wider mt-1 mb-8 max-w-xs text-center leading-relaxed">
                    Security PIN verification required to access customer cleanup tools.
                  </p>
                  <button 
@@ -1077,30 +1083,30 @@ export default function SettingsPage() {
                       setPinPurpose("unlock");
                       setShowPinModal(true);
                    }}
-                   className="px-8 py-3 bg-indigo-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-100 active:scale-95 transition-all flex items-center gap-2"
+                   className="px-8 py-3 bg-indigo-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-500/20 active:scale-95 transition-all flex items-center gap-2"
                  >
                    <Shield className="h-4 w-4" /> Unlock Tab
                  </button>
               </div>
             ) : (
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/8 shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-[#161f32]/60 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center">
-                      <Trash2 className="h-5 w-5 text-rose-600" />
+                    <div className="h-10 w-10 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-100 dark:border-rose-800/60 flex items-center justify-center">
+                      <Trash2 className="h-5 w-5 text-rose-600 dark:text-rose-400" />
                     </div>
                     <div>
-                      <h2 className="text-sm font-bold text-slate-900 uppercase tracking-widest">Permanent Data Removal</h2>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Purge customer records and associated history</p>
+                      <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-widest">Permanent Data Removal</h2>
+                      <p className="text-[10px] text-slate-400 dark:text-slate-400 font-bold uppercase tracking-wider">Purge customer records and associated history</p>
                     </div>
                   </div>
                   <div className="relative w-64">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
                     <input 
                       type="text" 
                       placeholder="Search customers..."
-                      className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs focus:bg-white focus:border-rose-300 outline-none transition-all"
+                      className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-[#161f32] border border-slate-100 dark:border-slate-800 rounded-lg text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-[#111827] focus:border-rose-300 dark:focus:border-rose-500/50 outline-none transition-all"
                       value={customerSearchTerm}
                       onChange={e => setCustomerSearchTerm(e.target.value)}
                     />
@@ -1114,24 +1120,24 @@ export default function SettingsPage() {
                       <span className="text-xs font-bold uppercase tracking-widest">Scanning Directory...</span>
                     </div>
                   ) : (
-                    <table className="min-w-full divide-y divide-slate-100">
-                      <thead className="bg-slate-50/30">
+                    <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800">
+                      <thead className="bg-slate-50/30 dark:bg-[#161f32]/40">
                         <tr>
-                          <th className="py-4 pl-8 pr-3 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Client Profile</th>
-                          <th className="px-3 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Service</th>
-                          <th className="px-3 py-4 text-left text-[10px] font-bold text-slate-400 uppercase tracking-widest">Handler</th>
+                          <th className="py-4 pl-8 pr-3 text-left text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest">Client Profile</th>
+                          <th className="px-3 py-4 text-left text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest">Service</th>
+                          <th className="px-3 py-4 text-left text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest">Handler</th>
                           <th className="relative py-4 pl-3 pr-8"><span className="sr-only">Actions</span></th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-50">
+                      <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                         {customers.filter(c => 
                           c.customerName.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
                           c.contactNumber.includes(customerSearchTerm)
                         ).length === 0 ? (
                           <tr>
                             <td colSpan={4} className="py-20 text-center">
-                              <Activity className="h-8 w-8 text-slate-200 mx-auto mb-3" />
-                              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">No matching customers identified</p>
+                              <Activity className="h-8 w-8 text-slate-200 dark:text-slate-700 mx-auto mb-3" />
+                              <p className="text-xs font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest">No matching customers identified</p>
                             </td>
                           </tr>
                         ) : (
@@ -1141,37 +1147,37 @@ export default function SettingsPage() {
                           ).map((customer) => {
                             const displayName = customer.project?.name || customer.customerName;
                             return (
-                              <tr key={customer.id} className="group hover:bg-slate-50/50 transition-colors">
+                              <tr key={customer.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
                                 <td className="whitespace-nowrap py-4 pl-8 pr-3">
                                   <div className="flex items-center">
-                                    <div className="h-9 w-9 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 font-bold border border-slate-200 text-xs">
+                                    <div className="h-9 w-9 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 font-bold border border-slate-200 dark:border-slate-700 text-xs">
                                       {displayName.charAt(0)}
                                     </div>
                                     <div className="ml-4">
-                                      <div className="text-xs font-bold text-slate-900 flex items-center gap-2">
+                                      <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                         {displayName}
                                         {customer.project?.name && (
-                                          <span className="px-1 py-0.5 bg-slate-100 text-[8px] font-black text-slate-400 rounded uppercase tracking-tighter border border-slate-200">Project</span>
+                                          <span className="px-1 py-0.5 bg-slate-100 dark:bg-slate-800 text-[8px] font-black text-slate-400 dark:text-slate-300 rounded uppercase tracking-tighter border border-slate-200 dark:border-slate-700">Project</span>
                                         )}
                                       </div>
-                                      <div className="text-[10px] text-slate-400 font-medium flex items-center gap-1.5 mt-0.5">
+                                      <div className="text-[10px] text-slate-400 dark:text-slate-400 font-medium flex items-center gap-1.5 mt-0.5">
                                         <Phone className="h-2.5 w-2.5" /> {customer.contactNumber}
                                       </div>
                                     </div>
                                   </div>
                                 </td>
                                 <td className="whitespace-nowrap px-3 py-4">
-                                  <div className="text-[10px] font-bold text-slate-600 uppercase tracking-wide flex items-center gap-1.5">
+                                  <div className="text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wide flex items-center gap-1.5">
                                     <Zap className="h-3 w-3 text-amber-500" />
                                     {customer.serviceType.replace("_", " ")}
                                   </div>
-                                  <div className="text-[9px] text-slate-400 font-medium flex items-center gap-1 mt-1 truncate max-w-[120px]">
+                                  <div className="text-[9px] text-slate-400 dark:text-slate-400 font-medium flex items-center gap-1 mt-1 truncate max-w-[120px]">
                                     <MapPin className="h-2.5 w-2.5" /> {customer.fullAddress || "No address"}
                                   </div>
                                 </td>
                                 <td className="whitespace-nowrap px-3 py-4">
-                                  <div className="text-[10px] font-bold text-slate-600 flex items-center gap-2">
-                                    <div className="h-5 w-5 rounded-full bg-slate-100 flex items-center justify-center border border-white">
+                                  <div className="text-[10px] font-bold text-slate-600 dark:text-slate-300 flex items-center gap-2">
+                                    <div className="h-5 w-5 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-white dark:border-slate-700">
                                       <User className="h-2.5 w-2.5 text-slate-400" />
                                     </div>
                                     {customer.assignedStaff?.name || "Internal"}
@@ -1183,7 +1189,7 @@ export default function SettingsPage() {
                                       onClick={() => setOpenMenuId(openMenuId === customer.id ? null : customer.id)}
                                       className={cn(
                                         "p-2 rounded-lg transition-all",
-                                        openMenuId === customer.id ? "bg-slate-900 text-white" : "text-slate-400 hover:text-slate-900 hover:bg-white border border-transparent hover:border-slate-100 shadow-sm"
+                                        openMenuId === customer.id ? "bg-slate-900 dark:bg-slate-800 text-white" : "text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-slate-800 border border-transparent hover:border-slate-100 dark:hover:border-slate-700 shadow-sm"
                                       )}
                                     >
                                       <MoreHorizontal className="h-4 w-4" />
@@ -1192,18 +1198,18 @@ export default function SettingsPage() {
                                     {openMenuId === customer.id && (
                                       <>
                                         <div className="fixed inset-0 z-10" onClick={() => setOpenMenuId(null)} />
-                                        <div className="absolute right-0 mt-2 w-44 rounded-xl bg-white text-slate-900 shadow-xl border border-slate-200 z-20 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                        <div className="absolute right-0 mt-2 w-44 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xl border border-slate-200 dark:border-slate-800 z-20 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                                           <div className="p-1">
                                             <button 
                                               onClick={() => { window.open(`/customers/${customer.id}`, '_blank'); setOpenMenuId(null); }}
-                                              className="w-full flex items-center gap-2.5 px-3 py-2 text-[10px] font-bold uppercase tracking-wider hover:bg-slate-50 rounded-lg transition-colors text-left"
+                                              className="w-full flex items-center gap-2.5 px-3 py-2 text-[10px] font-bold uppercase tracking-wider hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg transition-colors text-left"
                                             >
                                               <ExternalLink className="h-3.5 w-3.5 text-slate-400" /> View Profile
                                             </button>
-                                            <div className="h-px bg-slate-100 my-1" />
+                                            <div className="h-px bg-slate-100 dark:bg-slate-800 my-1" />
                                             <button 
                                               onClick={() => { setPermanentDeleteId(customer.id); setOpenMenuId(null); }}
-                                              className="w-full flex items-center gap-2.5 px-3 py-2 text-[10px] font-bold uppercase tracking-wider hover:bg-rose-50 text-rose-600 rounded-lg transition-colors text-left"
+                                              className="w-full flex items-center gap-2.5 px-3 py-2 text-[10px] font-bold uppercase tracking-wider hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-600 dark:text-rose-400 rounded-lg transition-colors text-left"
                                             >
                                               <Trash2 className="h-3.5 w-3.5" /> Delete Permanently
                                             </button>
@@ -1211,7 +1217,7 @@ export default function SettingsPage() {
                                         </div>
                                       </>
                                     )}
-                                    <ChevronRight className="h-3.5 w-3.5 text-slate-200 group-hover:text-rose-400 transition-all" />
+                                    <ChevronRight className="h-3.5 w-3.5 text-slate-200 dark:text-slate-700 group-hover:text-rose-400 transition-all" />
                                   </div>
                                 </td>
                               </tr>
@@ -1231,29 +1237,29 @@ export default function SettingsPage() {
 
       {/* Restore Confirmation Modal */}
       {showRestoreModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md p-8 animate-in zoom-in-95 duration-200">
-            <div className="flex items-center gap-3 text-rose-600 mb-6">
-              <div className="h-12 w-12 rounded-full bg-rose-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 w-full max-w-md p-8 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3 text-rose-600 dark:text-rose-400 mb-6">
+              <div className="h-12 w-12 rounded-full bg-rose-50 dark:bg-rose-950/50 border border-transparent dark:border-rose-800/40 flex items-center justify-center">
                 <AlertCircle className="h-6 w-6" />
               </div>
-              <h2 className="text-xl font-bold text-slate-900">Restore Backup?</h2>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Restore Backup?</h2>
             </div>
-            <p className="text-slate-600 text-sm leading-relaxed mb-8">
+            <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-8">
               This action will replace all current CRM data, settings, and branding with the contents of the selected backup file. This cannot be undone.
             </p>
             <div className="flex gap-3">
               <button
                 disabled={isLoading}
                 onClick={() => setShowRestoreModal(false)}
-                className="flex-1 px-6 py-3 bg-slate-100 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-200 transition-all disabled:opacity-50"
+                className="flex-1 px-6 py-3 bg-slate-100 dark:bg-[#161f32] text-slate-600 dark:text-slate-300 rounded-xl text-sm font-bold hover:bg-slate-200 dark:hover:bg-slate-800 transition-all disabled:opacity-50 border border-transparent dark:border-slate-800"
               >
                 Cancel
               </button>
               <button
                 disabled={isLoading}
                 onClick={handleRestoreBackup}
-                className="flex-1 px-6 py-3 bg-rose-600 text-white rounded-xl text-sm font-bold hover:bg-rose-700 shadow-lg shadow-rose-100 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 px-6 py-3 bg-rose-600 text-white rounded-xl text-sm font-bold hover:bg-rose-700 shadow-lg shadow-rose-500/20 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
                 {isLoading ? "Restoring..." : "Restore Now"}
@@ -1264,41 +1270,41 @@ export default function SettingsPage() {
       )}
 
       {isLoading && activeTab === "backup" && selectedFile && !showRestoreModal && (
-        <div className="fixed inset-0 z-[110] flex flex-col items-center justify-center bg-white/80 backdrop-blur-md animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[110] flex flex-col items-center justify-center bg-white/80 dark:bg-[#090d16]/80 backdrop-blur-md animate-in fade-in duration-300">
           <div className="relative">
-            <div className="h-20 w-20 rounded-full border-4 border-indigo-100 border-t-indigo-600 animate-spin" />
+            <div className="h-20 w-20 rounded-full border-4 border-indigo-100 dark:border-indigo-950 border-t-indigo-600 animate-spin" />
             <Database className="h-8 w-8 text-indigo-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
           </div>
-          <h2 className="text-xl font-bold text-slate-900 mt-6 tracking-tight">Restoring Backup...</h2>
-          <p className="text-slate-500 text-sm mt-2">Please do not close this window.</p>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white mt-6 tracking-tight">Restoring Backup...</h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-2">Please do not close this window.</p>
         </div>
       )}
 
       {/* Cloud Restore Confirmation Modal */}
       {showCloudRestoreModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md p-8 animate-in zoom-in-95 duration-200">
-            <div className="flex items-center gap-3 text-indigo-600 mb-6">
-              <div className="h-12 w-12 rounded-full bg-indigo-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 w-full max-w-md p-8 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3 text-indigo-600 dark:text-indigo-400 mb-6">
+              <div className="h-12 w-12 rounded-full bg-indigo-50 dark:bg-indigo-950/50 border border-transparent dark:border-indigo-800/40 flex items-center justify-center">
                 <CloudDownload className="h-6 w-6" />
               </div>
-              <h2 className="text-xl font-bold text-slate-900">Restore from Cloud?</h2>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Restore from Cloud?</h2>
             </div>
-            <p className="text-slate-600 text-sm leading-relaxed mb-8">
+            <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-8">
               This will replace all current CRM data, settings, and branding with the latest backup from Cloudflare R2. This cannot be undone.
             </p>
             <div className="flex gap-3">
               <button
                 disabled={isCollectingFromCloud}
                 onClick={() => setShowCloudRestoreModal(false)}
-                className="flex-1 px-6 py-3 bg-slate-100 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-200 transition-all disabled:opacity-50"
+                className="flex-1 px-6 py-3 bg-slate-100 dark:bg-[#161f32] text-slate-600 dark:text-slate-300 rounded-xl text-sm font-bold hover:bg-slate-200 dark:hover:bg-slate-800 transition-all disabled:opacity-50 border border-transparent dark:border-slate-800"
               >
                 Cancel
               </button>
               <button
                 disabled={isCollectingFromCloud}
                 onClick={handleCloudRestore}
-                className="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-500/20 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {isCollectingFromCloud && <Loader2 className="h-4 w-4 animate-spin" />}
                 {isCollectingFromCloud ? "Restoring..." : "Restore Now"}
@@ -1308,15 +1314,14 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* Cloud Restore Progress Overlay */}
       {isCollectingFromCloud && !showCloudRestoreModal && (
-        <div className="fixed inset-0 z-[110] flex flex-col items-center justify-center bg-white/80 backdrop-blur-md animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[110] flex flex-col items-center justify-center bg-white/80 dark:bg-[#090d16]/80 backdrop-blur-md animate-in fade-in duration-300">
           <div className="relative">
-            <div className="h-20 w-20 rounded-full border-4 border-indigo-100 border-t-indigo-600 animate-spin" />
+            <div className="h-20 w-20 rounded-full border-4 border-indigo-100 dark:border-indigo-950 border-t-indigo-600 animate-spin" />
             <Cloud className="h-8 w-8 text-indigo-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
           </div>
-          <h2 className="text-xl font-bold text-slate-900 mt-6 tracking-tight">Restoring from Cloud...</h2>
-          <p className="text-slate-500 text-sm mt-2">Fetching backup from Cloudflare R2. Please wait.</p>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white mt-6 tracking-tight">Restoring from Cloud...</h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-2">Fetching backup from Cloudflare R2. Please wait.</p>
         </div>
       )}
 
@@ -1338,28 +1343,28 @@ export default function SettingsPage() {
 
       {/* Customer Permanent Delete Modal */}
       {permanentDeleteId && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/20 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 animate-in zoom-in-95">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/40 dark:bg-black/70 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-white/10 animate-in zoom-in-95">
             <div className="p-8 text-center">
-              <div className="bg-rose-50 h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-5">
-                <AlertTriangle className="h-8 w-8 text-rose-500" />
+              <div className="bg-rose-50 dark:bg-rose-950/50 h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-5 border border-transparent dark:border-rose-800/40">
+                <AlertTriangle className="h-8 w-8 text-rose-500 dark:text-rose-400" />
               </div>
-              <h3 className="text-xl font-bold text-slate-900 tracking-tight">Erase Customer Data?</h3>
-              <p className="mt-2 text-slate-500 font-medium leading-relaxed px-4 text-xs uppercase tracking-wider">
-                This will permanently destroy this customer and all their associated projects, payments, and history. <span className="text-rose-600 font-black">THIS CANNOT BE UNDONE.</span>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Erase Customer Data?</h3>
+              <p className="mt-2 text-slate-500 dark:text-slate-400 font-medium leading-relaxed px-4 text-xs uppercase tracking-wider">
+                This will permanently destroy this customer and all their associated projects, payments, and history. <span className="text-rose-600 dark:text-rose-400 font-black">THIS CANNOT BE UNDONE.</span>
               </p>
               <div className="mt-8 flex flex-col gap-2">
                  <button 
                    disabled={isDeleting} 
                    onClick={handlePermanentDelete}
-                   className="w-full bg-rose-600 hover:bg-rose-700 py-3.5 rounded-xl text-white font-bold text-xs uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-rose-100"
+                   className="w-full bg-rose-600 hover:bg-rose-700 py-3.5 rounded-xl text-white font-bold text-xs uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-rose-500/20"
                  >
                    {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                    Confirm Destruction
                  </button>
                  <button 
                    onClick={() => setPermanentDeleteId(null)}
-                   className="w-full bg-slate-50 hover:bg-slate-100 py-3.5 rounded-xl text-slate-500 font-bold text-xs uppercase tracking-widest transition-colors"
+                   className="w-full bg-slate-50 dark:bg-[#161f32] hover:bg-slate-100 dark:hover:bg-slate-800 py-3.5 rounded-xl text-slate-500 dark:text-slate-300 font-bold text-xs uppercase tracking-widest transition-colors border border-transparent dark:border-slate-800"
                  >
                    Cancel
                  </button>
@@ -1368,6 +1373,255 @@ export default function SettingsPage() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function AppearanceTabSection() {
+  const { theme, mode, config, setMode, updateConfig, toggleTheme } = useTheme();
+  const [dayTime, setDayTime] = useState(config.schedule.dayTime || "07:00");
+  const [nightTime, setNightTime] = useState(config.schedule.nightTime || "19:00");
+  const [isSaved, setIsSaved] = useState(false);
+
+  const handleSaveSchedule = () => {
+    updateConfig({
+      schedule: {
+        ...config.schedule,
+        dayTime,
+        nightTime,
+      },
+    });
+    setIsSaved(true);
+    setTimeout(() => setIsSaved(false), 2500);
+  };
+
+  const modes: { id: ThemeMode; title: string; desc: string; icon: any; tag?: string }[] = [
+    {
+      id: "light",
+      title: "Light Mode",
+      desc: "Crisp daylight appearance for brightly lit workspaces.",
+      icon: Sun,
+    },
+    {
+      id: "dark",
+      title: "Dark Mode",
+      desc: "Deep Obsidian & Indigo theme with soft contrast to prevent eye strain.",
+      icon: Moon,
+    },
+    {
+      id: "system",
+      title: "Follow Windows OS",
+      desc: "Automatically syncs with your Windows system dark or light preference.",
+      icon: Laptop,
+    },
+    {
+      id: "scheduled",
+      title: "Day/Night Schedule",
+      desc: "Automatically transitions between light and dark based on your configured hours.",
+      icon: Clock,
+      tag: "AUTOMATED",
+    },
+  ];
+
+  const shortcuts = [
+    { label: "Ctrl + Shift + D (Default)", value: "Ctrl+Shift+D" },
+    { label: "Ctrl + \\", value: "Ctrl+\\" },
+    { label: "Ctrl + Shift + L", value: "Ctrl+Shift+L" },
+    { label: "Alt + T", value: "Alt+T" },
+  ];
+
+  return (
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2">
+      {/* Active Theme Status Card */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors">
+        <div className="flex items-center gap-4">
+          <div className="h-12 w-12 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-800/40 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+            {theme === "dark" ? <Moon className="h-6 w-6" /> : <Sun className="h-6 w-6" />}
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">Active Theme Status</h3>
+              <span className={cn(
+                "text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full border",
+                theme === "dark" 
+                  ? "bg-indigo-500/15 text-indigo-300 border-indigo-500/30" 
+                  : "bg-amber-500/15 text-amber-700 border-amber-500/30"
+              )}>
+                {theme === "dark" ? "Dark Mode Active" : "Light Mode Active"}
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              {mode === "light" && "System is locked to Light Mode."}
+              {mode === "dark" && "System is locked to Dark Mode."}
+              {mode === "system" && "Synchronizing dynamically with your Windows OS appearance."}
+              {mode === "scheduled" && `Automated: Light Mode at ${config.schedule.dayTime} • Dark Mode at ${config.schedule.nightTime}`}
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={toggleTheme}
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-all active:scale-95 cursor-pointer shrink-0"
+        >
+          <Sparkles className="h-4 w-4 text-indigo-500" /> Toggle Mode Now
+        </button>
+      </div>
+
+      {/* Mode Selection Grid */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden transition-colors">
+        <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+          <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
+            <Palette className="h-4 w-4 text-indigo-600 dark:text-indigo-400" /> Theme Mode
+          </h2>
+        </div>
+        <div className="p-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {modes.map((m) => {
+              const isSelected = mode === m.id;
+              const Icon = m.icon;
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => setMode(m.id)}
+                  className={cn(
+                    "p-5 rounded-2xl border text-left transition-all relative flex flex-col justify-between cursor-pointer group",
+                    isSelected
+                      ? "bg-indigo-50/40 dark:bg-indigo-950/30 border-indigo-600 dark:border-indigo-500 shadow-md shadow-indigo-100 dark:shadow-[0_0_20px_rgba(99,102,241,0.2)] ring-2 ring-indigo-600/20"
+                      : "bg-white dark:bg-[#161f32] border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600"
+                  )}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className={cn(
+                      "p-3 rounded-xl transition-colors",
+                      isSelected 
+                        ? "bg-indigo-600 text-white shadow-md shadow-indigo-200 dark:shadow-none" 
+                        : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white"
+                    )}>
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    {isSelected && (
+                      <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 bg-indigo-100/80 dark:bg-indigo-900/60 px-2 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800">
+                        <Check className="h-3 w-3" /> Selected
+                      </span>
+                    )}
+                    {!isSelected && m.tag && (
+                      <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+                        {m.tag}
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-4">
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white">{m.title}</h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">{m.desc}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Shortcut Configurator */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden transition-colors">
+        <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between">
+          <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
+            <Keyboard className="h-4 w-4 text-indigo-600 dark:text-indigo-400" /> Desktop Keyboard Shortcut
+          </h2>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={config.shortcutEnabled}
+              onChange={(e) => updateConfig({ shortcutEnabled: e.target.checked })}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
+          </label>
+        </div>
+        <div className="p-8 space-y-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="max-w-md">
+              <p className="text-sm font-semibold text-slate-900 dark:text-white">Active Key Combination</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Press this keyboard shortcut anywhere inside the desktop app to instantly toggle between light and dark modes.
+              </p>
+            </div>
+            <select
+              value={config.shortcutKey}
+              onChange={(e) => updateConfig({ shortcutKey: e.target.value })}
+              disabled={!config.shortcutEnabled}
+              className="px-4 py-2.5 bg-slate-50 dark:bg-[#161f32] border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white focus:border-indigo-600 outline-none cursor-pointer disabled:opacity-50"
+            >
+              {shortcuts.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded-xl flex items-center justify-between">
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+              💡 <span className="font-semibold text-slate-700 dark:text-slate-300">Smart Guard:</span> Shortcut is automatically suspended while typing inside inputs and textareas to avoid interruptions.
+            </p>
+            <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-800/40 px-2 py-1 rounded-md">
+              {config.shortcutKey}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Automated Day/Night Schedule Settings */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden transition-colors">
+        <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between">
+          <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
+            <Clock className="h-4 w-4 text-amber-500" /> Automated Day/Night Schedule
+          </h2>
+          {isSaved && (
+            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+              <Check className="h-3.5 w-3.5" /> Schedule Saved!
+            </span>
+          )}
+        </div>
+        <div className="p-8 space-y-6">
+          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+            When "Day/Night Schedule" mode is active, the app dynamically checks local system time every 30 seconds and transitions modes automatically without reloading.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2 p-5 bg-slate-50/50 dark:bg-[#161f32] border border-slate-100 dark:border-slate-700/60 rounded-xl">
+              <div className="flex items-center gap-2">
+                <Sun className="h-4 w-4 text-amber-500" />
+                <label className="text-xs font-bold text-slate-900 dark:text-white">Daytime Start (Switch to Light Mode)</label>
+              </div>
+              <p className="text-[11px] text-slate-400">Time when the app will automatically switch to Light mode.</p>
+              <input
+                type="time"
+                value={dayTime}
+                onChange={(e) => setDayTime(e.target.value)}
+                className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-600"
+              />
+            </div>
+            <div className="space-y-2 p-5 bg-slate-50/50 dark:bg-[#161f32] border border-slate-100 dark:border-slate-700/60 rounded-xl">
+              <div className="flex items-center gap-2">
+                <Moon className="h-4 w-4 text-indigo-400" />
+                <label className="text-xs font-bold text-slate-900 dark:text-white">Nighttime Start (Switch to Dark Mode)</label>
+              </div>
+              <p className="text-[11px] text-slate-400">Time when the app will automatically switch to Dark mode.</p>
+              <input
+                type="time"
+                value={nightTime}
+                onChange={(e) => setNightTime(e.target.value)}
+                className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-600"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <button
+              onClick={handleSaveSchedule}
+              className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-200 dark:shadow-[0_0_15px_rgba(99,102,241,0.3)] transition-all active:scale-95 cursor-pointer"
+            >
+              <Save className="h-3.5 w-3.5" /> Save Schedule Hours
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

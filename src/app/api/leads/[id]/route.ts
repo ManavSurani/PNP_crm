@@ -58,6 +58,8 @@ export async function GET(
         isHotLead: true,
         isArchived: true,
         archivedAt: true,
+        archiveReason: true,
+        tentativeDate: true,
       }
     });
 

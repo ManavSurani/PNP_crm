@@ -90,9 +90,9 @@ function SortableRow({
   const status = pending === 0 ? "PAID" : totalPaid > 0 ? "PARTIAL" : "PENDING";
   
   const statusColors = {
-    PENDING: "bg-slate-100 text-slate-600 border-slate-200",
-    PAID: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    PARTIAL: "bg-amber-50 text-amber-700 border-amber-200"
+    PENDING: "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/10",
+    PAID: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20",
+    PARTIAL: "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20"
   };
 
   const generateMessage = () => {
@@ -158,8 +158,8 @@ PNP Interior`;
       ref={setNodeRef} 
       style={style}
       className={cn(
-        "group hover:bg-slate-50 transition-colors cursor-pointer",
-        isDragging && "bg-white shadow-xl"
+        "group hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors cursor-pointer",
+        isDragging && "bg-white dark:bg-slate-800 shadow-xl"
       )}
       onClick={() => onRowClick(quotation)}
     >
@@ -168,32 +168,32 @@ PNP Interior`;
           <div 
             {...attributes} 
             {...listeners} 
-            className="p-1 hover:bg-slate-100 rounded cursor-grab active:cursor-grabbing text-slate-300 group-hover:text-slate-400 transition-colors"
+            className="p-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded cursor-grab active:cursor-grabbing text-slate-300 dark:text-slate-600 group-hover:text-slate-400 dark:group-hover:text-slate-300 transition-colors"
           >
             <GripVertical className="h-4 w-4" />
           </div>
         )}
       </td>
       <td className="w-9 py-4">
-        <div className="h-6 w-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-500 border border-slate-200">
+        <div className="h-6 w-6 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-[10px] font-black text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/10">
           {quotation.priority}
         </div>
       </td>
-      <td className="py-4 font-bold text-slate-900">{quotation.field.name}</td>
-      <td className="py-4 font-black text-slate-900">₹{quotation.amount.toLocaleString("en-IN")}</td>
+      <td className="py-4 font-bold text-slate-900 dark:text-white">{quotation.field.name}</td>
+      <td className="py-4 font-black text-slate-900 dark:text-white">₹{quotation.amount.toLocaleString("en-IN")}</td>
       <td className="py-4">
-        <div className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] font-black">
+        <div className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-500/20 text-[10px] font-black">
           ₹{totalPaid.toLocaleString("en-IN")}
         </div>
       </td>
       <td className="py-4">
-        <div className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-100 text-[10px] font-black">
+        <div className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-100 dark:border-amber-500/20 text-[10px] font-black">
           ₹{pending.toLocaleString("en-IN")}
         </div>
       </td>
       <td className="w-[180px] py-4">
-        <p className="text-xs font-bold text-slate-900">{quotation.vendor.name}</p>
-        <p className="text-[10px] text-slate-400 font-medium flex items-center gap-1 mt-0.5">
+        <p className="text-xs font-bold text-slate-900 dark:text-white">{quotation.vendor.name}</p>
+        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium flex items-center gap-1 mt-0.5">
           <Phone className="h-3 w-3" /> {quotation.vendor.phone}
         </p>
       </td>
@@ -210,34 +210,34 @@ PNP Interior`;
           <button 
             onClick={handleWhatsApp}
             title="Send WhatsApp"
-            className="p-2 hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 rounded-lg transition-all"
+            className="p-2 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 text-slate-400 dark:text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg transition-all cursor-pointer"
           >
             <MessageCircle className="h-4 w-4" />
           </button>
           <button 
             onClick={handleGroupShare}
             title="Share to Group"
-            className="p-2 hover:bg-slate-50 text-slate-400 hover:text-slate-900 rounded-lg transition-all"
+            className="p-2 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white rounded-lg transition-all cursor-pointer"
           >
             <Users className="h-4 w-4" />
           </button>
           <button 
             onClick={handleCopy}
             title="Copy Message"
-            className="p-2 hover:bg-slate-50 text-slate-400 hover:text-slate-900 rounded-lg transition-all"
+            className="p-2 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white rounded-lg transition-all cursor-pointer"
           >
             <Copy className="h-4 w-4" />
           </button>
-          <div className="w-px h-4 bg-slate-100 mx-0.5" />
+          <div className="w-px h-4 bg-slate-100 dark:bg-white/10 mx-0.5" />
           <button 
             onClick={(e) => { e.stopPropagation(); onEdit(quotation); }}
-            className="p-2 hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 rounded-lg transition-all"
+            className="p-2 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 text-slate-400 dark:text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg transition-all cursor-pointer"
           >
             <Pencil className="h-4 w-4" />
           </button>
           <button 
             onClick={(e) => { e.stopPropagation(); onDelete(quotation.id); }}
-            className="p-2 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg transition-all"
+            className="p-2 hover:bg-rose-50 dark:hover:bg-rose-500/10 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition-all cursor-pointer"
           >
             <Trash2 className="h-4 w-4" />
           </button>
@@ -281,31 +281,31 @@ export default function QuotationTable({
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
     >
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-white/8 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-100">
-            <thead className="bg-slate-50/50">
+          <table className="min-w-full divide-y divide-slate-100 dark:divide-white/5">
+            <thead className="bg-slate-50/50 dark:bg-white/[0.02]">
               <tr>
                 <th className="w-9 py-4"></th>
-                <th className="w-9 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">#</th>
-                <th className="py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Work Field</th>
-                <th className="py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Amount</th>
-                <th className="py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Paid</th>
-                <th className="py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Pending</th>
-                <th className="w-[180px] py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Vendor</th>
-                <th className="w-[100px] py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-                <th className="w-[150px] py-4 text-right pr-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">Actions</th>
+                <th className="w-9 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">#</th>
+                <th className="py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Work Field</th>
+                <th className="py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Amount</th>
+                <th className="py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Paid</th>
+                <th className="py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Pending</th>
+                <th className="w-[180px] py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Vendor</th>
+                <th className="w-[100px] py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Status</th>
+                <th className="w-[150px] py-4 text-right pr-8 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
+            <tbody className="divide-y divide-slate-50 dark:divide-white/5">
               {quotations.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-20 text-center">
-                    <div className="h-12 w-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100">
-                      <GripVertical className="h-6 w-6 text-slate-200" />
+                    <div className="h-12 w-12 bg-slate-50 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100 dark:border-white/10">
+                      <GripVertical className="h-6 w-6 text-slate-200 dark:text-slate-600" />
                     </div>
-                    <h3 className="text-sm font-bold text-slate-900">No quotations recorded</h3>
-                    <p className="text-xs text-slate-400 mt-1">Click the "Add New Field" button to get started.</p>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">No quotations recorded</h3>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Click the "Add New Field" button to get started.</p>
                   </td>
                 </tr>
               ) : (

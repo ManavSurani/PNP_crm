@@ -109,7 +109,7 @@ export function ClockTimePicker({
         className="relative cursor-pointer"
         onClick={() => !disabled && setIsOpen(true)}
       >
-        <Clock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+        <Clock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500 pointer-events-none" />
         <input 
           type="text"
           readOnly
@@ -118,8 +118,8 @@ export function ClockTimePicker({
           placeholder={placeholder}
           value={displayValue}
           className={cn(
-            "block w-full rounded-lg border border-slate-200 py-2.5 pr-4 bg-white text-slate-900 placeholder:text-slate-400 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/10 text-sm transition-all outline-none cursor-pointer",
-            disabled && "bg-slate-50 cursor-not-allowed opacity-70",
+            "block w-full rounded-lg border border-slate-200 dark:border-slate-800 py-2.5 pr-4 bg-white dark:bg-[#161f32] text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/10 text-sm transition-all outline-none cursor-pointer",
+            disabled && "bg-slate-50 dark:bg-slate-800/40 cursor-not-allowed opacity-70",
             className
           )}
           style={{ paddingLeft: '2.75rem' }}
@@ -127,13 +127,13 @@ export function ClockTimePicker({
       </div>
 
       {isOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div 
-            className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-100 animate-in zoom-in-95 duration-200"
+            className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-100 dark:border-white/10 animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="bg-indigo-600 p-6 text-center relative">
+            <div className="bg-indigo-600 dark:bg-indigo-700 p-6 text-center relative">
               <button 
                 type="button"
                 onClick={() => setIsOpen(false)}
@@ -277,8 +277,8 @@ export function ClockTimePicker({
             </div>
 
             {/* Clock Face */}
-            <div className="p-8 flex items-center justify-center bg-slate-50/80">
-              <div className="relative w-64 h-64 rounded-full bg-white shadow-sm border border-slate-200/60 flex items-center justify-center">
+            <div className="p-8 flex items-center justify-center bg-slate-50/80 dark:bg-[#161f32]/50">
+              <div className="relative w-64 h-64 rounded-full bg-white dark:bg-slate-900 shadow-sm border border-slate-200/60 dark:border-slate-800 flex items-center justify-center">
                 {/* Center dot */}
                 <div className="w-2 h-2 rounded-full bg-indigo-600 absolute z-20" />
                 
@@ -319,7 +319,7 @@ export function ClockTimePicker({
                         }}
                         className={cn(
                           "absolute w-8 h-8 -ml-4 -mt-4 flex items-center justify-center rounded-full text-sm font-medium z-20 transition-all",
-                          isActive ? "bg-indigo-600 text-white shadow-md shadow-indigo-200" : "text-slate-600 hover:bg-slate-100"
+                          isActive ? "bg-indigo-600 text-white shadow-md shadow-indigo-200 dark:shadow-indigo-950" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                         )}
                         style={{ left: pos.left, top: pos.top }}
                       >
@@ -340,7 +340,7 @@ export function ClockTimePicker({
                         }}
                         className={cn(
                           "absolute w-8 h-8 -ml-4 -mt-4 flex items-center justify-center rounded-full text-sm font-medium z-20 transition-all",
-                          isActive ? "bg-indigo-600 text-white shadow-md shadow-indigo-200" : "text-slate-600 hover:bg-slate-100"
+                          isActive ? "bg-indigo-600 text-white shadow-md shadow-indigo-200 dark:shadow-indigo-950" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                         )}
                         style={{ left: pos.left, top: pos.top }}
                       >
@@ -353,7 +353,7 @@ export function ClockTimePicker({
             </div>
 
             {/* Actions */}
-            <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+            <div className="p-4 bg-slate-50 dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
                <button 
                  type="button"
                  onClick={() => {
@@ -365,7 +365,7 @@ export function ClockTimePicker({
                    setInternalHour(h);
                    setInternalMinute(now.getMinutes());
                  }}
-                 className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-wider"
+                 className="px-4 py-2 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors uppercase tracking-wider"
                >
                  Now
                </button>
@@ -373,14 +373,14 @@ export function ClockTimePicker({
                  <button 
                    type="button"
                    onClick={() => setIsOpen(false)}
-                   className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-200 rounded-lg transition-colors"
+                   className="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors"
                  >
                    Cancel
                  </button>
                  <button 
                    type="button"
                    onClick={handleSave}
-                   className="px-6 py-2 text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg shadow-sm shadow-indigo-200 transition-all active:scale-95"
+                   className="px-6 py-2 text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg shadow-sm shadow-indigo-200 dark:shadow-indigo-950 transition-all active:scale-95"
                  >
                    Save
                  </button>

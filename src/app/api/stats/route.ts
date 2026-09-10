@@ -97,8 +97,12 @@ export async function GET() {
       prisma.lead.count({ where: { status: "WON_ORDER", isCancelled: false, 
         // @ts-ignore
         isProjectCompleted: true } }),
-      // [21] NEW: Current Leads in Pipeline
-      prisma.lead.count({ where: { status: { not: "WON_ORDER" }, isCancelled: false } }),
+      // [21] NEW: Current Leads in Pipeline (excluding archived)
+      prisma.lead.count({ where: { status: { not: "WON_ORDER" }, isCancelled: false, isArchived: false } }),
+      // [22] NEW: Archived Leads Count
+      prisma.lead.count({ where: { isArchived: true, isCancelled: false } }),
+      // [23] NEW: Active Hot Leads Count
+      prisma.lead.count({ where: { isHotLead: true, isCancelled: false, isArchived: false, status: { not: "WON_ORDER" } } }),
     ]);
 
     const topProjects = (stats[13] as any[] || []).map((o: any) => {
@@ -200,6 +204,8 @@ export async function GET() {
         totalPending,
         totalMeetings: (stats[15] as any[]).length,
         currentLeads: stats[21],
+        archivedLeads: stats[22],
+        hotLeads: stats[23],
         topProjects,
         packageStats
       },

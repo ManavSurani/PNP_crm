@@ -65,11 +65,11 @@ export default function PackageSelection({ leadId, initialPackage, onSelect }: {
   return (
     <div className="space-y-8 font-sans">
       <div className="flex items-center gap-4">
-        <div className="h-10 w-10 bg-indigo-600/10 rounded-xl flex items-center justify-center text-indigo-600 border border-indigo-600/20">
+        <div className="h-10 w-10 bg-indigo-600/10 dark:bg-indigo-500/15 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 border border-indigo-600/20 dark:border-indigo-500/30">
           <Package className="h-5 w-5" />
         </div>
         <div>
-          <p className="text-slate-500 text-xs font-medium mt-2 tracking-wide">Select a service package to pre-load estimation headers.</p>
+          <p className="text-slate-500 dark:text-slate-400 text-xs font-medium mt-2 tracking-wide">Select a service package to pre-load estimation headers.</p>
         </div>
       </div>
 
@@ -83,54 +83,54 @@ export default function PackageSelection({ leadId, initialPackage, onSelect }: {
               className={cn(
                 "relative flex flex-col text-left p-8 rounded-xl border transition-all group overflow-hidden",
                 isActive 
-                  ? "bg-white border-indigo-600 shadow-xl shadow-indigo-100 ring-1 ring-indigo-600/20" 
-                  : "bg-white border-slate-200 text-slate-600 hover:border-indigo-600/30 hover:shadow-md"
+                  ? "bg-white dark:bg-slate-900 border-indigo-600 dark:border-indigo-500 shadow-xl shadow-indigo-100 dark:shadow-indigo-950/40 ring-1 ring-indigo-600/20 dark:ring-indigo-500/30" 
+                  : "bg-white dark:bg-slate-900 border-slate-200 dark:border-white/8 text-slate-600 dark:text-slate-300 hover:border-indigo-600/30 dark:hover:border-indigo-500/40 hover:shadow-md"
               )}
             >
               <div className={cn(
                 "h-12 w-12 rounded-xl flex items-center justify-center mb-8 transition-all border",
-                isActive ? "bg-indigo-600 text-white border-indigo-600" : "bg-slate-50 text-slate-400 border-slate-100 group-hover:text-indigo-600 group-hover:border-indigo-600/20 group-hover:bg-white"
+                isActive ? "bg-indigo-600 dark:bg-indigo-600 text-white border-indigo-600 dark:border-indigo-600" : "bg-slate-50 dark:bg-[#161f32] text-slate-400 dark:text-slate-500 border-slate-100 dark:border-slate-800 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 group-hover:border-indigo-600/20 dark:group-hover:border-indigo-500/30 group-hover:bg-white dark:group-hover:bg-slate-800"
               )}>
                 <pkg.icon className="h-6 w-6" />
               </div>
               
               <div className="space-y-1.5 relative z-10">
-                <h4 className={cn("text-base font-bold uppercase tracking-tight", isActive ? "text-slate-900" : "text-slate-800")}>{pkg.name}</h4>
-                <p className={cn("text-[10px] font-semibold leading-tight", isActive ? "text-indigo-600" : "text-slate-500")}>
+                <h4 className={cn("text-base font-bold uppercase tracking-tight", isActive ? "text-slate-900 dark:text-white" : "text-slate-800 dark:text-slate-200")}>{pkg.name}</h4>
+                <p className={cn("text-[10px] font-semibold leading-tight", isActive ? "text-indigo-600 dark:text-indigo-400" : "text-slate-500 dark:text-slate-400")}>
                   {pkg.description}
                 </p>
               </div>
 
-              <div className={cn("mt-8 pt-8 border-t space-y-4 flex-1 relative z-10", isActive ? "border-indigo-600/10" : "border-slate-100")}>
+              <div className={cn("mt-8 pt-8 border-t space-y-4 flex-1 relative z-10", isActive ? "border-indigo-600/10 dark:border-indigo-500/20" : "border-slate-100 dark:border-slate-800")}>
                 {pkg.features.map((f, i) => (
                   <div key={i} className="flex items-center gap-3">
-                    <Check className={cn("h-3.5 w-3.5 shrink-0", isActive ? "text-indigo-600" : "text-slate-300")} />
-                    <span className={cn("text-[11px] font-bold leading-none tracking-wide", isActive ? "text-slate-700" : "text-slate-500")}>{f}</span>
+                    <Check className={cn("h-3.5 w-3.5 shrink-0", isActive ? "text-indigo-600 dark:text-indigo-400" : "text-slate-300 dark:text-slate-600")} />
+                    <span className={cn("text-[11px] font-bold leading-none tracking-wide", isActive ? "text-slate-700 dark:text-slate-200" : "text-slate-500 dark:text-slate-400")}>{f}</span>
                   </div>
                 ))}
               </div>
 
               {isActive && (
                 <div className="absolute top-0 right-0 p-4">
-                   <div className="bg-indigo-600/10 border border-indigo-600/20 p-1.5 rounded-lg">
-                      <Check className="h-4 w-4 text-indigo-600" />
+                   <div className="bg-indigo-600/10 dark:bg-indigo-500/20 border border-indigo-600/20 dark:border-indigo-500/30 p-1.5 rounded-lg">
+                      <Check className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
                    </div>
                 </div>
               )}
               {/* Subtle dynamic background for active card */}
               {isActive && (
-                <div className="absolute bottom-0 right-0 w-32 h-32 bg-indigo-600/5 rounded-full blur-[60px] -mr-16 -mb-16" />
+                <div className="absolute bottom-0 right-0 w-32 h-32 bg-indigo-600/5 dark:bg-indigo-500/10 rounded-full blur-[60px] -mr-16 -mb-16" />
               )}
             </button>
           );
         })}
       </div>
 
-      <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-5 flex items-start gap-4">
+      <div className="bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-800/40 rounded-2xl p-5 flex items-start gap-4">
         <Info className="h-5 w-5 text-indigo-500 shrink-0 mt-0.5" />
         <div>
-          <p className="text-xs font-bold text-indigo-900 uppercase tracking-widest">Pricing Intelligence</p>
-          <p className="text-[11px] text-indigo-700 font-bold opacity-80 leading-relaxed mt-1">
+          <p className="text-xs font-bold text-indigo-900 dark:text-indigo-300 uppercase tracking-widest">Pricing Intelligence</p>
+          <p className="text-[11px] text-indigo-700 dark:text-indigo-300/80 font-bold opacity-80 leading-relaxed mt-1">
             Selecting a package will automatically pre-load relevant cost headers in the Smart Quotation Builder (Priority 4). 
             You can still add custom items to any selected package.
           </p>

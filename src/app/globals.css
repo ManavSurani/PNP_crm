@@ -1,15 +1,43 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #f8fafc;
   --foreground: #0f172a;
   --card: #ffffff;
   --card-foreground: #0f172a;
+  --card-subtle: #f1f5f9;
   --primary: #4f46e5;
   --primary-foreground: #ffffff;
   --accent: #6366f1;
   --border: #e2e8f0;
   --ring: #4f46e5;
+  --input: #ffffff;
+  --input-border: #e2e8f0;
+  --muted: #64748b;
+  --popover: #ffffff;
+  --scrollbar-thumb: rgba(148, 163, 184, 0.4);
+  --scrollbar-thumb-hover: rgba(148, 163, 184, 0.6);
+}
+
+.dark {
+  --background: #090d16;
+  --foreground: #f8fafc;
+  --card: #111827;
+  --card-foreground: #f8fafc;
+  --card-subtle: #161f32;
+  --primary: #6366f1;
+  --primary-foreground: #ffffff;
+  --accent: #818cf8;
+  --border: rgba(255, 255, 255, 0.08);
+  --ring: #6366f1;
+  --input: #161f32;
+  --input-border: #334155;
+  --muted: #94a3b8;
+  --popover: #0f172a;
+  --scrollbar-thumb: rgba(255, 255, 255, 0.15);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.28);
 }
 
 @theme inline {
@@ -17,11 +45,15 @@
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+  --color-card-subtle: var(--card-subtle);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-accent: var(--accent);
   --color-border: var(--border);
   --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-muted: var(--muted);
+  --color-popover: var(--popover);
 
   --radius-xl: 12px;
   --radius-2xl: 16px;
@@ -34,6 +66,7 @@ body {
   font-family: var(--font-geist-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 /* ─── Global Scrollbar Styling ─── */
@@ -47,17 +80,17 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.4);
+  background: var(--scrollbar-thumb);
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.6);
+  background: var(--scrollbar-thumb-hover);
 }
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
 /* Tailwind utility to completely hide scrollbars where needed */
@@ -114,5 +147,22 @@ body {
   }
   .animate-pulse-soft {
     animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+
+/* ─── Print Isolation: Guarantee crisp white-paper outputs ─── */
+@media print {
+  html,
+  body,
+  .dark,
+  [data-theme="dark"] {
+    background: #ffffff !important;
+    color: #000000 !important;
+    --background: #ffffff !important;
+    --foreground: #000000 !important;
+    --card: #ffffff !important;
+    --card-foreground: #000000 !important;
+    --card-subtle: #f8fafc !important;
+    --border: #e2e8f0 !important;
   }
 }

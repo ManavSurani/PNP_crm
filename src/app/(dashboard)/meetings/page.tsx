@@ -67,11 +67,11 @@ export default function MeetingsPage() {
     <div className="max-w-7xl mx-auto space-y-6 pb-10">
 
       {/* Header */}
-      <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 p-8 rounded-xl border border-slate-200 dark:border-white/8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-48 h-48 bg-primary rounded-full blur-[100px] opacity-5 -mr-24 -mt-24" />
         <div className="relative z-10">
-          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Site Visits & Consultations</h1>
-          <p className="text-slate-500 text-sm mt-1 font-medium">Coordinate site visits, field measurements, and client discussions.</p>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white tracking-tight">Site Visits & Consultations</h1>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1 font-medium">Coordinate site visits, field measurements, and client discussions.</p>
         </div>
         <div className="relative z-10 flex gap-3">
           <div 
@@ -79,41 +79,39 @@ export default function MeetingsPage() {
             className={cn(
               "px-5 py-3 rounded-xl flex flex-col items-center min-w-[100px] shadow-sm transition-all cursor-pointer active:scale-95 border",
               filterPriority === "TODAY" 
-                ? "bg-indigo-600 border-indigo-500 shadow-indigo-100" 
-                : "bg-indigo-50/50 border-indigo-100 shadow-indigo-50/50"
+                ? "bg-indigo-600 border-indigo-500 text-white shadow-indigo-500/20" 
+                : "bg-indigo-50/50 dark:bg-indigo-950/30 border-indigo-100 dark:border-indigo-500/20"
             )}
           >
-             <span className={cn("text-xl font-black leading-none", filterPriority === "TODAY" ? "text-white" : "text-indigo-600")}>{todayCount}</span>
-             <span className={cn("text-[9px] font-bold uppercase tracking-widest mt-1.5", filterPriority === "TODAY" ? "text-indigo-100" : "text-indigo-400")}>Today</span>
+             <span className={cn("text-xl font-black leading-none", filterPriority === "TODAY" ? "text-white" : "text-indigo-600 dark:text-indigo-400")}>{todayCount}</span>
+             <span className={cn("text-[9px] font-bold uppercase tracking-widest mt-1.5", filterPriority === "TODAY" ? "text-indigo-100" : "text-indigo-400 dark:text-indigo-300")}>Today</span>
           </div>
           <div 
             onClick={() => setFilterPriority(filterPriority === "OVERDUE" ? "ALL" : "OVERDUE")}
             className={cn(
               "px-5 py-3 rounded-xl flex flex-col items-center min-w-[100px] shadow-sm transition-all cursor-pointer active:scale-95 border",
               filterPriority === "OVERDUE" 
-                ? "bg-rose-600 border-rose-500 shadow-rose-100" 
-                : "bg-rose-50/50 border-rose-100 shadow-rose-50/50"
+                ? "bg-rose-600 border-rose-500 text-white shadow-rose-500/20" 
+                : "bg-rose-50/50 dark:bg-rose-950/30 border-rose-100 dark:border-rose-500/20"
             )}
           >
-             <span className={cn("text-xl font-black leading-none", filterPriority === "OVERDUE" ? "text-white" : "text-rose-600")}>{overdueCount}</span>
-             <span className={cn("text-[9px] font-bold uppercase tracking-widest mt-1.5", filterPriority === "OVERDUE" ? "text-rose-100" : "text-rose-400")}>Overdue</span>
+             <span className={cn("text-xl font-black leading-none", filterPriority === "OVERDUE" ? "text-white" : "text-rose-600 dark:text-rose-400")}>{overdueCount}</span>
+             <span className={cn("text-[9px] font-bold uppercase tracking-widest mt-1.5", filterPriority === "OVERDUE" ? "text-rose-100" : "text-rose-400 dark:text-rose-300")}>Overdue</span>
           </div>
           <div 
             onClick={() => setFilterPriority(filterPriority === "UPCOMING" ? "ALL" : "UPCOMING")}
             className={cn(
               "px-5 py-3 rounded-xl flex flex-col items-center min-w-[100px] shadow-sm transition-all cursor-pointer active:scale-95 border",
               filterPriority === "UPCOMING" 
-                ? "bg-amber-600 border-amber-500 shadow-amber-100" 
-                : "bg-amber-50/50 border-amber-100 shadow-amber-50/50"
+                ? "bg-amber-600 border-amber-500 text-white shadow-amber-500/20" 
+                : "bg-amber-50/50 dark:bg-amber-950/30 border-amber-100 dark:border-amber-500/20"
             )}
           >
-             <span className={cn("text-xl font-black leading-none", filterPriority === "UPCOMING" ? "text-white" : "text-amber-600")}>{upcomingCount}</span>
-             <span className={cn("text-[9px] font-bold uppercase tracking-widest mt-1.5", filterPriority === "UPCOMING" ? "text-amber-100" : "text-amber-400")}>UPCOMING</span>
+             <span className={cn("text-xl font-black leading-none", filterPriority === "UPCOMING" ? "text-white" : "text-amber-600 dark:text-amber-400")}>{upcomingCount}</span>
+             <span className={cn("text-[9px] font-bold uppercase tracking-widest mt-1.5", filterPriority === "UPCOMING" ? "text-amber-100" : "text-amber-400 dark:text-amber-300")}>UPCOMING</span>
           </div>
         </div>
       </div>
-
-
 
       {/* Toolset */}
       <div className="flex flex-col sm:flex-row gap-4 items-center">
@@ -122,7 +120,7 @@ export default function MeetingsPage() {
           <input 
             type="text" 
             placeholder="Search by site location or entity identifier..." 
-            className="w-full pl-12 pr-4 py-3 bg-white rounded-xl border border-slate-200 shadow-sm focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all text-sm font-medium outline-none"
+            className="w-full pl-12 pr-4 py-3 bg-white dark:bg-[#161f32] rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm focus:ring-4 focus:ring-primary/5 focus:border-primary text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all text-sm font-medium outline-none"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -136,10 +134,10 @@ export default function MeetingsPage() {
               else setFilterPriority("ALL");
             }}
             className={cn(
-              "w-full h-full min-h-[46px] rounded-xl border py-2 px-3 text-[10px] font-bold uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2",
+              "w-full h-full min-h-[46px] rounded-xl border py-2 px-3 text-[10px] font-bold uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer",
               filterPriority !== "ALL" 
                 ? "bg-indigo-600 text-white border-indigo-500 shadow-md" 
-                : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50 shadow-sm"
+                : "bg-white dark:bg-slate-900 border-slate-200 dark:border-white/8 text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm"
             )}
           >
             <Globe className="h-4 w-4" /> {filterPriority === "ALL" ? "All Distances" : `${filterPriority} ONLY`}
@@ -151,7 +149,7 @@ export default function MeetingsPage() {
               setSearch("");
               setFilterPriority("ALL");
             }}
-            className="flex items-center justify-center p-3 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition shadow-sm shrink-0"
+            className="flex items-center justify-center p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/8 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-sm shrink-0 cursor-pointer"
             title="Reset Filters"
           >
             <RotateCcw className="h-4 w-4" />
@@ -160,25 +158,25 @@ export default function MeetingsPage() {
       </div>
 
       {/* Main Registry */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-white/8 shadow-sm overflow-hidden flex-1 flex flex-col">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center flex-1 text-slate-400 min-h-[400px]">
             <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
             <span className="text-sm font-medium tracking-wide">Syncing Deployment Map...</span>
           </div>
         ) : (
-          <div className="overflow-auto flex-1 scrollbar-thin scrollbar-thumb-slate-200" style={{ maxHeight: 'calc(100vh - 420px)' }}>
-            <table className="w-full divide-y divide-slate-200">
-              <thead className="bg-slate-50/50 sticky top-0 z-20 backdrop-blur-sm">
+          <div className="overflow-auto flex-1 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700" style={{ maxHeight: 'calc(100vh - 420px)' }}>
+            <table className="w-full divide-y divide-slate-200 dark:divide-slate-800">
+              <thead className="bg-slate-50/90 dark:bg-[#161f32]/95 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-20 backdrop-blur-sm">
                 <tr>
-                  <th scope="col" className="py-4 pl-6 pr-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Customer Name</th>
-                  <th scope="col" className="px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Scheduled Date</th>
-                  <th scope="col" className="px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Site Address</th>
-                  <th scope="col" className="px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                  <th scope="col" className="py-4 pr-6 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+                  <th scope="col" className="py-4 pl-6 pr-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Customer Name</th>
+                  <th scope="col" className="px-3 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Scheduled Date</th>
+                  <th scope="col" className="px-3 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Site Address</th>
+                  <th scope="col" className="px-3 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+                  <th scope="col" className="py-4 pr-6 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 bg-white dark:bg-slate-900">
                 {filtered.map((m) => {
                   const scheduleDate = new Date(m.date);
                   const isTodayMeeting = isToday(scheduleDate);
@@ -188,19 +186,21 @@ export default function MeetingsPage() {
                     <tr 
                       key={m.id} 
                       onClick={() => router.push(m.lead.status === "WON_ORDER" ? `/customers/${m.leadId}` : `/leads/${m.leadId}`)}
-                      className="group hover:bg-slate-50 transition-all cursor-pointer"
+                      className="group hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-all cursor-pointer"
                     >
                       <td className="py-5 pl-6 pr-3">
                         <div className="flex items-center gap-4">
                           <div className={cn(
-                            "h-10 w-10 rounded-lg flex items-center justify-center font-bold text-sm ring-1 ring-black/5 shadow-sm transition-all group-hover:scale-110",
-                            isTodayMeeting ? "bg-emerald-50 text-emerald-600 border border-emerald-100" : "bg-slate-50 text-slate-400 border border-slate-100"
+                            "h-10 w-10 rounded-lg flex items-center justify-center font-bold text-sm ring-1 ring-black/5 dark:ring-white/10 shadow-sm transition-all group-hover:scale-110",
+                            isTodayMeeting 
+                              ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-500/30" 
+                              : "bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-300 border border-slate-100 dark:border-slate-700"
                           )}>
                              {m.lead.customerName ? m.lead.customerName.charAt(0).toUpperCase() : "?"}
                           </div>
                           <div>
-                             <p className="text-sm font-bold text-slate-900 group-hover:text-primary transition-colors">{m.lead.customerName || "Unknown Customer"}</p>
-                             <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-widest mt-1 flex items-center gap-1.5">
+                             <p className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-primary dark:group-hover:text-indigo-400 transition-colors">{m.lead.customerName || "Unknown Customer"}</p>
+                             <p className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-widest mt-1 flex items-center gap-1.5">
                                 <Phone className="h-2.5 w-2.5" /> {m.lead.contactNumber}
                              </p>
                           </div>
@@ -208,18 +208,18 @@ export default function MeetingsPage() {
                       </td>
                       <td className="px-3 py-5">
                         <div className="flex flex-col gap-1">
-                          <span className="text-xs font-bold text-slate-900">{format(scheduleDate, "dd MMM, yyyy")}</span>
+                          <span className="text-xs font-bold text-slate-900 dark:text-slate-100">{format(scheduleDate, "dd MMM, yyyy")}</span>
                           <div className="flex items-center gap-1.5">
-                             <Clock className="h-3 w-3 text-primary" />
-                             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{m.time}</span>
+                             <Clock className="h-3 w-3 text-primary dark:text-indigo-400" />
+                             <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{m.time}</span>
                           </div>
                           {isTodayMeeting && (
-                            <span className="inline-flex items-center gap-1 w-fit px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-600 text-[9px] font-bold uppercase tracking-wider border border-emerald-100 mt-1">
+                            <span className="inline-flex items-center gap-1 w-fit px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 text-[9px] font-bold uppercase tracking-wider border border-emerald-100 dark:border-emerald-500/30 mt-1">
                                Active Today
                             </span>
                           )}
                           {isOverdue && (
-                            <span className="inline-flex items-center gap-1 w-fit px-2 py-0.5 rounded-md bg-rose-50 text-rose-600 text-[9px] font-bold uppercase tracking-wider border border-rose-100 mt-1 shadow-sm">
+                            <span className="inline-flex items-center gap-1 w-fit px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 text-[9px] font-bold uppercase tracking-wider border border-rose-100 dark:border-rose-500/30 mt-1 shadow-sm">
                                <AlertTriangle className="h-2.5 w-2.5" /> Missed Visit
                             </span>
                           )}
@@ -229,13 +229,13 @@ export default function MeetingsPage() {
                         <div className="max-w-[200px] space-y-2">
                            <div className="flex items-start gap-2">
                               <MapPin className="h-3.5 w-3.5 text-rose-400 mt-0.5 shrink-0" />
-                              <p className="text-[11px] font-semibold text-slate-600 leading-relaxed uppercase line-clamp-2">{m.address}</p>
+                              <p className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 leading-relaxed uppercase line-clamp-2">{m.address}</p>
                            </div>
                            <Link 
                              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(m.address)}`} 
                              target="_blank"
                              onClick={(e) => e.stopPropagation()}
-                             className="inline-flex items-center gap-1 text-[9px] font-bold text-primary hover:bg-primary/5 px-2 py-1 rounded transition-all uppercase tracking-wider"
+                             className="inline-flex items-center gap-1 text-[9px] font-bold text-primary dark:text-indigo-400 hover:bg-primary/5 dark:hover:bg-indigo-950/30 px-2 py-1 rounded transition-all uppercase tracking-wider"
                            >
                              <Map className="h-2.5 w-2.5" /> Launch Navigation
                            </Link>
@@ -247,7 +247,7 @@ export default function MeetingsPage() {
                               isOverdue ? "bg-rose-500 animate-pulse shadow-rose-500/50" :
                               m.status === "SCHEDULED" ? "bg-amber-400 animate-pulse shadow-amber-400/50" : "bg-emerald-500 shadow-emerald-500/50"
                            )} />
-                           <span className={cn("text-[10px] font-bold uppercase tracking-widest", isOverdue ? "text-rose-600" : "text-slate-500")}>
+                           <span className={cn("text-[10px] font-bold uppercase tracking-widest", isOverdue ? "text-rose-600 dark:text-rose-400" : "text-slate-500 dark:text-slate-400")}>
                              {isOverdue ? "OVERDUE" : m.status}
                            </span>
                         </div>
@@ -255,7 +255,7 @@ export default function MeetingsPage() {
                       <td className="py-5 pr-6 text-right">
                         <Link 
                           href={m.lead.status === "WON_ORDER" ? `/customers/${m.leadId}` : `/leads/${m.leadId}`}
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50/50 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-lg text-xs font-bold transition-all border border-indigo-100/50 shadow-sm whitespace-nowrap active:scale-95 group/btn"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50/50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-600 hover:text-white rounded-lg text-xs font-bold transition-all border border-indigo-100/50 dark:border-indigo-500/30 shadow-sm whitespace-nowrap active:scale-95 group/btn"
                         >
                           View {m.lead.status === "WON_ORDER" ? "Customer" : "Lead"} <ChevronRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
                         </Link>
@@ -266,11 +266,11 @@ export default function MeetingsPage() {
                 {filtered.length === 0 && (
                   <tr>
                     <td colSpan={5} className="py-24 text-center">
-                       <div className="h-12 w-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-200 text-slate-300">
+                       <div className="h-12 w-12 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-200 dark:border-slate-700 text-slate-300 dark:text-slate-500">
                          <MapPin className="h-6 w-6" />
                        </div>
-                       <h3 className="text-sm font-semibold text-slate-900">Deployment queue clear</h3>
-                       <p className="text-xs text-slate-500 mt-1 font-medium italic">No scheduled site visits match your search parameters.</p>
+                       <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Deployment queue clear</h3>
+                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium italic">No scheduled site visits match your search parameters.</p>
                     </td>
                   </tr>
                 )}

@@ -81,6 +81,9 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
   const [followUpDate, setFollowUpDate] = useState("");
   const [followUpTime, setFollowUpTime] = useState("");
   const [cancelReason, setCancelReason] = useState(CANCEL_REASONS[0]);
+  const [archiveReason, setArchiveReason] = useState("Client Will Call");
+  const [archiveMonth, setArchiveMonth] = useState("");
+  const [archiveYear, setArchiveYear] = useState("");
   const [reactivationNote, setReactivationNote] = useState("");
   const [meetingForm, setMeetingForm] = useState({ address: "", date: "", time: "", notes: "" });
   const [editForm, setEditForm] = useState<Partial<LeadDetails>>({});
@@ -155,6 +158,9 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
     setFollowUpDate("");
     setFollowUpTime("");
     setCancelReason(CANCEL_REASONS[0]);
+    setArchiveReason("Client Will Call");
+    setArchiveMonth("");
+    setArchiveYear("");
     setReactivationNote("");
     setMeetingForm({ address: "", date: "", time: "", notes: "" });
     setEditError(null);
@@ -516,38 +522,38 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
       <div className="flex items-center justify-between shrink-0">
         <button 
           onClick={() => router.back()} 
-          className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-emerald-600 transition-colors group"
+          className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors group"
         >
-          <div className="h-8 w-8 rounded-lg border border-slate-200 flex items-center justify-center group-hover:border-emerald-200 bg-white shadow-sm transition-colors">
+          <div className="h-8 w-8 rounded-lg border border-slate-200 dark:border-slate-800 flex items-center justify-center group-hover:border-emerald-200 bg-white dark:bg-slate-900 shadow-sm transition-colors">
             <ArrowLeft className="h-4 w-4" />
           </div>
           BACK
         </button>
 
-        <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 tracking-widest uppercase">
+        <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-widest uppercase">
           {lead.isArchived ? (
-            <Link href="/interested" className="hover:text-indigo-600 transition-colors text-indigo-600 font-bold">Archived Leads</Link>
+            <Link href="/interested" className="hover:text-indigo-600 transition-colors text-indigo-600 dark:text-indigo-400 font-bold">Archived Leads</Link>
           ) : lead.isCancelled ? (
             <Link href="/canceled" className="hover:text-rose-600 transition-colors text-rose-400/80">Canceled Records</Link>
           ) : (
             <Link href="/leads" className="hover:text-emerald-600 transition-colors text-indigo-400/80">Lead Pipeline</Link>
           )}
-          <ChevronRight className="h-3 w-3 text-slate-300" /> 
-          <span className="text-slate-900 font-black">Details</span>
+          <ChevronRight className="h-3 w-3 text-slate-300 dark:text-slate-600" /> 
+          <span className="text-slate-900 dark:text-white font-black">Details</span>
         </div>
       </div>
 
       {/* Header */}
-      <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 p-8 rounded-xl border border-slate-200 dark:border-white/8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-48 h-48 bg-primary rounded-full blur-[100px] opacity-5 -mr-24 -mt-24" />
         <div className="flex items-center gap-6 relative z-10">
           {/* Header Avatar Container */}
           <div className="relative h-16 w-16 shrink-0">
-            <div className="h-16 w-16 bg-slate-100 rounded-xl flex items-center justify-center border border-slate-200">
-              <span className="text-2xl font-bold text-slate-800 uppercase">{lead.customerName ? lead.customerName.charAt(0) : "?"}</span>
+            <div className="h-16 w-16 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center border border-slate-200 dark:border-slate-700">
+              <span className="text-2xl font-bold text-slate-800 dark:text-white uppercase">{lead.customerName ? lead.customerName.charAt(0) : "?"}</span>
             </div>
             {lead.isHotLead && (
-              <span className="absolute -bottom-1.5 -right-1.5 bg-amber-400 rounded-full p-1 shadow-sm border-2 border-white">
+              <span className="absolute -bottom-1.5 -right-1.5 bg-amber-400 rounded-full p-1 shadow-sm border-2 border-white dark:border-slate-900">
                 <Star className="h-3 w-3 text-white fill-white" />
               </span>
             )}
@@ -557,7 +563,7 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
               <div className="flex items-center gap-2">
                 <input
                   autoFocus
-                  className="text-xl font-semibold text-slate-900 tracking-tight border-b-2 border-indigo-500 outline-none bg-transparent py-0.5"
+                  className="text-xl font-semibold text-slate-900 dark:text-white tracking-tight border-b-2 border-indigo-500 outline-none bg-transparent py-0.5"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   onKeyDown={(e) => {
@@ -566,10 +572,10 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                   }}
                   onBlur={handleSaveName}
                 />
-                <button onClick={handleSaveName} className="p-1 text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors">
+                <button onClick={handleSaveName} className="p-1 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-md transition-colors">
                   <Check className="h-4 w-4" />
                 </button>
-                <button onClick={() => setIsEditingName(false)} className="p-1 text-slate-400 hover:bg-slate-50 rounded-md transition-colors">
+                <button onClick={() => setIsEditingName(false)} className="p-1 text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-md transition-colors">
                   <X className="h-4 w-4" />
                 </button>
               </div>
@@ -584,7 +590,7 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                   }}
                   className={cn(
                     "text-xl font-semibold tracking-tight transition-opacity",
-                    !isLocked ? "cursor-pointer hover:opacity-80 text-slate-900" : "text-slate-900"
+                    !isLocked ? "cursor-pointer hover:opacity-80 text-slate-900 dark:text-white" : "text-slate-900 dark:text-white"
                   )}
                   title={!isLocked ? "Double-click to edit" : undefined}
                 >
@@ -596,7 +602,7 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                       setNewName(lead.customerName || "");
                       setIsEditingName(true);
                     }}
-                    className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-md transition-all opacity-0 group-hover/name:opacity-100"
+                    className="p-1.5 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-all opacity-0 group-hover/name:opacity-100"
                     title="Edit Name"
                   >
                     <Pencil className="h-3.5 w-3.5" />
@@ -605,10 +611,10 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
               </div>
             )}
             <div className="mt-1.5 flex flex-wrap gap-3 text-xs">
-              <span className="flex items-center gap-1.5 text-slate-600 font-medium bg-slate-50 px-3 py-1 rounded-md border border-slate-200"><Phone className="h-3.5 w-3.5 text-indigo-600" /> {lead.contactNumber}</span>
-              <span className="flex items-center gap-1.5 text-slate-600 font-medium bg-slate-50 px-3 py-1 rounded-md border border-slate-200 uppercase"><FileText className="h-3.5 w-3.5 text-slate-400" /> {lead.serviceType.replace(/_/g, " ")}</span>
+              <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 font-medium bg-slate-50 dark:bg-[#161f32] px-3 py-1 rounded-md border border-slate-200 dark:border-slate-800"><Phone className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" /> {lead.contactNumber}</span>
+              <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 font-medium bg-slate-50 dark:bg-[#161f32] px-3 py-1 rounded-md border border-slate-200 dark:border-slate-800 uppercase"><FileText className="h-3.5 w-3.5 text-slate-400" /> {lead.serviceType.replace(/_/g, " ")}</span>
               {lead.inquirySource === "THROUGH_REFERENCE" && lead.referenceName && (
-                <span className="flex items-center gap-1.5 text-slate-600 font-medium bg-slate-50 px-3 py-1 rounded-md border border-slate-200 uppercase"><User className="h-3.5 w-3.5 text-amber-500" /> {lead.referenceName}</span>
+                <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 font-medium bg-slate-50 dark:bg-[#161f32] px-3 py-1 rounded-md border border-slate-200 dark:border-slate-800 uppercase"><User className="h-3.5 w-3.5 text-amber-500" /> {lead.referenceName}</span>
               )}
             </div>
           </div>
@@ -617,7 +623,7 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
           <div className="flex items-center gap-3">
             <button
               onClick={() => setActiveModal("CALL")}
-              className="h-9 w-9 bg-white hover:bg-slate-50 text-white rounded-xl flex items-center justify-center transition-all active:scale-90 shadow-sm border border-slate-200 group"
+              className="h-9 w-9 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-white rounded-xl flex items-center justify-center transition-all active:scale-90 shadow-sm border border-slate-200 dark:border-slate-700 group"
               title="Direct Call"
             >
               <svg 
@@ -634,7 +640,7 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
               onClick={() => {
                 window.open(`https://wa.me/${lead.contactNumber.replace(/\D/g, "")}`, "_blank");
               }}
-              className="h-9 w-9 bg-[#25D366] hover:bg-[#20ba5a] text-white rounded-xl flex items-center justify-center transition-all active:scale-90 shadow-md shadow-emerald-100 border border-emerald-200 group"
+              className="h-9 w-9 bg-[#25D366] hover:bg-[#20ba5a] text-white rounded-xl flex items-center justify-center transition-all active:scale-90 shadow-md shadow-emerald-100 dark:shadow-emerald-950/40 border border-emerald-200 dark:border-emerald-700 group"
               title="WhatsApp Message"
             >
               <svg 
@@ -646,15 +652,15 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
               </svg>
             </button>
 
-            {/* Hot Lead Toggle Button (NEW) */}
+            {/* Hot Lead Toggle Button */}
             <button
               onClick={handleToggleHotLead}
               title={lead.isHotLead ? "Remove Hot Lead" : "Mark as Hot Lead"}
               className={cn(
                 "h-9 w-9 rounded-xl flex items-center justify-center transition-all active:scale-90 border",
                 lead.isHotLead
-                  ? "bg-amber-400 text-white border-amber-300 shadow-md shadow-amber-100"
-                  : "bg-white text-slate-400 border-slate-200 hover:border-amber-300 hover:text-amber-400"
+                  ? "bg-amber-400 text-white border-amber-300 shadow-md shadow-amber-100 dark:shadow-amber-950/40"
+                  : "bg-white dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700 hover:border-amber-300 hover:text-amber-400"
               )}
             >
               <Star className={cn("h-5 w-5", lead.isHotLead ? "fill-white" : "")} />
@@ -664,24 +670,24 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
               <button
                 onClick={handleReactivateLead}
                 title="Reactivate Lead from Archive"
-                className="h-9 px-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl flex items-center gap-1.5 transition-all active:scale-90 border border-indigo-200 text-xs font-bold shadow-sm cursor-pointer"
+                className="h-9 px-3 bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-400 rounded-xl flex items-center gap-1.5 transition-all active:scale-90 border border-indigo-200 dark:border-indigo-800/50 text-xs font-bold shadow-sm cursor-pointer"
               >
                 <RotateCcw className="h-3.5 w-3.5" /> Reactivate
               </button>
             )}
 
             {lead.isArchived ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wider border bg-indigo-50 text-indigo-700 border-indigo-200">
-                <Archive className="h-3 w-3" /> Archived (Passive)
+              <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wider border bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700">
+                <Archive className="h-3 w-3 text-slate-500 dark:text-slate-400" /> Archived (Passive)
               </span>
             ) : (
               <span className={cn(
                 "inline-flex items-center rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wider border",
-                lead.status === "NEW_INQUIRY" ? "bg-amber-50 text-amber-700 border-amber-200" :
-                lead.status === "WON_ORDER" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
-                lead.status === "CANCELLED" ? "bg-rose-50 text-rose-700 border-rose-200" :
-                lead.status === "MEETING_SCHEDULED" ? "bg-indigo-50 text-indigo-700 border-indigo-200" :
-                "bg-sky-50 text-sky-700 border-sky-200"
+                lead.status === "NEW_INQUIRY" ? "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/50" :
+                lead.status === "WON_ORDER" ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/50" :
+                lead.status === "CANCELLED" ? "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800/50" :
+                lead.status === "MEETING_SCHEDULED" ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800/50" :
+                "bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-800/50"
               )}>
                 {lead.status === "NEW_INQUIRY" ? "New Lead" :
                  lead.status === "WON_ORDER" ? "Project Started" :
@@ -691,7 +697,7 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
               </span>
             )}
           </div>
-          {lead.cancelReason && <p className="text-[10px] text-rose-500 font-medium italic">Reason: {lead.cancelReason}</p>}
+          {lead.cancelReason && <p className="text-[10px] text-rose-500 dark:text-rose-400 font-medium italic">Reason: {lead.cancelReason}</p>}
         </div>
       </div>
 
@@ -699,7 +705,7 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
         {/* Left Column */}
         <div className="space-y-6">
           {/* Operations Hub */}
-          <div className="bg-slate-900 px-6 py-8 rounded-xl shadow-sm text-white">
+          <div className="bg-slate-900 p-6 rounded-xl shadow-sm text-white border border-white/8">
             <h3 className="text-sm font-semibold mb-6 flex items-center gap-2 uppercase tracking-wider">
               <Zap className="h-4 w-4 text-amber-500" /> Action Center
             </h3>
@@ -739,9 +745,9 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                     setMeetingForm(prev => ({ ...prev, address: lead.fullAddress || "" })); 
                     setActiveModal("MEETING"); 
                   }} 
-                  className="w-full bg-white text-slate-900 hover:bg-slate-100 py-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all border border-slate-200 shadow-sm mt-3"
+                  className="w-full bg-white dark:bg-slate-800 text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 py-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all border border-slate-200 dark:border-slate-700 shadow-sm mt-3"
                 >
-                  <Calendar className="h-4 w-4 text-indigo-600" /> Schedule Site Visit
+                  <Calendar className="h-4 w-4 text-indigo-600 dark:text-indigo-400" /> Schedule Site Visit
                 </button>
                 <button 
                   onClick={() => {
@@ -749,7 +755,7 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                     setConversionError("");
                     setActiveModal("CONVERT");
                   }} 
-                  className="w-full bg-indigo-50 text-indigo-700 hover:bg-indigo-100 py-3 rounded-lg text-[11px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all border border-indigo-200 mt-2 shadow-sm relative overflow-hidden group"
+                  className="w-full bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 py-3 rounded-lg text-[11px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all border border-indigo-200 dark:border-indigo-800/60 mt-2 shadow-sm relative overflow-hidden group"
                 >
                   <Zap className="h-4 w-4 text-indigo-500 group-hover:scale-110 transition-transform" /> Convert to Customer
                 </button>
@@ -764,34 +770,34 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
           </div>
 
           {/* Core Lead File */}
-          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative">
-            <button onClick={() => { setEditForm(lead); setActiveModal("EDIT"); }} className="absolute top-6 right-6 p-2 text-slate-400 hover:bg-slate-50 hover:text-indigo-600 rounded-lg transition-all border border-transparent hover:border-slate-100">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-white/8 shadow-sm relative">
+            <button onClick={() => { setEditForm(lead); setActiveModal("EDIT"); }} className="absolute top-6 right-6 p-2 text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg transition-all border border-transparent hover:border-slate-100 dark:hover:border-slate-700">
               <Pencil className="h-4 w-4" />
             </button>
-            <h3 className="text-sm font-semibold text-slate-900 mb-6 uppercase tracking-wider">Profile Information</h3>
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-6 uppercase tracking-wider">Profile Information</h3>
             <div className="space-y-4">
               <div className="space-y-1">
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><MapPin className="h-3 w-3" /> Address</p>
+                <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5"><MapPin className="h-3 w-3" /> Address</p>
                 <div className="flex items-start justify-between gap-4">
-                  <p className="text-sm text-slate-800 font-medium leading-relaxed">{lead.fullAddress || "Not specified"}</p>
+                  <p className="text-sm text-slate-800 dark:text-slate-200 font-medium leading-relaxed">{lead.fullAddress || "Not specified"}</p>
                 </div>
               </div>
               <div className="space-y-1">
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><Zap className="h-3 w-3" /> Requirement</p>
-                <p className="text-sm text-slate-800 font-medium">{lead.requirementDetails || "No details provided"}</p>
+                <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5"><Zap className="h-3 w-3" /> Requirement</p>
+                <p className="text-sm text-slate-800 dark:text-slate-200 font-medium">{lead.requirementDetails || "No details provided"}</p>
               </div>
               <div className="grid grid-cols-2 gap-3 pt-2">
-                <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                  <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-tight">Area / City</p>
-                  <p className="text-xs font-bold text-slate-900 truncate">Surat</p>
+                <div className="bg-slate-50 dark:bg-[#161f32] p-3 rounded-lg border border-slate-100 dark:border-slate-800">
+                  <p className="text-[9px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-tight">Area / City</p>
+                  <p className="text-xs font-bold text-slate-900 dark:text-white truncate">Surat</p>
                 </div>
-                <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                  <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-tight">Source</p>
-                  <p className="text-xs font-bold text-slate-900 uppercase">{lead.inquirySource}</p>
+                <div className="bg-slate-50 dark:bg-[#161f32] p-3 rounded-lg border border-slate-100 dark:border-slate-800">
+                  <p className="text-[9px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-tight">Source</p>
+                  <p className="text-xs font-bold text-slate-900 dark:text-white uppercase">{lead.inquirySource}</p>
                 </div>
-                <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 col-span-2">
-                  <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-tight">Interested Service</p>
-                  <p className="text-xs font-bold text-slate-900 uppercase font-bold">{lead.serviceType.replace(/_/g, " ")}</p>
+                <div className="bg-slate-50 dark:bg-[#161f32] p-3 rounded-lg border border-slate-100 dark:border-slate-800 col-span-2">
+                  <p className="text-[9px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-tight">Interested Service</p>
+                  <p className="text-xs font-bold text-slate-900 dark:text-white uppercase">{lead.serviceType.replace(/_/g, " ")}</p>
                 </div>
               </div>
             </div>
@@ -799,23 +805,23 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
         </div>
 
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col h-full overflow-hidden">
-            <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-white/8 shadow-sm flex flex-col h-full overflow-hidden">
+            <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-[#161f32]/50 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="h-8 w-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-md shadow-indigo-100">
+                <div className="h-8 w-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-md shadow-indigo-100 dark:shadow-indigo-950">
                   <Activity className="h-4 w-4 text-white" />
                 </div>
-                <h3 className="text-base font-bold text-slate-900 tracking-tight">Activity Timeline</h3>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">Activity Timeline</h3>
               </div>
-              <span className="px-3 py-1 bg-white border border-slate-200 rounded-full text-[10px] font-bold text-slate-500 uppercase tracking-widest shadow-sm">
+              <span className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full text-[10px] font-bold text-slate-500 dark:text-slate-300 uppercase tracking-widest shadow-sm">
                 {timeline.length} Events
               </span>
             </div>
 
-            <div className="flex-1 overflow-auto max-h-[750px] scrollbar-thin scrollbar-thumb-slate-200">
-              <div className="divide-y divide-slate-100">
+            <div className="flex-1 overflow-auto max-h-[750px] scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
+              <div className="divide-y divide-slate-100 dark:divide-slate-800">
                 {timeline.map((item: any) => (
-                  <div key={item.id} className="group relative flex hover:bg-slate-50/50 transition-all">
+                  <div key={item.id} className="group relative flex hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-all">
                     {/* Status Bar */}
                     <div className={cn("w-1.5 self-stretch shrink-0", getStatusColor(item))} />
                     
@@ -824,10 +830,10 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                         <div className="flex items-center gap-3">
                           <div className={cn(
                             "h-7 w-7 rounded-lg flex items-center justify-center shadow-sm border",
-                            item.type === "MEETING" ? "bg-indigo-50 border-indigo-100 text-indigo-600" :
-                            item.type === "NOTE" ? "bg-amber-50 border-amber-100 text-amber-600" :
-                            item.type === "TRANSACTION" ? (item.type === "RECEIVED" ? "bg-emerald-50 border-emerald-100 text-emerald-600" : "bg-rose-50 border-rose-100 text-rose-600") :
-                            "bg-slate-50 border-slate-100 text-slate-600"
+                            item.type === "MEETING" ? "bg-indigo-50 dark:bg-indigo-950/50 border-indigo-100 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400" :
+                            item.type === "NOTE" ? "bg-amber-50 dark:bg-amber-950/50 border-amber-100 dark:border-amber-800 text-amber-600 dark:text-amber-400" :
+                            item.type === "TRANSACTION" ? (item.type === "RECEIVED" ? "bg-emerald-50 dark:bg-emerald-950/50 border-emerald-100 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400" : "bg-rose-50 dark:bg-rose-950/50 border-rose-100 dark:border-rose-800 text-rose-600 dark:text-rose-400") :
+                            "bg-slate-50 dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-300"
                           )}>
                             {item.type === "MEETING" ? <Calendar className="h-3.5 w-3.5" /> :
                              item.type === "NOTE" ? <MessageSquare className="h-3.5 w-3.5" /> :
@@ -835,14 +841,14 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                              <Phone className="h-3.5 w-3.5" />}
                           </div>
                           <div className="flex flex-col">
-                            <span className="text-xs font-bold text-slate-900 leading-none">
+                            <span className="text-xs font-bold text-slate-900 dark:text-white leading-none">
                               {item.type === "MEETING" ? "Site Visit" :
                                item.type === "NOTE" ? "Internal Note" :
                                item.type === "TRANSACTION" ? (item.type === "RECEIVED" ? "Payment In" : "Expense Out") :
                                `Call Attempt: ${item.outcome?.replace(/_/g, " ") || "Manual Log"}`}
                               {item.type === "FOLLOW_UP" && item.outcome === "NOT_PICKED" && ` (#${getAttemptNumber(item.id)})`}
                             </span>
-                            <span className="text-[10px] font-semibold text-slate-400 mt-1 flex items-center gap-1">
+                            <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 mt-1 flex items-center gap-1">
                               <Clock className="h-2.5 w-2.5" />
                               {format(new Date(item.createdAt), "dd MMM, yyyy · h:mm a")}
                             </span>
@@ -859,7 +865,7 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                                   setCompletingMeetingId(item.id);
                                   setActiveModal("COMPLETE_MEETING");
                                 }}
-                                className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-md border border-transparent hover:border-emerald-200 transition-all"
+                                className="p-1.5 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-md border border-transparent hover:border-emerald-200 dark:hover:border-emerald-800 transition-all"
                                 title="Complete Visit"
                               >
                                 <Check className="h-3.5 w-3.5" />
@@ -878,7 +884,7 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                                 else if (item.type === "FOLLOW_UP") initialText = item.noteGiven || "";
                                 setEditNoteText(initialText);
                               }}
-                              className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-md border border-transparent hover:border-slate-200 transition-all"
+                              className="p-1.5 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-white dark:hover:bg-slate-800 rounded-md border border-transparent hover:border-slate-200 dark:hover:border-slate-700 transition-all"
                             >
                               <Pencil className="h-3.5 w-3.5" />
                             </button>
@@ -887,7 +893,7 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                                 e.preventDefault();
                                 handleDeleteActivity(item.id, item.type);
                               }}
-                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-white rounded-md border border-transparent hover:border-slate-200 transition-all"
+                              className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-white dark:hover:bg-slate-800 rounded-md border border-transparent hover:border-slate-200 dark:hover:border-slate-700 transition-all"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>
@@ -897,47 +903,47 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
 
                       <div className="pl-10 pr-4">
                         {item.type === "MEETING" ? (
-                          <div className="space-y-3 bg-white p-3.5 rounded-xl border border-slate-200/60 shadow-sm">
-                            <div className="flex items-start gap-2 text-slate-900 font-bold text-[11px]">
+                          <div className="space-y-3 bg-white dark:bg-slate-800/80 p-3.5 rounded-xl border border-slate-200/60 dark:border-slate-700/80 shadow-sm">
+                            <div className="flex items-start gap-2 text-slate-900 dark:text-white font-bold text-[11px]">
                               <MapPin className="h-3.5 w-3.5 text-indigo-500 mt-0.5" /> 
                               <span className="leading-relaxed">{item.address}</span>
                             </div>
-                            <div className="flex gap-4 text-[10px] font-bold text-slate-500">
-                              <span className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded border border-slate-100"><Calendar className="h-3 w-3 text-slate-400" /> {format(new Date(item.date), "dd MMM, yyyy")}</span>
-                              <span className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded border border-slate-100"><Clock className="h-3 w-3 text-slate-400" /> {item.time}</span>
+                            <div className="flex gap-4 text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                              <span className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 px-2 py-1 rounded border border-slate-100 dark:border-slate-700"><Calendar className="h-3 w-3 text-slate-400" /> {format(new Date(item.date), "dd MMM, yyyy")}</span>
+                              <span className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900 px-2 py-1 rounded border border-slate-100 dark:border-slate-700"><Clock className="h-3 w-3 text-slate-400" /> {item.time}</span>
                             </div>
-                            {item.notes && <p className="text-[11px] text-slate-600 bg-indigo-50/30 p-2.5 rounded-lg border border-indigo-100/50 italic leading-relaxed">"{item.notes}"</p>}
+                            {item.notes && <p className="text-[11px] text-slate-600 dark:text-slate-300 bg-indigo-50/30 dark:bg-indigo-950/30 p-2.5 rounded-lg border border-indigo-100/50 dark:border-indigo-900/40 italic leading-relaxed">"{item.notes}"</p>}
                           </div>
                         ) : item.type === "TRANSACTION" ? (
-                          <div className="flex items-center justify-between bg-white p-3.5 rounded-xl border border-slate-200/60 shadow-sm">
+                          <div className="flex items-center justify-between bg-white dark:bg-slate-800/80 p-3.5 rounded-xl border border-slate-200/60 dark:border-slate-700/80 shadow-sm">
                              <div className="flex flex-col gap-1">
-                               <span className="text-sm font-black text-slate-900">₹{item.amount.toLocaleString()}</span>
-                               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Paid to: {item.paidTo}</span>
+                               <span className="text-sm font-black text-slate-900 dark:text-white">₹{item.amount.toLocaleString()}</span>
+                               <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-tight">Paid to: {item.paidTo}</span>
                              </div>
                              <span className={cn(
                                "px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border",
-                               item.type === "RECEIVED" ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-rose-50 text-rose-700 border-rose-100"
+                               item.type === "RECEIVED" ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800/50" : "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border-rose-100 dark:border-rose-800/50"
                              )}>
                                {item.category}
                              </span>
                           </div>
                         ) : item.type === "NOTE" ? (
-                          <p className="text-sm text-slate-700 leading-relaxed font-medium">
+                          <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
                             {item.content}
                           </p>
                         ) : (
                           <div className="space-y-3">
                             {item.nextCallDate && (
-                              <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 border border-indigo-100/50 rounded-lg w-fit">
+                              <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100/50 dark:border-indigo-900/40 rounded-lg w-fit">
                                  <Calendar className="h-3 w-3 text-indigo-500" />
-                                 <span className="text-[9px] font-black text-indigo-700 uppercase tracking-widest">
+                                 <span className="text-[9px] font-black text-indigo-700 dark:text-indigo-400 uppercase tracking-widest">
                                    Next Call: {format(new Date(item.nextCallDate), "dd MMM, yyyy")}
                                    {item.nextCallTime && ` @ ${item.nextCallTime}`}
                                  </span>
                               </div>
                             )}
-                            <p className="text-sm text-slate-700 leading-relaxed font-medium">
-                              {item.noteGiven || <span className="text-slate-300 italic">No conversation summary logged.</span>}
+                            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
+                              {item.noteGiven || <span className="text-slate-300 dark:text-slate-600 italic">No conversation summary logged.</span>}
                             </p>
                           </div>
                         )}
@@ -947,12 +953,12 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                 ))}
 
                 {timeline.length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-32 text-slate-300">
-                    <div className="h-16 w-16 bg-slate-50 rounded-full flex items-center justify-center border border-slate-100 mb-4 opacity-50">
+                  <div className="flex flex-col items-center justify-center py-32 text-slate-300 dark:text-slate-600">
+                    <div className="h-16 w-16 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center border border-slate-100 dark:border-slate-700 mb-4 opacity-50">
                       <Activity className="h-8 w-8" />
                     </div>
-                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Activity stream is empty</p>
-                    <p className="text-[10px] text-slate-300 mt-1 font-medium">Log an outcome to start the pipeline.</p>
+                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Activity stream is empty</p>
+                    <p className="text-[10px] text-slate-300 dark:text-slate-600 mt-1 font-medium">Log an outcome to start the pipeline.</p>
                   </div>
                 )}
               </div>
@@ -966,7 +972,7 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
         <Modal title="Edit Lead" icon={<Pencil className="h-5 w-5" />} color="primary" onClose={closeModal}>
           <form onSubmit={handleUpdateLead} className="p-8 space-y-6">
             {editError && (
-              <div className="p-4 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-3 text-rose-700 mb-6">
+              <div className="p-4 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/60 rounded-lg flex items-center gap-3 text-rose-700 dark:text-rose-400 mb-6">
                 <AlertTriangle className="h-5 w-5 shrink-0" />
                 <p className="text-xs font-semibold">{editError}</p>
               </div>
@@ -1062,7 +1068,9 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                 meetingAddress: pickedStatus === "MEETING" ? meetingForm.address : undefined,
                 meetingDate: pickedStatus === "MEETING" ? meetingForm.date : undefined,
                 meetingTime: pickedStatus === "MEETING" ? meetingForm.time : undefined,
-                meetingNotes: pickedStatus === "MEETING" ? noteContent : undefined
+                meetingNotes: pickedStatus === "MEETING" ? noteContent : undefined,
+                archiveReason: pickedStatus === "ARCHIVE" ? archiveReason : undefined,
+                tentativeDate: (pickedStatus === "ARCHIVE" && archiveYear && archiveMonth) ? `${archiveYear}-${archiveMonth}-01` : undefined,
               });
             }}
             className="flex flex-col h-full"
@@ -1080,18 +1088,18 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
 
               return allNotes.length > 0 && (
                 <div className="space-y-3 mb-6">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Previous Conversations & Notes</p>
-                  <hr className="border-slate-200" />
-                  <div className="space-y-2 max-h-40 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200">
+                  <p className="text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest ml-1">Previous Conversations & Notes</p>
+                  <hr className="border-slate-200 dark:border-slate-800" />
+                  <div className="space-y-2 max-h-40 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700">
                     {allNotes.map((note, index) => (
                       <div key={note.id} className="space-y-3">
                         <div className="flex gap-3">
                           <span className="text-[10px] font-bold text-slate-400 mt-0.5">#{allNotes.length - index}</span>
-                          <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
+                          <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
                             {note.content}
                           </p>
                         </div>
-                        {index < allNotes.length - 1 && <hr className="border-slate-100" />}
+                        {index < allNotes.length - 1 && <hr className="border-slate-100 dark:border-slate-800" />}
                       </div>
                     ))}
                   </div>
@@ -1137,7 +1145,7 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                       }}
                       className={cn(
                         "py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border transition-all",
-                        pickedStatus === opt.val ? "bg-slate-900 text-white border-slate-900 shadow-lg scale-[1.02]" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50",
+                        pickedStatus === opt.val ? "bg-slate-900 dark:bg-indigo-600 text-white border-slate-900 dark:border-indigo-500 shadow-lg scale-[1.02]" : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60",
                         isInterestedDisabled && "opacity-40 cursor-not-allowed grayscale"
                       )}
                     >{opt.label}</button>
@@ -1157,12 +1165,12 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
 
             {/* Conditional Meeting Form */}
             {pickedStatus === "MEETING" && (
-              <div className="space-y-4 p-5 bg-indigo-50/50 rounded-xl border border-indigo-100 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="space-y-4 p-5 bg-indigo-50/50 dark:bg-indigo-950/20 rounded-xl border border-indigo-100 dark:border-indigo-500/20 animate-in fade-in slide-in-from-top-2 duration-300">
                 <div className="flex items-center gap-2 mb-1">
-                  <div className="h-7 w-7 bg-indigo-600 rounded-lg flex items-center justify-center shadow-md shadow-indigo-100">
+                  <div className="h-7 w-7 bg-indigo-600 rounded-lg flex items-center justify-center shadow-md shadow-indigo-100 dark:shadow-none">
                     <Calendar className="h-4 w-4 text-white" />
                   </div>
-                  <p className="text-xs font-bold text-indigo-900 uppercase tracking-tight">Schedule Site Visit</p>
+                  <p className="text-xs font-bold text-indigo-900 dark:text-indigo-400 uppercase tracking-tight">Schedule Site Visit</p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <Field label="Visit Date *">
@@ -1182,7 +1190,7 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                     <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                     <input 
                       required
-                      className="block w-full rounded-lg border border-slate-200 py-2.5 pl-11 bg-white text-slate-900 placeholder:text-slate-300 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5 text-sm transition-all outline-none"
+                      className="block w-full rounded-lg border border-slate-200 dark:border-slate-700/80 py-2.5 pl-11 bg-white dark:bg-[#161f32] text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600 focus:border-indigo-600 dark:focus:border-indigo-500 focus:ring-4 focus:ring-indigo-600/5 text-sm transition-all outline-none"
                       placeholder="Confirm site address..."
                       value={meetingForm.address}
                       onChange={e => setMeetingForm({ ...meetingForm, address: e.target.value })}
@@ -1209,8 +1217,153 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
               </Field>
             )}
             {pickedStatus === "ARCHIVE" && (
-              <div className="p-3 bg-amber-50/80 rounded-xl border border-amber-200 text-xs text-amber-800 flex items-center gap-2 animate-in fade-in">
-                <span>📦 Lead will be moved to <strong>Passive Archive</strong>. No follow-up reminders will be created until customer contacts us.</span>
+              <div className="p-4 bg-slate-50/90 dark:bg-[#161f32]/60 rounded-xl border border-slate-200/90 dark:border-slate-700/60 space-y-4 animate-in fade-in">
+                <div className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed flex items-center gap-2">
+                  <Archive className="h-4 w-4 text-slate-500 dark:text-slate-400 shrink-0" />
+                  <span>Lead will be moved to <strong className="text-slate-900 dark:text-white font-semibold">Passive Archive</strong>. Active follow-ups and scheduled visits will be paused.</span>
+                </div>
+
+                {/* Archive Reason Selection */}
+                <div className="space-y-1.5">
+                  <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    Archive Reason
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { label: "Client Will Call", icon: "📞" },
+                      { label: "Possession Pending", icon: "🔑" },
+                      { label: "Site Under Construction", icon: "🏗️" },
+                      { label: "Budget On Hold", icon: "💰" }
+                    ].map((r) => (
+                      <button
+                        key={r.label}
+                        type="button"
+                        onClick={() => setArchiveReason(r.label)}
+                        className={cn(
+                          "flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold border transition-all text-left cursor-pointer",
+                          archiveReason === r.label
+                            ? "bg-slate-900 dark:bg-indigo-600 border-slate-900 dark:border-indigo-500 text-white shadow-sm"
+                            : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                        )}
+                      >
+                        <span className="text-sm">{r.icon}</span>
+                        <span className="truncate">{r.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Expected Possession Month & Year */}
+                <div className="space-y-2 pt-1 border-t border-slate-200/60 dark:border-slate-700/60">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      Expected Month / Possession
+                    </label>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium italic">Optional</span>
+                  </div>
+
+                  {/* Quick Preset Chips */}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mr-1">Quick:</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const d = new Date();
+                        d.setMonth(d.getMonth() + 3);
+                        setArchiveMonth(String(d.getMonth() + 1).padStart(2, "0"));
+                        setArchiveYear(String(d.getFullYear()));
+                      }}
+                      className="px-2.5 py-1 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg text-[10px] font-semibold text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                    >
+                      +3 Months
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const d = new Date();
+                        d.setMonth(d.getMonth() + 6);
+                        setArchiveMonth(String(d.getMonth() + 1).padStart(2, "0"));
+                        setArchiveYear(String(d.getFullYear()));
+                      }}
+                      className="px-2.5 py-1 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg text-[10px] font-semibold text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                    >
+                      +6 Months
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const d = new Date();
+                        d.setFullYear(d.getFullYear() + 1);
+                        setArchiveMonth(String(d.getMonth() + 1).padStart(2, "0"));
+                        setArchiveYear(String(d.getFullYear()));
+                      }}
+                      className="px-2.5 py-1 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg text-[10px] font-semibold text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                    >
+                      Next Year ({new Date().getFullYear() + 1})
+                    </button>
+                    {(archiveMonth || archiveYear) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setArchiveMonth("");
+                          setArchiveYear("");
+                        }}
+                        className="px-2 py-1 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/40 border border-rose-200 dark:border-rose-800/80 rounded-lg text-[10px] font-semibold text-rose-600 dark:text-rose-400 transition-colors cursor-pointer ml-auto"
+                      >
+                        ✕ Clear
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Dual Large Dropdowns */}
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <div>
+                      <select
+                        value={archiveMonth}
+                        onChange={(e) => setArchiveMonth(e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#161f32] py-2.5 px-3 text-xs font-medium text-slate-800 dark:text-slate-200 focus:border-slate-900 dark:focus:border-indigo-500 focus:ring-1 focus:ring-slate-900 dark:focus:ring-indigo-500 outline-none transition-all cursor-pointer"
+                      >
+                        <option value="">-- Select Month --</option>
+                        <option value="01">January</option>
+                        <option value="02">February</option>
+                        <option value="03">March</option>
+                        <option value="04">April</option>
+                        <option value="05">May</option>
+                        <option value="06">June</option>
+                        <option value="07">July</option>
+                        <option value="08">August</option>
+                        <option value="09">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                      </select>
+                    </div>
+                    <div>
+                      <select
+                        value={archiveYear}
+                        onChange={(e) => setArchiveYear(e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#161f32] py-2.5 px-3 text-xs font-medium text-slate-800 dark:text-slate-200 focus:border-slate-900 dark:focus:border-indigo-500 focus:ring-1 focus:ring-slate-900 dark:focus:ring-indigo-500 outline-none transition-all cursor-pointer"
+                      >
+                        <option value="">-- Select Year --</option>
+                        {Array.from({ length: 8 }, (_, i) => new Date().getFullYear() + i).map((y) => (
+                          <option key={y} value={String(y)}>
+                            {y}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 leading-normal">
+                    {archiveMonth && archiveYear ? (
+                      <span className="text-slate-700 dark:text-slate-300 font-semibold">
+                        Selected: {["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][parseInt(archiveMonth, 10)]} {archiveYear}
+                      </span>
+                    ) : (
+                      "No pressure or alerts; for internal team reference only."
+                    )}
+                  </p>
+                </div>
               </div>
             )}
             </div>
@@ -1234,9 +1387,9 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
             post("/api/follow-ups", { leadId: id, outcome: "NOT_PICKED", noteGiven: noteContent || null });
           }}>
             <div className="p-8 space-y-6">
-              <div className="bg-amber-50 border border-amber-100 rounded-lg p-3.5 flex items-start gap-3">
+              <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-500/20 rounded-lg p-3.5 flex items-start gap-3">
                 <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-                <p className="text-[11px] text-amber-700 font-medium leading-relaxed">
+                <p className="text-[11px] text-amber-700 dark:text-amber-400 font-medium leading-relaxed">
                   <span className="font-bold">System Note:</span> Lead will be auto-scheduled for a recall tomorrow. Frequent misses lead to auto-archival.
                 </p>
               </div>
@@ -1261,9 +1414,9 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
             post("/api/follow-ups", { leadId: id, outcome: "CANCELLED", cancelReason, noteGiven: noteContent || null });
           }}>
             <div className="p-8 space-y-6">
-              <div className="bg-rose-50 border border-rose-100 rounded-lg p-3.5 flex items-start gap-3">
+              <div className="bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-500/20 rounded-lg p-3.5 flex items-start gap-3">
                 <AlertTriangle className="h-4 w-4 text-rose-500 shrink-0 mt-0.5" />
-                <p className="text-[11px] text-rose-700 font-medium">Inquiry will be moved to the 'Cancelled' tab. You can reactivate this profile anytime.</p>
+                <p className="text-[11px] text-rose-700 dark:text-rose-400 font-medium">Inquiry will be moved to the 'Cancelled' tab. You can reactivate this profile anytime.</p>
               </div>
               <Field label="Resolution Reason *">
                 <select className={inputCls} value={cancelReason} onChange={e => setCancelReason(e.target.value)}>
@@ -1289,8 +1442,8 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
             post(`/api/leads/${id}/reactivate`, { reactivationNote });
           }}>
             <div className="p-8 space-y-6">
-              <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-3.5">
-                <p className="text-[11px] text-indigo-700 font-medium">Resetting status to <span className="font-bold underline">FOLLOW UP</span>. This will appear as a fresh activity on your timeline.</p>
+              <div className="bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-500/20 rounded-lg p-3.5">
+                <p className="text-[11px] text-indigo-700 dark:text-indigo-400 font-medium">Resetting status to <span className="font-bold underline">FOLLOW UP</span>. This will appear as a fresh activity on your timeline.</p>
               </div>
               <Field label="Reactivation Insight">
                 <textarea rows={3} className={inputCls} placeholder="Why is this client back in the pipeline?"
@@ -1312,12 +1465,12 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
             <div className="p-8 space-y-6">
               {isUnnamed ? (
                 <div className="space-y-4">
-                  <div className="bg-amber-50 border border-amber-200/80 rounded-xl p-4 text-left">
+                  <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-500/20 rounded-xl p-4 text-left">
                     <div className="flex items-start gap-3">
                       <span className="text-xl">⚠️</span>
                       <div>
-                        <p className="text-sm font-bold text-amber-900">Unnamed Lead Detected</p>
-                        <p className="text-xs text-amber-700 mt-0.5">
+                        <p className="text-sm font-bold text-amber-900 dark:text-amber-400">Unnamed Lead Detected</p>
+                        <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
                           This lead does not have a name yet. Please enter the customer or lead name below to store and convert them into the Customer Directory.
                         </p>
                       </div>
@@ -1325,8 +1478,8 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                   </div>
 
                   <div className="space-y-1.5 text-left">
-                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                      <User className="h-3.5 w-3.5 text-indigo-600" /> Customer / Lead Name <span className="text-rose-500">*</span>
+                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                      <User className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" /> Customer / Lead Name <span className="text-rose-500">*</span>
                     </label>
                     <input 
                       type="text" 
@@ -1335,10 +1488,10 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                       placeholder="e.g. Rahul Sharma" 
                       value={conversionName} 
                       onChange={e => { setConversionName(e.target.value); setConversionError(""); }} 
-                      className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all shadow-sm"
+                      className="w-full px-3.5 py-2.5 bg-white dark:bg-[#161f32] border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all shadow-sm"
                     />
                     {conversionError && (
-                      <p className="text-xs text-rose-600 font-medium mt-1">{conversionError}</p>
+                      <p className="text-xs text-rose-600 dark:text-rose-400 font-medium mt-1">{conversionError}</p>
                     )}
                   </div>
                 </div>
@@ -1346,21 +1499,21 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                 <div className="space-y-4 text-left">
                   <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-5">
                     <div className="flex items-start gap-3">
-                      <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                      <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                       <div className="space-y-1.5">
-                        <p className="text-xs font-bold text-amber-900 uppercase tracking-wider">
+                        <p className="text-xs font-bold text-amber-900 dark:text-amber-400 uppercase tracking-wider">
                           Irreversible Customer Conversion
                         </p>
-                        <p className="text-xs text-slate-600 leading-relaxed">
-                          Once a lead is converted to a customer, it <strong className="text-slate-900 font-semibold">cannot go back to the active lead pipeline</strong>. In the future, this record can only be deactivated (stored in Canceled Records) or permanently deleted.
+                        <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                          Once a lead is converted to a customer, it <strong className="text-slate-900 dark:text-white font-semibold">cannot go back to the active lead pipeline</strong>. In the future, this record can only be deactivated (stored in Canceled Records) or permanently deleted.
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs text-slate-600 flex items-center justify-between">
+                  <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg p-3 text-xs text-slate-600 dark:text-slate-300 flex items-center justify-between">
                     <span>Converting Customer:</span>
-                    <span className="font-bold text-slate-900">{lead.customerName}</span>
+                    <span className="font-bold text-slate-900 dark:text-white">{lead.customerName}</span>
                   </div>
                 </div>
               )}
@@ -1401,17 +1554,17 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
 
               <Field label={lead.fullAddress && !isEditingAddress ? "Site Address (Reference)" : "Site Address *"}>
                 {lead.fullAddress && !isEditingAddress ? (
-                  <div className="p-3.5 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-between gap-3 group">
+                  <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/80 rounded-lg flex items-center justify-between gap-3 group">
                     <div className="flex items-start gap-3">
                       <MapPin className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
-                      <p className="text-[11px] text-slate-600 font-medium leading-relaxed">
+                      <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
                         {lead.fullAddress}
                       </p>
                     </div>
                     <button 
                       type="button"
                       onClick={() => setIsEditingAddress(true)}
-                      className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-md transition-all border border-transparent hover:border-slate-100"
+                      className="p-1.5 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-white dark:hover:bg-slate-700 rounded-md transition-all border border-transparent hover:border-slate-100 dark:hover:border-slate-600"
                     >
                       <Pencil className="h-3 w-3" />
                     </button>
@@ -1422,7 +1575,7 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                       <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                       <input 
                         required
-                        className="block w-full rounded-lg border border-slate-200 py-2.5 pl-11 bg-white text-slate-900 placeholder:text-slate-300 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5 text-sm transition-all outline-none"
+                        className="block w-full rounded-lg border border-slate-200 dark:border-slate-700/80 py-2.5 pl-11 bg-white dark:bg-[#161f32] text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600 focus:border-indigo-600 dark:focus:border-indigo-500 focus:ring-4 focus:ring-indigo-600/5 text-sm transition-all outline-none"
                         placeholder="Enter full site address..."
                         value={meetingForm.address}
                         onChange={e => setMeetingForm({ ...meetingForm, address: e.target.value })}
@@ -1518,7 +1671,7 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                       onClick={() => setMeetingOutcome(opt.val)}
                       className={cn(
                         "py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border transition-all",
-                        meetingOutcome === opt.val ? "bg-slate-900 text-white border-slate-900 shadow-lg scale-[1.02]" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50",
+                        meetingOutcome === opt.val ? "bg-slate-900 dark:bg-indigo-600 text-white border-slate-900 dark:border-indigo-500 shadow-lg scale-[1.02]" : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60",
                       )}
                     >{opt.label}</button>
                   ))}
@@ -1556,14 +1709,14 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
               )}
 
               {meetingOutcome === "CONVERT" && isUnnamed && (
-                <div className="space-y-2 p-4 bg-amber-50 border border-amber-200/80 rounded-xl text-left">
+                <div className="space-y-2 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-500/20 rounded-xl text-left">
                   <div className="flex items-center gap-2">
                     <span className="text-base">⚠️</span>
-                    <p className="text-xs font-bold text-amber-900 uppercase tracking-wider">
+                    <p className="text-xs font-bold text-amber-900 dark:text-amber-400 uppercase tracking-wider">
                       Customer Name Required Before Conversion
                     </p>
                   </div>
-                  <p className="text-[11px] text-amber-700">
+                  <p className="text-[11px] text-amber-700 dark:text-amber-300">
                     This lead is currently unnamed. Please assign a name to formalize customer conversion.
                   </p>
                   <input 
@@ -1573,10 +1726,10 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
                     placeholder="Enter customer / lead name..." 
                     value={conversionName} 
                     onChange={e => { setConversionName(e.target.value); setConversionError(""); }} 
-                    className="w-full px-3.5 py-2.5 bg-white border border-amber-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all shadow-sm"
+                    className="w-full px-3.5 py-2.5 bg-white dark:bg-[#161f32] border border-amber-300 dark:border-amber-500/50 rounded-lg text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all shadow-sm"
                   />
                   {conversionError && (
-                    <p className="text-xs text-rose-600 font-medium">{conversionError}</p>
+                    <p className="text-xs text-rose-600 dark:text-rose-400 font-medium">{conversionError}</p>
                   )}
                 </div>
               )}
@@ -1584,13 +1737,13 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
               {meetingOutcome === "CONVERT" && !isUnnamed && (
                 <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl text-left">
                   <div className="flex items-start gap-2.5">
-                    <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                    <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-xs font-bold text-amber-900 uppercase tracking-wider">
+                      <p className="text-xs font-bold text-amber-900 dark:text-amber-400 uppercase tracking-wider">
                         Irreversible Customer Conversion
                       </p>
-                      <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                        Converting <strong className="text-slate-900">{lead.customerName}</strong> will finalize them as a customer. Once converted, this record cannot go back to the active lead pipeline.
+                      <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+                        Converting <strong className="text-slate-900 dark:text-white font-semibold">{lead.customerName}</strong> will finalize them as a customer. Once converted, this record cannot go back to the active lead pipeline.
                       </p>
                     </div>
                   </div>
@@ -1616,26 +1769,26 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
 
       {/* ─── MODAL: DIRECT CALL INTEGRATION ─── */}
       {activeModal === "CALL" && (
-        <Modal title="Initiating Direct Call" icon={<Phone className="h-5 w-5 text-indigo-500" />} color="primary" onClose={closeModal}>
+        <Modal title="Initiating Direct Call" icon={<Phone className="h-5 w-5 text-indigo-500 dark:text-indigo-400" />} color="primary" onClose={closeModal}>
           <div className="p-8 space-y-6 text-center">
-            <div className="mx-auto h-16 w-16 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mb-2 shadow-sm border border-indigo-100">
+            <div className="mx-auto h-16 w-16 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center mb-2 shadow-sm border border-indigo-100 dark:border-indigo-500/20">
               <Phone className="h-8 w-8 animate-pulse" />
             </div>
             
-            <h3 className="text-xl font-bold text-slate-900 tracking-tight">Ready to dial?</h3>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Ready to dial?</h3>
             
-            <p className="text-sm text-slate-500 leading-relaxed px-4">
-              Click <span className="font-semibold text-slate-700">Dial Now</span> to automatically place the call. 
+            <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed px-4">
+              Click <span className="font-semibold text-slate-700 dark:text-slate-200">Dial Now</span> to automatically place the call. 
               <br /><br />
-              <span className="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Not connecting?</span><br />
+              <span className="text-[11px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">Not connecting?</span><br />
               Ensure your phone is linked to your PC.
             </p>
 
-            <div className="flex flex-col gap-3 pt-4 border-t border-slate-100">
+            <div className="flex flex-col gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
               <a 
                 href={`tel:+91${lead.contactNumber.replace(/\D/g, "")}`}
                 onClick={() => setTimeout(closeModal, 300)}
-                className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-md shadow-indigo-100 border border-indigo-500/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+                className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-md shadow-indigo-100 dark:shadow-none border border-indigo-500/20 transition-all active:scale-95 flex items-center justify-center gap-2"
               >
                 <Phone className="h-5 w-5 fill-current" /> Dial Now
               </a>
@@ -1643,7 +1796,7 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
               <a 
                 href="ms-settings:mobile-devices-addphone-direct"
                 onClick={() => setTimeout(closeModal, 300)}
-                className="w-full py-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl font-semibold transition-all active:scale-95 flex items-center justify-center gap-2 text-sm"
+                className="w-full py-3 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold transition-all active:scale-95 flex items-center justify-center gap-2 text-sm"
               >
                 <MonitorSmartphone className="h-4 w-4 text-slate-400" /> Check Phone Link on PC
               </a>
@@ -1657,12 +1810,12 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
 
 // ─── Shared Helpers ───────────────────────────────────────────────────────────
 
-const inputCls = "w-full rounded-lg border border-slate-200 bg-white py-2.5 px-4 text-slate-900 font-medium placeholder:text-slate-300 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5 transition-all outline-none text-sm";
+const inputCls = "w-full rounded-lg border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-[#161f32] py-2.5 px-4 text-slate-900 dark:text-white font-medium placeholder:text-slate-300 dark:placeholder:text-slate-600 focus:border-indigo-600 dark:focus:border-indigo-500 focus:ring-4 focus:ring-indigo-600/5 transition-all outline-none text-sm";
 
 function Field({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (
     <div className={className}>
-      <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2 ml-1">{label}</label>
+      <label className="block text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 ml-1">{label}</label>
       {children}
     </div>
   );
@@ -1672,14 +1825,14 @@ function Modal({ title, icon, onClose, children }: {
   title: string; icon: React.ReactNode; color: string; onClose: () => void; children: React.ReactNode;
 }) {
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/10 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-xl overflow-hidden border border-slate-200 animate-in zoom-in-95 duration-200">
-        <div className="px-8 py-6 flex items-center justify-between border-b border-slate-100 bg-slate-50/50">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/10 dark:bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-xl overflow-hidden border border-slate-200 dark:border-white/10 animate-in zoom-in-95 duration-200">
+        <div className="px-8 py-6 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40">
           <div className="flex items-center gap-3">
-            <div className="text-indigo-600">{icon}</div>
-            <h2 className="text-lg font-semibold text-slate-900 tracking-tight">{title}</h2>
+            <div className="text-indigo-600 dark:text-indigo-400">{icon}</div>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white tracking-tight">{title}</h2>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-lg transition-all text-slate-400 hover:text-slate-900"><X className="h-5 w-5" /></button>
+          <button onClick={onClose} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-all text-slate-400 hover:text-slate-900 dark:hover:text-white"><X className="h-5 w-5" /></button>
         </div>
         {children}
       </div>
@@ -1691,8 +1844,8 @@ function ModalFooter({ onClose, isSubmitting, label, disabled, onSubmit }: {
   onClose: () => void; isSubmitting: boolean; label: string; disabled?: boolean; color?: string; onSubmit?: () => void;
 }) {
   return (
-    <div className="flex items-center justify-end gap-3 p-8 bg-slate-50/50 border-t border-slate-100">
-      <button type="button" onClick={onClose} className="text-rose-500 font-semibold text-sm hover:text-rose-700 transition-colors px-4">Cancel</button>
+    <div className="flex items-center justify-end gap-3 p-8 bg-slate-50/50 dark:bg-slate-800/40 border-t border-slate-100 dark:border-slate-800">
+      <button type="button" onClick={onClose} className="text-rose-500 dark:text-rose-400 font-semibold text-sm hover:text-rose-700 dark:hover:text-rose-300 transition-colors px-4">Cancel</button>
       <button
         type="submit"
         disabled={disabled || isSubmitting}

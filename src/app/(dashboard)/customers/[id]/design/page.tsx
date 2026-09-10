@@ -116,29 +116,29 @@ export default function DesignExpensesPage({ params }: { params: Promise<{ id: s
   if (!customer) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50/30">
+    <div className="min-h-screen bg-slate-50/30 dark:bg-[#090d16]">
       {/* --- STICKY HEADER --- */}
-      <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-3 shadow-sm">
+      <div className="sticky top-0 z-30 bg-white/80 dark:bg-[#0d131f]/90 backdrop-blur-md border-b border-slate-200 dark:border-white/8 px-6 py-3 shadow-sm">
         <div className="max-w-[1600px] mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <Link href={`/customers/${id}`} className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-400">
+            <Link href={`/customers/${id}`} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-slate-900 dark:hover:text-white">
               <ArrowLeft className="h-4 w-4" />
             </Link>
             <div>
-              <h1 className="text-sm font-black text-slate-900 tracking-tight flex items-center gap-2 uppercase">
+              <h1 className="text-sm font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2 uppercase">
                 {customer.customerName}
-                <span className="text-[10px] text-rose-600 font-bold uppercase tracking-widest px-2 py-0.5 bg-rose-50 rounded border border-rose-100">Design Expenses</span>
+                <span className="text-[10px] text-rose-600 dark:text-rose-400 font-bold uppercase tracking-widest px-2 py-0.5 bg-rose-50 dark:bg-rose-950/40 rounded border border-rose-100 dark:border-rose-800">Design Expenses</span>
               </h1>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter">
                 Project: {customer.project?.name || "Standard Workspace"}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-             <div className="flex flex-col items-end pr-4 border-r border-slate-100">
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Total Design Cost</p>
-                <p className="text-sm font-black text-slate-900 tracking-tight">₹{totalDesignCost.toLocaleString()}</p>
+             <div className="flex flex-col items-end pr-4 border-r border-slate-100 dark:border-slate-800">
+                <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Total Design Cost</p>
+                <p className="text-sm font-black text-slate-900 dark:text-white tracking-tight">₹{totalDesignCost.toLocaleString()}</p>
              </div>
              <button 
               onClick={() => { setEditingTransaction(null); setShowTransModal(true); }}
@@ -161,15 +161,15 @@ export default function DesignExpensesPage({ params }: { params: Promise<{ id: s
         
         {/* --- INITIAL DEAL SETUP --- */}
         {!hasFinanceSetup ? (
-          <div className="mb-8 bg-white border-2 border-dashed border-slate-200 rounded-2xl p-12 text-center max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="h-16 w-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="mb-8 bg-white dark:bg-slate-900 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-12 text-center max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="h-16 w-16 bg-rose-50 dark:bg-rose-950/40 rounded-full flex items-center justify-center mx-auto mb-6">
               <Palette className="h-8 w-8 text-rose-400" />
             </div>
-            <h2 className="text-xl font-black text-slate-900 mb-2 tracking-tight">Setup Design Financials</h2>
-            <p className="text-slate-500 text-sm mb-8 font-medium">Enter the Initial Deal Amount to calculate your design-side profit margins.</p>
+            <h2 className="text-xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">Setup Design Financials</h2>
+            <p className="text-slate-500 dark:text-slate-400 text-sm mb-8 font-medium">Enter the Initial Deal Amount to calculate your design-side profit margins.</p>
             <button 
               onClick={() => setShowDealModal(true)}
-              className="bg-slate-900 text-white px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/20"
+              className="bg-slate-900 dark:bg-indigo-600 text-white px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-indigo-500 transition-all shadow-xl shadow-slate-900/20"
             >
               Enter Initial Deal Amount
             </button>
@@ -205,49 +205,49 @@ export default function DesignExpensesPage({ params }: { params: Promise<{ id: s
                </div>
 
                {/* EXPENSE TABLE */}
-               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                  <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                    <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
-                       <Palette className="h-3.5 w-3.5 text-rose-500" />
+               <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/8 shadow-sm overflow-hidden">
+                  <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40">
+                    <h3 className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
+                       <Palette className="h-3.5 w-3.5 text-rose-500 dark:text-rose-400" />
                        Design Expense Ledger
                     </h3>
                   </div>
                   <div className="overflow-auto max-h-[600px] compact-scrollbar">
                     <table className="w-full text-left border-collapse">
-                      <thead className="sticky top-0 bg-white border-b border-slate-100 z-10">
+                      <thead className="sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 z-10">
                         <tr>
-                          <th className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Date</th>
-                          <th className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Description</th>
-                          <th className="px-6 py-3 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Amount</th>
+                          <th className="px-6 py-3 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Date</th>
+                          <th className="px-6 py-3 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Description</th>
+                          <th className="px-6 py-3 text-right text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Amount</th>
                           <th className="px-6 py-3 w-16"></th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-50">
+                      <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                         {designExpenses.map(t => (
-                          <tr key={t.id} className="group hover:bg-slate-50/50 transition-colors">
-                            <td className="px-6 py-4 whitespace-nowrap text-[10px] font-black text-slate-500 uppercase italic">
+                          <tr key={t.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
+                            <td className="px-6 py-4 whitespace-nowrap text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase italic">
                                {format(new Date(t.date), "dd MMM yyyy")}
                             </td>
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-2 mb-0.5">
-                                <p className="text-[11px] font-black text-slate-900">{t.paidTo}</p>
+                                <p className="text-[11px] font-black text-slate-900 dark:text-white">{t.paidTo}</p>
                                 {t.isSystemGenerated && (
-                                   <span className="text-[8px] font-black bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded border border-amber-100 flex items-center gap-1 uppercase">
+                                   <span className="text-[8px] font-black bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded border border-amber-100 dark:border-amber-500/30 flex items-center gap-1 uppercase">
                                      <AlertCircle className="h-2 w-2" /> System
                                    </span>
                                 )}
                               </div>
-                              <p className="text-[10px] text-slate-400 font-medium">{t.description || t.category}</p>
+                              <p className="text-[10px] text-slate-400 dark:text-slate-400 font-medium">{t.description || t.category}</p>
                             </td>
-                            <td className="px-6 py-4 text-right text-sm font-black text-rose-600 tracking-tight">
+                            <td className="px-6 py-4 text-right text-sm font-black text-rose-600 dark:text-rose-400 tracking-tight">
                                ₹{t.amount.toLocaleString()}
                             </td>
                             <td className="px-6 py-4">
                                <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <button onClick={() => { setEditingTransaction(t); setShowTransModal(true); }} className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all">
+                                  <button onClick={() => { setEditingTransaction(t); setShowTransModal(true); }} className="p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all">
                                      <Pencil className="h-3.5 w-3.5" />
                                   </button>
-                                  <button onClick={() => handleDeleteTransaction(t.id)} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all">
+                                  <button onClick={() => handleDeleteTransaction(t.id)} className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-all">
                                      <Trash2 className="h-3.5 w-3.5" />
                                   </button>
                                </div>
@@ -257,8 +257,8 @@ export default function DesignExpensesPage({ params }: { params: Promise<{ id: s
                         {designExpenses.length === 0 && (
                           <tr>
                             <td colSpan={4} className="py-24 text-center">
-                               <Palette className="h-12 w-12 text-slate-100 mx-auto mb-4" />
-                               <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">No Design Expenses Logged</p>
+                               <Palette className="h-12 w-12 text-slate-100 dark:text-slate-800 mx-auto mb-4" />
+                               <p className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-[0.2em]">No Design Expenses Logged</p>
                             </td>
                           </tr>
                         )}
@@ -270,49 +270,49 @@ export default function DesignExpensesPage({ params }: { params: Promise<{ id: s
 
             {/* Sidebar */}
             <div className="col-span-12 lg:col-span-4 space-y-6">
-               <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
+               <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-white/8 p-6 shadow-sm">
                   <div className="flex items-center gap-3 mb-4">
-                     <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+                     <div className="p-2 bg-indigo-50 dark:bg-indigo-950/50 rounded-lg text-indigo-600 dark:text-indigo-400">
                         <Info className="h-4 w-4" />
                      </div>
-                     <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">About Module</h3>
+                     <h3 className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-widest">About Module</h3>
                   </div>
-                  <p className="text-[11px] text-slate-500 font-medium leading-relaxed mb-4">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed mb-4">
                      This module tracks internal design costs (renders, layouts, adjustment costs). It calculates design-side profit margins separate from overall project financials.
                   </p>
-                  <div className="p-3 bg-amber-50 rounded-xl border border-amber-100 flex items-start gap-3">
-                     <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-                     <p className="text-[10px] text-amber-700 font-bold leading-tight">
+                  <div className="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-xl border border-amber-100 dark:border-amber-500/20 flex items-start gap-3">
+                     <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                     <p className="text-[10px] text-amber-700 dark:text-amber-300 font-bold leading-tight">
                         Payments or unrelated expenses are not subtracted here. Only "Design Source" entries impact these margins.
                      </p>
                   </div>
                </div>
 
                {/* RECENT ACTIVITY LOGS */}
-               <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm overflow-hidden">
+               <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-white/8 p-6 shadow-sm overflow-hidden">
                   <div className="flex items-center gap-3 mb-6">
-                     <div className="p-2 bg-slate-50 rounded-lg text-slate-400">
+                     <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg text-slate-400">
                         <History className="h-4 w-4" />
                      </div>
-                     <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Design Activity</h3>
+                     <h3 className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-widest">Design Activity</h3>
                   </div>
-                  <div className="space-y-6 relative before:absolute before:left-2 before:top-2 before:bottom-2 before:w-px before:bg-slate-100">
+                  <div className="space-y-6 relative before:absolute before:left-2 before:top-2 before:bottom-2 before:w-px before:bg-slate-100 dark:before:bg-slate-800">
                       {logs.filter(l => l.action.includes("DESIGN") || l.action === "AUTO_EXPENSE_GENERATED").map((log, i) => (
                         <div key={log.id} className="relative flex items-start gap-4">
                            <div className={cn(
-                             "h-4 w-4 rounded-full border-2 border-white ring-1 ring-slate-100 flex items-center justify-center shrink-0 relative z-10",
+                             "h-4 w-4 rounded-full border-2 border-white dark:border-slate-900 ring-1 ring-slate-100 dark:ring-slate-800 flex items-center justify-center shrink-0 relative z-10",
                              log.action === "AUTO_EXPENSE_GENERATED" ? "bg-amber-500 shadow-lg shadow-amber-500/20" : "bg-rose-500"
                            )}>
                               <div className="h-1 w-1 bg-white rounded-full" />
                            </div>
                            <div className="flex-1">
-                              <p className="text-[10px] font-black text-slate-800 leading-tight mb-1">{log.details}</p>
-                              <p className="text-[8px] font-bold text-slate-400 uppercase">{format(new Date(log.createdAt), "dd MMM, HH:mm")}</p>
+                              <p className="text-[10px] font-black text-slate-800 dark:text-slate-200 leading-tight mb-1">{log.details}</p>
+                              <p className="text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase">{format(new Date(log.createdAt), "dd MMM, HH:mm")}</p>
                            </div>
                         </div>
                       ))}
                       {logs.filter(l => l.action.includes("DESIGN") || l.action === "AUTO_EXPENSE_GENERATED").length === 0 && (
-                        <p className="text-[9px] font-bold text-slate-300 uppercase text-center py-4">No recent design logs</p>
+                        <p className="text-[9px] font-bold text-slate-300 dark:text-slate-600 uppercase text-center py-4">No recent design logs</p>
                       )}
                   </div>
                </div>
@@ -346,15 +346,15 @@ export default function DesignExpensesPage({ params }: { params: Promise<{ id: s
 
 function ProfitCard({ label, value, icon, color, isHighlight = false, prefix = "" }: any) {
   return (
-    <div className={cn("p-5 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden", isHighlight ? "bg-slate-900 text-white" : "bg-white")}>
-       <div className={cn("absolute -right-4 -top-4 h-24 w-24 rounded-full opacity-5", isHighlight ? "bg-white" : "bg-slate-900")} />
+    <div className={cn("p-5 rounded-2xl border border-slate-100 dark:border-white/8 shadow-sm relative overflow-hidden", isHighlight ? "bg-slate-900 dark:bg-indigo-950/80 text-white dark:border-indigo-500/30" : "bg-white dark:bg-slate-900")}>
+       <div className={cn("absolute -right-4 -top-4 h-24 w-24 rounded-full opacity-5", isHighlight ? "bg-white" : "bg-slate-900 dark:bg-white")} />
        <div className="flex items-center gap-3 mb-3 relative z-10">
-          <div className={cn("p-2 rounded-lg", isHighlight ? "bg-white/10" : "bg-slate-50 text-slate-400")}>
+          <div className={cn("p-2 rounded-lg", isHighlight ? "bg-white/10" : "bg-slate-50 dark:bg-[#161f32] text-slate-400 dark:text-slate-400")}>
              {icon}
           </div>
-          <p className={cn("text-[9px] font-black uppercase tracking-widest", isHighlight ? "text-slate-400" : "text-slate-400")}>{label}</p>
+          <p className={cn("text-[9px] font-black uppercase tracking-widest", isHighlight ? "text-slate-400 dark:text-slate-300" : "text-slate-400 dark:text-slate-400")}>{label}</p>
        </div>
-       <p className={cn("text-2xl font-black tracking-tight relative z-10", isHighlight ? "text-white" : "text-slate-900")}>
+       <p className={cn("text-2xl font-black tracking-tight relative z-10", isHighlight ? "text-white" : "text-slate-900 dark:text-white")}>
           {prefix}₹{(value ?? 0).toLocaleString()}
        </p>
     </div>
@@ -415,56 +415,56 @@ function TransactionModal({ leadId, editingData, onClose, onSuccess }: any) {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in duration-200">
+      <div className="absolute inset-0 bg-slate-900/40 dark:bg-slate-950/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-sm bg-white dark:bg-slate-900 border border-transparent dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in duration-200">
         <div className="px-6 py-4 bg-rose-600 text-white flex items-center justify-between">
           <h2 className="text-sm font-black uppercase tracking-widest">{editingData ? "Edit" : "New"} Design Expense</h2>
           <button onClick={onClose} className="p-1 hover:bg-black/10 rounded-full transition-colors"><X className="h-4 w-4" /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {err && <div className="p-2 bg-rose-50 border border-rose-100 text-rose-600 text-[9px] font-black uppercase rounded-lg">{err}</div>}
+          {err && <div className="p-2 bg-rose-50 dark:bg-rose-950/40 border border-rose-100 dark:border-rose-800 text-rose-600 dark:text-rose-400 text-[9px] font-black uppercase rounded-lg">{err}</div>}
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Amount (₹)</label>
+              <label className="text-[9px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest">Amount (₹)</label>
               <input 
                 type="number" value={amount} onChange={e => setAmount(e.target.value)}
                 placeholder="0"
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-black outline-none focus:ring-2 focus:ring-rose-900/5 transition-all"
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-[#161f32] border border-slate-100 dark:border-slate-700/80 rounded-lg text-xs font-black text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-rose-900/5 dark:focus:ring-rose-500/20 transition-all"
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Date</label>
+              <label className="text-[9px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest">Date</label>
               <input 
                 type="date" value={date} onChange={e => setDate(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-rose-900/5 transition-all"
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-[#161f32] border border-slate-100 dark:border-slate-700/80 rounded-lg text-xs font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-rose-900/5 dark:focus:ring-rose-500/20 transition-all"
               />
             </div>
           </div>
 
           <div className="space-y-1">
-            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Party / Designer Name</label>
+            <label className="text-[9px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest">Party / Designer Name</label>
             <input 
               value={paidTo} onChange={e => setPaidTo(e.target.value)}
               placeholder="e.g. 3D Renderer Name"
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-rose-900/5 transition-all"
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-[#161f32] border border-slate-100 dark:border-slate-700/80 rounded-lg text-xs font-bold text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-rose-900/5 dark:focus:ring-rose-500/20 transition-all"
             />
           </div>
 
           <div className="space-y-1">
-            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Expense Note</label>
+            <label className="text-[9px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest">Expense Note</label>
             <textarea 
               value={description} onChange={e => setDescription(e.target.value)}
               placeholder="e.g. Living room 3D views..."
               rows={2}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-medium outline-none resize-none focus:ring-2 focus:ring-rose-900/5 transition-all"
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-[#161f32] border border-slate-100 dark:border-slate-700/80 rounded-lg text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-400 outline-none resize-none focus:ring-2 focus:ring-rose-900/5 dark:focus:ring-rose-500/20 transition-all"
             />
           </div>
 
           <button 
             type="submit" disabled={isSaving}
-            className="w-full mt-2 py-3 rounded-xl bg-rose-600 text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-rose-600/20 transition-all disabled:opacity-50"
+            className="w-full mt-2 py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-rose-600/20 transition-all disabled:opacity-50"
           >
             {isSaving ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : (editingData ? "Update Record" : "Log Design Expense")}
           </button>
@@ -504,35 +504,35 @@ function DealAmountModal({ leadId, currentAmount, currentNotes, onClose, onSucce
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden">
-        <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+      <div className="absolute inset-0 bg-slate-900/40 dark:bg-slate-950/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-sm bg-white dark:bg-slate-900 border border-transparent dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden">
+        <div className="px-6 py-4 bg-slate-900 dark:bg-[#161f32] text-white flex items-center justify-between border-b dark:border-slate-800">
           <h2 className="text-[10px] font-black uppercase tracking-widest">Initial Deal Amount</h2>
           <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full transition-colors"><X className="h-4 w-4" /></button>
         </div>
         <div className="p-6 space-y-4">
            <div className="space-y-1">
-             <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Final Agreed Amount (₹)</label>
+             <label className="text-[9px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest">Final Agreed Amount (₹)</label>
              <input 
                type="number" value={amount} onChange={e => setAmount(e.target.value)}
                placeholder="Enter amount..."
-               className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-lg font-black outline-none focus:ring-4 focus:ring-slate-900/5 transition-all"
+               className="w-full px-4 py-3 bg-slate-50 dark:bg-[#161f32] border border-slate-100 dark:border-slate-700/80 rounded-xl text-lg font-black text-slate-900 dark:text-white outline-none focus:ring-4 focus:ring-slate-900/5 dark:focus:ring-indigo-500/20 transition-all"
                autoFocus
              />
            </div>
            <div className="space-y-1">
-             <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Deal Notes (Optional)</label>
+             <label className="text-[9px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest">Deal Notes (Optional)</label>
              <textarea 
                value={notes} onChange={e => setNotes(e.target.value)}
                placeholder="e.g. Shared between modules..."
                rows={3}
-               className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-medium outline-none resize-none focus:ring-4 focus:ring-slate-900/5 transition-all"
+               className="w-full px-4 py-3 bg-slate-50 dark:bg-[#161f32] border border-slate-100 dark:border-slate-700/80 rounded-xl text-xs font-medium text-slate-900 dark:text-white outline-none resize-none focus:ring-4 focus:ring-slate-900/5 dark:focus:ring-indigo-500/20 transition-all"
              />
            </div>
            
            <button 
              onClick={handleSave} disabled={isSaving}
-             className="w-full bg-slate-900 text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-slate-900/20 disabled:opacity-50"
+             className="w-full bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-500 text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-slate-900/20 transition-all disabled:opacity-50"
            >
              {isSaving ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : "Save Deal Amount"}
            </button>

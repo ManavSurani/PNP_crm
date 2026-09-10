@@ -16,6 +16,9 @@ export default function BrandLogo({ className, imageClassName }: BrandLogoProps)
       <Image 
         src={logoImg} 
         alt="PNP Logo" 
+        width={64}
+        height={64}
+        style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
         className={cn(
           "h-full w-full object-contain brightness-0 invert scale-[1.1]",
           imageClassName

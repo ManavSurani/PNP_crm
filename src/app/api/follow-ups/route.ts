@@ -75,7 +75,8 @@ export async function POST(request: Request) {
       leadId, outcome, noteGiven, pickedStatus, cancelReason, 
       followUpDate, followUpTime,
       meetingAddress, meetingDate, meetingTime, meetingNotes,
-      isLongDistance
+      isLongDistance,
+      archiveReason, tentativeDate
     } = body;
 
     const result = await prisma.$transaction(async (tx) => {
@@ -214,23 +215,31 @@ export async function POST(request: Request) {
       }
 
       // 5. Update Lead Status
-      await (tx.lead as any).update({
+      const finalArchiveReason = archiveReason || "Client Will Call";
+      const finalTentativeDate = tentativeDate ? new Date(tentativeDate) : null;
+
+      await tx.lead.update({
         where: { id: leadId },
         data: {
           status: leadStatusUpdate as any,
           isCancelled,
           isArchived,
           archivedAt: isArchived ? new Date() : undefined,
+          archiveReason: isArchived ? finalArchiveReason : undefined,
+          tentativeDate: isArchived ? finalTentativeDate : undefined,
           cancelReason: finalCancelReason,
           fullAddress: (pickedStatus === "MEETING" && meetingAddress) ? meetingAddress : undefined
         }
       });
 
       if (isArchived) {
+        const dateFormatted = finalTentativeDate 
+          ? ` (Expected: ${finalTentativeDate.toLocaleString("default", { month: "short", year: "numeric" })})` 
+          : "";
         await tx.leadNote.create({
           data: {
             leadId,
-            content: "📦 Lead moved to Passive Archive from Call Log (Customer will call back)"
+            content: `📦 Lead moved to Passive Archive from Call Log — Reason: ${finalArchiveReason}${dateFormatted}`
           }
         });
       }

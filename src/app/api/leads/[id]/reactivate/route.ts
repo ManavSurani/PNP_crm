@@ -42,6 +42,8 @@ export async function POST(
           isCancelled: false,
           isArchived: false,
           archivedAt: null,
+          archiveReason: null,
+          tentativeDate: null,
           cancelReason: null,
           reactivatedAt: new Date(),
           reactivationNote: reactivationNote || null,

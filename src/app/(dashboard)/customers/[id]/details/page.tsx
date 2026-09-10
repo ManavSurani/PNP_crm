@@ -172,44 +172,44 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
       <div className="flex items-center justify-between px-2 pt-2 mb-4">
         <Link 
           href={`/customers/${id}`}
-          className="group flex items-center gap-2 text-[10px] font-black text-slate-400 hover:text-slate-900 transition-all uppercase tracking-[0.2em]"
+          className="group flex items-center gap-2 text-[10px] font-black text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all uppercase tracking-[0.2em]"
         >
-          <div className="h-7 w-7 rounded-full border border-slate-200 flex items-center justify-center group-hover:border-slate-400 transition-colors bg-white shadow-sm">
-            <ArrowLeft className="h-3.5 w-3.5" />
+          <div className="h-7 w-7 rounded-full border border-slate-200 dark:border-slate-800 flex items-center justify-center group-hover:border-slate-400 dark:group-hover:border-slate-600 transition-colors bg-white dark:bg-slate-900 shadow-sm">
+            <ArrowLeft className="h-3.5 w-3.5 text-slate-700 dark:text-slate-300" />
           </div>
           BACK
         </Link>
         
         <div className="flex items-center gap-2 text-[10px] font-black tracking-[0.2em] uppercase">
-          <Link href="/customers" className="text-slate-300 hover:text-slate-500 transition-colors">Customer Directory</Link>
-          <ChevronRight className="h-3 w-3 text-slate-200" /> 
-          <Link href={`/customers/${id}`} className="text-slate-300 hover:text-slate-500 transition-colors">{customer.customerName.toUpperCase()}</Link>
-          <ChevronRight className="h-3 w-3 text-slate-200" /> 
-          <span className="text-slate-900">DETAILS</span>
+          <Link href="/customers" className="text-slate-300 dark:text-slate-500 hover:text-slate-500 dark:hover:text-slate-300 transition-colors">Customer Directory</Link>
+          <ChevronRight className="h-3 w-3 text-slate-200 dark:text-slate-700" /> 
+          <Link href={`/customers/${id}`} className="text-slate-300 dark:text-slate-500 hover:text-slate-500 dark:hover:text-slate-300 transition-colors">{customer.customerName.toUpperCase()}</Link>
+          <ChevronRight className="h-3 w-3 text-slate-200 dark:text-slate-700" /> 
+          <span className="text-slate-900 dark:text-white">DETAILS</span>
         </div>
       </div>
 
       {/* Header */}
-      <div className="bg-white px-6 py-5 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 px-6 py-5 rounded-xl border border-slate-200 dark:border-white/8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500 rounded-full blur-[100px] opacity-5 -mr-24 -mt-24" />
         <div className="flex items-center gap-5 relative z-10">
-          <div className="h-12 w-12 bg-emerald-50 rounded-lg flex shrink-0 items-center justify-center border border-emerald-100 shadow-sm">
-            <span className="text-xl font-bold text-emerald-600 uppercase">{displayName.charAt(0)}</span>
+          <div className="h-12 w-12 bg-emerald-50 dark:bg-emerald-950/40 rounded-lg flex shrink-0 items-center justify-center border border-emerald-100 dark:border-emerald-500/30 shadow-sm">
+            <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400 uppercase">{displayName.charAt(0)}</span>
           </div>
           <div>
             <div className="flex items-center gap-2 mb-0.5">
-              <h1 className="text-lg font-bold text-slate-900 tracking-tight">{displayName}</h1>
+              <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">{displayName}</h1>
               {customer.project?.name && (
-                <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-600 text-[8px] font-black uppercase tracking-widest rounded border border-emerald-100">Project</span>
+                <span className="px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 text-[8px] font-black uppercase tracking-widest rounded border border-emerald-100 dark:border-emerald-500/30">Project</span>
               )}
             </div>
             <div className="flex flex-wrap gap-2 text-[11px]">
-              <span className="flex items-center gap-1.5 text-slate-600 font-semibold bg-slate-50 px-2 py-0.5 rounded border border-slate-200"><Phone className="h-3 w-3 text-emerald-600" /> {customer.contactNumber}</span>
-              <span className="flex items-center gap-1.5 text-slate-600 font-semibold bg-slate-50 px-2 py-0.5 rounded border border-slate-200 uppercase tracking-tight"><FileText className="h-3 w-3 text-emerald-500" /> {customer.serviceType.replace(/_/g, " ")}</span>
+              <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 font-semibold bg-slate-50 dark:bg-[#161f32] px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700/80"><Phone className="h-3 w-3 text-emerald-600 dark:text-emerald-400" /> {customer.contactNumber}</span>
+              <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 font-semibold bg-slate-50 dark:bg-[#161f32] px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700/80 uppercase tracking-tight"><FileText className="h-3 w-3 text-emerald-500 dark:text-emerald-400" /> {customer.serviceType.replace(/_/g, " ")}</span>
               {customer.inquirySource === "THROUGH_REFERENCE" && customer.referenceName && (
-                <span className="flex items-center gap-1.5 text-slate-600 font-semibold bg-slate-50 px-2 py-0.5 rounded border border-slate-200 uppercase tracking-tight"><User className="h-3 w-3 text-amber-500" /> {customer.referenceName}</span>
+                <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 font-semibold bg-slate-50 dark:bg-[#161f32] px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700/80 uppercase tracking-tight"><User className="h-3 w-3 text-amber-500 dark:text-amber-400" /> {customer.referenceName}</span>
               )}
-              {customer.project?.name && <span className="flex items-center gap-1.5 text-slate-400 font-bold px-2 py-0.5 rounded border border-slate-100 uppercase tracking-tighter">Client: {customer.customerName}</span>}
+              {customer.project?.name && <span className="flex items-center gap-1.5 text-slate-400 dark:text-slate-400 font-bold px-2 py-0.5 rounded border border-slate-100 dark:border-slate-800 uppercase tracking-tighter">Client: {customer.customerName}</span>}
             </div>
           </div>
         </div>
@@ -237,7 +237,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                   "flex items-center gap-1.5 px-3 py-1.5 text-[9px] font-black uppercase tracking-widest rounded transition-all active:scale-95 shadow-sm border",
                   confirmDeactivate 
                     ? "bg-rose-600 text-white border-rose-500 animate-pulse" 
-                    : "bg-white text-slate-400 hover:text-rose-600 border-slate-200 hover:border-rose-200"
+                    : "bg-white dark:bg-slate-800 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 border-slate-200 dark:border-slate-700 hover:border-rose-200 dark:hover:border-rose-800"
                 )}
               >
                 <Ban className="h-3 w-3" /> {confirmDeactivate ? "Confirm?" : "Deactivate"}
@@ -245,20 +245,20 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
             )}
             <span className={cn(
               "inline-flex items-center rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-tight border gap-1.5",
-              isCancelled ? "bg-rose-50 text-rose-700 border-rose-200" : "bg-emerald-50 text-emerald-700 border-emerald-200"
+              isCancelled ? "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800" : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30"
             )}>
               <CheckCircle2 className="h-3.5 w-3.5" /> {isCancelled ? "Deactivated" : "Active"}
             </span>
           </div>
           <div className="flex items-center gap-1.5 px-1">
              <div className={cn("h-1.5 w-1.5 rounded-full", customer.priority === "HIGH" ? "bg-rose-500 animate-pulse" : "bg-amber-400")} />
-             <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">
+             <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
                {customer.priority} Priority
              </span>
              {customer.cancelReason && (
                <>
-                 <span className="text-slate-200 mx-1">|</span>
-                 <p className="text-[9px] text-rose-500 font-bold uppercase italic tracking-tighter">Reason: {customer.cancelReason}</p>
+                 <span className="text-slate-200 dark:text-slate-700 mx-1">|</span>
+                 <p className="text-[9px] text-rose-500 dark:text-rose-400 font-bold uppercase italic tracking-tighter">Reason: {customer.cancelReason}</p>
                </>
              )}
           </div>
@@ -268,35 +268,32 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Profile Core Data & Action Center */}
         <div className="space-y-6">
-          
-
-
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative group hover:shadow-md transition-all duration-300">
-            <button onClick={() => { setEditForm(customer); setActiveModal("EDIT"); }} className="absolute top-4 right-4 p-1.5 text-slate-400 hover:bg-slate-50 hover:text-emerald-600 rounded transition-all border border-transparent hover:border-slate-100">
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-white/8 shadow-sm relative group hover:shadow-md transition-all duration-300">
+            <button onClick={() => { setEditForm(customer); setActiveModal("EDIT"); }} className="absolute top-4 right-4 p-1.5 text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-emerald-600 dark:hover:text-emerald-400 rounded transition-all border border-transparent hover:border-slate-100 dark:hover:border-slate-700">
               <Pencil className="h-3.5 w-3.5" />
             </button>
-            <h3 className="text-[11px] font-black text-slate-900 mb-4 uppercase tracking-[0.1em] flex items-center gap-2">
+            <h3 className="text-[11px] font-black text-slate-900 dark:text-white mb-4 uppercase tracking-[0.1em] flex items-center gap-2">
               <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
               Client Logistics
             </h3>
             <div className="space-y-3.5">
               <div className="space-y-1">
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><MapPin className="h-3 w-3" /> Address</p>
-                <p className="text-xs text-slate-800 font-semibold leading-normal">{customer.fullAddress || "Not specified"}</p>
-                {customer.landmark && <p className="text-[10px] text-slate-500 mt-0.5 italic">Near: {customer.landmark}</p>}
+                <p className="text-[9px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><MapPin className="h-3 w-3" /> Address</p>
+                <p className="text-xs text-slate-800 dark:text-slate-200 font-semibold leading-normal">{customer.fullAddress || "Not specified"}</p>
+                {customer.landmark && <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 italic">Near: {customer.landmark}</p>}
               </div>
               <div className="space-y-1">
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><FileText className="h-3 w-3" /> Core Requirement</p>
-                <p className="text-xs text-slate-800 font-medium leading-relaxed">{customer.requirementDetails || "No details documented"}</p>
+                <p className="text-[9px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5"><FileText className="h-3 w-3" /> Core Requirement</p>
+                <p className="text-xs text-slate-800 dark:text-slate-200 font-medium leading-relaxed">{customer.requirementDetails || "No details documented"}</p>
               </div>
               <div className="grid grid-cols-2 gap-2 pt-1">
-                <div className="bg-slate-50/80 p-2.5 rounded-lg border border-slate-100">
-                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-tighter mb-0.5">Approved Budget</p>
-                  <p className="text-xs font-bold text-slate-900">{customer.budgetRange || "Pending"}</p>
+                <div className="bg-slate-50/80 dark:bg-[#161f32] p-2.5 rounded-lg border border-slate-100 dark:border-slate-800">
+                  <p className="text-[8px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-tighter mb-0.5">Approved Budget</p>
+                  <p className="text-xs font-bold text-slate-900 dark:text-white">{customer.budgetRange || "Pending"}</p>
                 </div>
-                <div className="bg-slate-50/80 p-2.5 rounded-lg border border-slate-100">
-                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-tighter mb-0.5">Acquisition</p>
-                  <p className="text-xs font-bold text-slate-900 uppercase">{customer.inquirySource}</p>
+                <div className="bg-slate-50/80 dark:bg-[#161f32] p-2.5 rounded-lg border border-slate-100 dark:border-slate-800">
+                  <p className="text-[8px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-tighter mb-0.5">Acquisition</p>
+                  <p className="text-xs font-bold text-slate-900 dark:text-white uppercase">{customer.inquirySource}</p>
                 </div>
               </div>
             </div>
@@ -309,10 +306,10 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
 
 
           {/* ── NOTES & TASKS ── */}
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col h-[380px] hover:shadow-md transition-all duration-300">
-            <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 rounded-t-xl">
-              <h3 className="text-[11px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
-                <FileText className="h-3.5 w-3.5 text-indigo-500" /> Project Notes
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-white/8 shadow-sm flex flex-col h-[380px] hover:shadow-md transition-all duration-300">
+            <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/40 rounded-t-xl">
+              <h3 className="text-[11px] font-black text-slate-800 dark:text-white uppercase tracking-widest flex items-center gap-2">
+                <FileText className="h-3.5 w-3.5 text-indigo-500 dark:text-indigo-400" /> Project Notes
               </h3>
               <button
                 onClick={() => {
@@ -320,16 +317,16 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                   setEditingNoteId(null);
                   setActiveModal("ADD_NOTE");
                 }}
-                className="text-[9px] font-black text-indigo-600 hover:text-white hover:bg-indigo-600 border border-indigo-100 bg-white px-2.5 py-1 rounded transition-all uppercase tracking-tight"
+                className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 hover:text-white hover:bg-indigo-600 dark:hover:bg-indigo-600 border border-indigo-100 dark:border-indigo-500/30 bg-white dark:bg-slate-800 px-2.5 py-1 rounded transition-all uppercase tracking-tight"
               >
                 + Add Note
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-3.5 space-y-2.5 bg-slate-50/30">
+            <div className="flex-1 overflow-y-auto p-3.5 space-y-2.5 bg-slate-50/30 dark:bg-[#161f32]/30">
               {notes.length > 0 ? (
                 notes.map(note => (
-                  <div key={note.id} className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm group hover:border-indigo-200 transition-all duration-200">
+                  <div key={note.id} className="bg-white dark:bg-slate-800/80 p-3 rounded-lg border border-slate-200 dark:border-slate-700/80 shadow-sm group hover:border-indigo-200 dark:hover:border-indigo-500/30 transition-all duration-200">
                     <div className="flex items-start gap-3">
                       <button
                         onClick={async () => {
@@ -342,7 +339,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                         }}
                         className={cn(
                           "mt-0.5 h-4 w-4 rounded border flex items-center justify-center cursor-pointer transition-colors",
-                          note.isCompleted ? "bg-emerald-500 border-emerald-500" : "border-slate-300 hover:border-indigo-400"
+                          note.isCompleted ? "bg-emerald-500 border-emerald-500" : "border-slate-300 dark:border-slate-600 hover:border-indigo-400 dark:hover:border-indigo-400"
                         )}
                       >
                         {note.isCompleted && <Check className="h-2.5 w-2.5 text-white" strokeWidth={5} />}
@@ -350,12 +347,12 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                       <div className="flex-1 min-w-0">
                         <p className={cn(
                           "text-[11px] font-semibold leading-relaxed",
-                          note.isCompleted ? "text-slate-400 line-through" : "text-slate-700"
+                          note.isCompleted ? "text-slate-400 dark:text-slate-500 line-through" : "text-slate-700 dark:text-slate-200"
                         )}>
                           {note.content}
                         </p>
                         <div className="flex items-center gap-3 mt-1.5">
-                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">
+                          <span className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-tighter">
                             {format(new Date(note.createdAt), "dd MMM, hh:mm a")}
                           </span>
                         </div>
@@ -367,7 +364,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                             setEditingNoteId(note.id);
                             setActiveModal("EDIT_NOTE");
                           }}
-                          className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-700 transition-all"
+                          className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-slate-700 dark:hover:text-white transition-all"
                         >
                           <Pencil className="h-3 w-3" />
                         </button>
@@ -376,7 +373,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                             setDeleteTarget({ type: "note", id: note.id });
                             setActiveModal("DELETE_NOTE");
                           }}
-                          className="p-1 hover:bg-rose-50 rounded text-slate-400 hover:text-rose-600 transition-all"
+                          className="p-1 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-all"
                         >
                           <X className="h-3 w-3" />
                         </button>
@@ -386,31 +383,27 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                 ))
               ) : (
                 <div className="h-full flex flex-col items-center justify-center text-center opacity-30 py-6">
-                  <FileText className="h-8 w-8 text-slate-300 mb-2" />
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">No project notes yet</p>
+                  <FileText className="h-8 w-8 text-slate-300 dark:text-slate-600 mb-2" />
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">No project notes yet</p>
                 </div>
               )}
             </div>
           </div>
 
-
-
-
-
-          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm min-h-[400px] hover:shadow-md transition-all duration-300">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-white/8 shadow-sm min-h-[400px] hover:shadow-md transition-all duration-300">
              <div className="flex items-center gap-4 mb-8">
-               <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-[0.15em] flex items-center gap-2">
-                 <Activity className="h-4 w-4 text-emerald-500" />
+               <h3 className="text-[11px] font-black text-slate-900 dark:text-white uppercase tracking-[0.15em] flex items-center gap-2">
+                 <Activity className="h-4 w-4 text-emerald-500 dark:text-emerald-400" />
                  Activity Timeline
                </h3>
-               <div className="h-px flex-1 bg-slate-100" />
-               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{timeline.length} Logs</p>
+               <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800" />
+               <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{timeline.length} Logs</p>
              </div>
-             <div className="relative pl-6 border-l-2 border-slate-100 space-y-6">
+             <div className="relative pl-6 border-l-2 border-slate-100 dark:border-slate-800 space-y-6">
                {timeline.map((item: any) => (
                  <div key={item.id} className="relative">
                      <div className={cn(
-                       "absolute -left-[2.5rem] top-0 h-8 w-8 rounded-full border-4 border-white shadow-sm flex items-center justify-center",
+                       "absolute -left-[2.5rem] top-0 h-8 w-8 rounded-full border-4 border-white dark:border-slate-900 shadow-sm flex items-center justify-center",
                        item.type === "MEETING" ? "bg-emerald-600" :
                        item.outcome === "PICKED" ? "bg-emerald-500" :
                        item.outcome === "NOT_PICKED" ? "bg-rose-500" : "bg-slate-800"
@@ -421,33 +414,33 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                      </div>
                    <div className="space-y-1.5">
                      <div className="flex flex-wrap gap-2 items-center">
-                       <span className="text-[9px] font-bold text-slate-400 flex items-center gap-1 uppercase tracking-tight">
+                       <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1 uppercase tracking-tight">
                          <Clock className="h-2.5 w-2.5" />
                          {format(new Date(item.createdAt), "dd MMM, h:mm a")}
                        </span>
-                       <span className={cn("text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-sm bg-slate-50 border border-slate-100",
-                         item.type === "MEETING" ? "text-emerald-600 border-emerald-100" :
-                         item.outcome === "PICKED" ? "text-emerald-600 border-emerald-100" :
-                         item.outcome === "NOT_PICKED" ? "text-rose-600 border-rose-100" : "text-slate-600"
+                       <span className={cn("text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-sm bg-slate-50 dark:bg-[#161f32] border border-slate-100 dark:border-slate-800",
+                         item.type === "MEETING" ? "text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-500/30" :
+                         item.outcome === "PICKED" ? "text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-500/30" :
+                         item.outcome === "NOT_PICKED" ? "text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-800" : "text-slate-600 dark:text-slate-400"
                        )}>
                          {item.type === "MEETING" ? "Site Update" :
                           item.outcome ? item.outcome.replace("_", " ") : "Log"}
                          {item.outcome === "NOT_PICKED" && ` (#${item.attemptNumber})`}
                        </span>
                      </div>
-                     <div className="p-3 bg-slate-50/50 rounded-lg border border-slate-100 text-[11px] text-slate-700 leading-relaxed group shadow-sm hover:shadow-md transition-all">
+                     <div className="p-3 bg-slate-50/50 dark:bg-[#161f32]/50 rounded-lg border border-slate-100 dark:border-slate-800 text-[11px] text-slate-700 dark:text-slate-300 leading-relaxed group shadow-sm hover:shadow-md transition-all">
                        {item.type === "MEETING" ? (
                          <div className="space-y-2">
-                           <div className="flex items-center gap-2 text-slate-900 font-bold text-[10px] uppercase tracking-tight"><MapPin className="h-3 w-3 text-emerald-500" /> {item.address}</div>
-                           <div className="flex gap-4 text-[9px] font-bold text-slate-500 uppercase tracking-tighter">
+                           <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold text-[10px] uppercase tracking-tight"><MapPin className="h-3 w-3 text-emerald-500 dark:text-emerald-400" /> {item.address}</div>
+                           <div className="flex gap-4 text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tighter">
                              <span className="flex items-center gap-1"><Calendar className="h-2.5 w-2.5" /> {format(new Date(item.date), "PPP")}</span>
                              <span className="flex items-center gap-1"><Clock className="h-2.5 w-2.5" /> {item.time}</span>
                            </div>
-                           {item.notes && <p className="italic text-slate-500 text-[10px] border-t border-slate-200 pt-1.5 leading-normal">"{item.notes}"</p>}
+                           {item.notes && <p className="italic text-slate-500 dark:text-slate-400 text-[10px] border-t border-slate-200 dark:border-slate-700 pt-1.5 leading-normal">"{item.notes}"</p>}
                          </div>
                        ) : (
                          <p className="whitespace-pre-wrap font-medium">
-                           {item.content || item.noteGiven || <span className="text-slate-400 italic">No documentation.</span>}
+                           {item.content || item.noteGiven || <span className="text-slate-400 dark:text-slate-500 italic">No documentation.</span>}
                          </p>
                        )}
                      </div>
@@ -455,9 +448,9 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                  </div>
                ))}
                {timeline.length === 0 && (
-                 <div className="text-center py-16 text-slate-300">
+                 <div className="text-center py-16 text-slate-300 dark:text-slate-600">
                    <Activity className="h-10 w-10 mx-auto mb-2 opacity-10" />
-                   <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">No events logged</p>
+                   <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">No events logged</p>
                  </div>
                )}
              </div>
@@ -471,7 +464,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
         <Modal title="Update Profile" icon={<Pencil className="h-5 w-5" />} color="primary" onClose={closeModal}>
           <form onSubmit={handleUpdateCustomer} className="p-8 space-y-6">
             {editError && (
-              <div className="p-4 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-3 text-rose-700 mb-6">
+              <div className="p-4 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/60 rounded-lg flex items-center gap-3 text-rose-700 dark:text-rose-400 mb-6">
                 <AlertTriangle className="h-5 w-5 shrink-0" />
                 <p className="text-xs font-semibold">{editError}</p>
               </div>
@@ -506,9 +499,9 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
       {activeModal === "CANCEL" && (
         <Modal title="Deactivate Account" icon={<Ban className="h-5 w-5" />} color="primary" onClose={closeModal}>
           <div className="p-8 space-y-6">
-            <div className="bg-rose-50 border border-rose-100 rounded-lg p-3.5 flex items-start gap-3">
+            <div className="bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-500/20 rounded-lg p-3.5 flex items-start gap-3">
               <AlertTriangle className="h-4 w-4 text-rose-500 shrink-0 mt-0.5" />
-              <p className="text-[11px] text-rose-700 font-medium">Deactivating will pause execution metrics for this client.</p>
+              <p className="text-[11px] text-rose-700 dark:text-rose-400 font-medium">Deactivating will pause execution metrics for this client.</p>
             </div>
             <Field label="Closure Reason *">
               <select className={inputCls} value={cancelReason} onChange={e => setCancelReason(e.target.value)}>
@@ -569,12 +562,12 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                   "h-5 w-5 rounded border-2 flex items-center justify-center transition-all cursor-pointer",
                   noteForm.isCompleted
                     ? "bg-emerald-500 border-emerald-500"
-                    : "border-slate-300 hover:border-emerald-400"
+                    : "border-slate-300 dark:border-slate-600 hover:border-emerald-400 dark:hover:border-emerald-400"
                 )}
               >
                 {noteForm.isCompleted && <Check className="h-3 w-3 text-white" />}
               </div>
-              <span className="text-sm font-medium text-slate-700">Mark as completed</span>
+              <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Mark as completed</span>
             </label>
             <ModalFooter
               onClose={closeModal}
@@ -611,9 +604,9 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
           onClose={closeModal}
         >
           <div className="p-8 space-y-6">
-            <div className="bg-rose-50 border border-rose-100 rounded-lg p-4 flex items-start gap-3">
+            <div className="bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-500/20 rounded-lg p-4 flex items-start gap-3">
               <AlertTriangle className="h-4 w-4 text-rose-500 shrink-0 mt-0.5" />
-              <p className="text-sm text-rose-700 font-medium">
+              <p className="text-sm text-rose-700 dark:text-rose-400 font-medium">
                 Are you sure you want to delete this note?
                 This action cannot be undone and will permanently remove the record.
               </p>
@@ -641,12 +634,12 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
 
 // ─── Shared Helpers ───────────────────────────────────────────────────────────
 
-const inputCls = "w-full rounded-lg border border-slate-200 bg-white py-2.5 px-4 text-slate-900 font-medium placeholder:text-slate-300 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5 transition-all outline-none text-sm";
+const inputCls = "w-full rounded-lg border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-[#161f32] py-2.5 px-4 text-slate-900 dark:text-white font-medium placeholder:text-slate-300 dark:placeholder:text-slate-600 focus:border-indigo-600 dark:focus:border-indigo-500 focus:ring-4 focus:ring-indigo-600/5 transition-all outline-none text-sm";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2 ml-1">{label}</label>
+      <label className="block text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 ml-1">{label}</label>
       {children}
     </div>
   );
@@ -656,14 +649,14 @@ function Modal({ title, icon, color, onClose, children }: {
   title: string; icon: React.ReactNode; color: string; onClose: () => void; children: React.ReactNode;
 }) {
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/10 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-xl overflow-hidden border border-slate-200 animate-in zoom-in-95 duration-200">
-        <div className="px-8 py-6 flex items-center justify-between border-b border-slate-100 bg-slate-50/50">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/10 dark:bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-xl overflow-hidden border border-slate-200 dark:border-white/10 animate-in zoom-in-95 duration-200">
+        <div className="px-8 py-6 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40">
           <div className="flex items-center gap-3">
-            <div className="text-emerald-600">{icon}</div>
-            <h2 className="text-lg font-semibold text-slate-900 tracking-tight">{title}</h2>
+            <div className="text-emerald-600 dark:text-emerald-400">{icon}</div>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white tracking-tight">{title}</h2>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-lg transition-all text-slate-400 hover:text-slate-900"><X className="h-5 w-5" /></button>
+          <button onClick={onClose} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-all text-slate-400 hover:text-slate-900 dark:hover:text-white"><X className="h-5 w-5" /></button>
         </div>
         {children}
       </div>
@@ -675,8 +668,8 @@ function ModalFooter({ onClose, isSubmitting, label, disabled, color = "primary"
   onClose: () => void; isSubmitting: boolean; label: string; disabled?: boolean; color?: string; onSubmit?: () => void;
 }) {
   return (
-    <div className="flex items-center justify-end gap-3 p-8 bg-slate-50/50 border-t border-slate-100">
-      <button type={onSubmit ? "button" : "submit"} onClick={onClose} className="text-rose-500 font-semibold text-sm hover:text-rose-700 transition-colors px-4">Cancel</button>
+    <div className="flex items-center justify-end gap-3 p-8 bg-slate-50/50 dark:bg-slate-800/40 border-t border-slate-100 dark:border-slate-800">
+      <button type={onSubmit ? "button" : "submit"} onClick={onClose} className="text-rose-500 dark:text-rose-400 font-semibold text-sm hover:text-rose-700 dark:hover:text-rose-300 transition-colors px-4">Cancel</button>
       <button
         type={onSubmit ? "button" : "submit"}
         disabled={disabled || isSubmitting}

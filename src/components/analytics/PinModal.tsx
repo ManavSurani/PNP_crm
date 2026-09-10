@@ -82,30 +82,30 @@ export default function PinModal({
   const isComplete = pin.every(d => d !== "");
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-300">
       <div className={cn(
-        "bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-[400px] p-10 relative overflow-hidden transition-all duration-300",
-        shake ? "animate-shake border-rose-500 shadow-rose-100" : "animate-in zoom-in-95 duration-200"
+        "bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-white/10 w-full max-w-[400px] p-10 relative overflow-hidden transition-all duration-300",
+        shake ? "animate-shake border-rose-500 shadow-rose-100 dark:shadow-rose-950/30" : "animate-in zoom-in-95 duration-200"
       )}>
         {/* Background Decoration */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16" />
+        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 dark:bg-indigo-500/10 rounded-full blur-3xl -mr-16 -mt-16" />
         
         {/* Close Button (Optional based on mode) */}
         <button 
           onClick={onCancel}
-          className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all"
+          className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"
         >
           <X className="h-5 w-5" />
         </button>
 
         <div className="text-center space-y-6 relative z-10">
-          <div className="mx-auto h-16 w-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mb-2 shadow-inner">
+          <div className="mx-auto h-16 w-16 bg-primary/10 dark:bg-indigo-500/15 rounded-2xl flex items-center justify-center text-primary dark:text-indigo-400 mb-2 shadow-inner">
             <Lock className="h-8 w-8" />
           </div>
           
           <div className="space-y-1">
-            <h2 className="text-xl font-black text-slate-900 tracking-tight">{title}</h2>
-            <p className="text-sm text-slate-500 font-medium">{subtitle}</p>
+            <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">{title}</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{subtitle}</p>
           </div>
 
           {/* PIN Input Grid */}
@@ -122,15 +122,15 @@ export default function PinModal({
                 onChange={e => handleChange(i, e.target.value)}
                 onKeyDown={e => handleKeyDown(i, e)}
                 className={cn(
-                  "h-14 w-14 bg-slate-50 border-2 rounded-2xl text-center text-2xl font-black focus:bg-white focus:ring-8 transition-all outline-none",
-                  shake ? "border-rose-200 text-rose-600 focus:border-rose-500 focus:ring-rose-50/50" : "border-slate-100 text-slate-900 focus:border-primary focus:ring-primary/5"
+                  "h-14 w-14 bg-slate-50 dark:bg-[#161f32] border-2 rounded-2xl text-center text-2xl font-black text-slate-900 dark:text-white focus:bg-white dark:focus:bg-[#1a233a] focus:ring-8 transition-all outline-none",
+                  shake ? "border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 focus:border-rose-500 focus:ring-rose-50/50" : "border-slate-100 dark:border-slate-800 focus:border-primary focus:ring-primary/5 dark:focus:ring-indigo-500/10"
                 )}
               />
             ))}
           </div>
 
           {externalError && (
-            <div className="flex items-center justify-center gap-2 text-rose-600 text-xs font-bold uppercase tracking-wider animate-in fade-in slide-in-from-top-1">
+            <div className="flex items-center justify-center gap-2 text-rose-600 dark:text-rose-400 text-xs font-bold uppercase tracking-wider animate-in fade-in slide-in-from-top-1">
               <AlertCircle className="h-3.5 w-3.5" />
               {externalError}
             </div>
@@ -140,7 +140,7 @@ export default function PinModal({
             <button
               disabled={!isComplete || isLoading}
               onClick={handleSubmit}
-              className="w-full py-4 bg-primary text-white rounded-2xl text-sm font-black tracking-widest uppercase hover:shadow-xl hover:shadow-primary/20 active:scale-95 transition-all disabled:opacity-40 flex items-center justify-center gap-2"
+              className="w-full py-4 bg-primary hover:bg-indigo-500 text-white rounded-2xl text-sm font-black tracking-widest uppercase hover:shadow-xl hover:shadow-primary/20 active:scale-95 transition-all disabled:opacity-40 flex items-center justify-center gap-2"
             >
               {isLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -151,7 +151,7 @@ export default function PinModal({
             </button>
             <button
               onClick={onCancel}
-              className="w-full py-3 text-slate-400 text-[10px] font-black tracking-[0.2em] uppercase hover:text-slate-600 transition-colors"
+              className="w-full py-3 text-slate-400 dark:text-slate-500 text-[10px] font-black tracking-[0.2em] uppercase hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
             >
               Cancel Access
             </button>

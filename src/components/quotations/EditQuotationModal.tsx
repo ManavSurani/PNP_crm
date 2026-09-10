@@ -166,40 +166,40 @@ export default function EditQuotationModal({ isOpen, onClose, quotation, onSucce
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div
-        className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+        className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs"
         onClick={handleClose}
       />
 
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+      <div className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
         {/* Header */}
-        <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <div className="p-6 border-b border-slate-100 dark:border-white/8 flex items-center justify-between bg-slate-50/50 dark:bg-white/[0.02]">
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center">
-              <Pencil className="h-4 w-4 text-emerald-600" />
+            <div className="h-9 w-9 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 flex items-center justify-center">
+              <Pencil className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900">Edit Quotation</h2>
-              <p className="text-[10px] text-slate-400 font-medium mt-0.5 uppercase tracking-wider">
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">Edit Quotation</h2>
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium mt-0.5 uppercase tracking-wider">
                 {quotation.field.name}
               </p>
             </div>
           </div>
           <button
             onClick={handleClose}
-            className="p-2 hover:bg-slate-200 rounded-full transition-colors"
+            className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors cursor-pointer"
           >
-            <X className="h-5 w-5 text-slate-400" />
+            <X className="h-5 w-5 text-slate-400 dark:text-slate-500" />
           </button>
         </div>
 
         <div className="p-6 space-y-6">
           {/* Field Selection */}
           <div className="space-y-2">
-            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
+            <label className="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">
               Work Field
             </label>
             <select
-              className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm font-medium focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
+              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#161f32] text-slate-900 dark:text-white p-3 text-sm font-medium focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all cursor-pointer"
               value={selectedFieldId}
               onChange={(e) => handleFieldChange(e.target.value)}
             >
@@ -217,7 +217,7 @@ export default function EditQuotationModal({ isOpen, onClose, quotation, onSucce
           {/* Vendor Selection */}
           {selectedFieldId && (
             <div className="space-y-2 animate-in slide-in-from-top-2 duration-200">
-              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
+              <label className="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">
                 Vendor{selectedField ? ` — ${selectedField.name}` : ""}
               </label>
 
@@ -229,19 +229,19 @@ export default function EditQuotationModal({ isOpen, onClose, quotation, onSucce
                 <div className="space-y-3">
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Search className="h-4 w-4 text-slate-400" />
+                      <Search className="h-4 w-4 text-slate-400 dark:text-slate-500" />
                     </div>
                     <input 
                       type="text"
                       placeholder="Search vendors..."
-                      className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#161f32] text-slate-900 dark:text-white py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
                       value={vendorSearchQuery}
                       onChange={e => setVendorSearchQuery(e.target.value)}
                     />
                   </div>
                   <div className="max-h-[180px] overflow-y-auto space-y-2 pr-1">
                     {filteredVendors.length === 0 && !isAddingVendor && (
-                      <p className="text-center py-6 text-xs text-slate-400 italic">
+                      <p className="text-center py-6 text-xs text-slate-400 dark:text-slate-500 italic">
                         No vendors found.
                       </p>
                     )}
@@ -250,21 +250,21 @@ export default function EditQuotationModal({ isOpen, onClose, quotation, onSucce
                         key={v.id}
                         onClick={() => setSelectedVendorId(v.id)}
                         className={cn(
-                          "w-full flex items-center justify-between p-3.5 rounded-xl border transition-all text-left group",
+                          "w-full flex items-center justify-between p-3.5 rounded-xl border transition-all text-left group cursor-pointer",
                           selectedVendorId === v.id
-                            ? "bg-emerald-50 border-emerald-500 ring-1 ring-emerald-500"
-                            : "bg-white border-slate-100 hover:border-emerald-200 hover:bg-slate-50"
+                            ? "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-500 ring-1 ring-emerald-500"
+                            : "bg-white dark:bg-[#161f32] border-slate-100 dark:border-white/8 hover:border-emerald-200 dark:hover:border-emerald-500/30 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
                         )}
                       >
                         <div>
-                          <p className="text-sm font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
+                          <p className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
                             {v.name}
                           </p>
-                          <div className="text-xs text-slate-400 font-medium flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+                          <div className="text-xs text-slate-400 dark:text-slate-500 font-medium flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
                             <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {v.phone}</span>
                             {v.contacts?.map((c, i) => (
                               <span key={i} className="flex items-center gap-1">
-                                <Phone className="h-3 w-3" /> {c.phone} {c.name && <span className="text-[10px] text-slate-300">({c.name})</span>}
+                                <Phone className="h-3 w-3" /> {c.phone} {c.name && <span className="text-[10px] text-slate-300 dark:text-slate-600">({c.name})</span>}
                               </span>
                             ))}
                           </div>
@@ -281,30 +281,30 @@ export default function EditQuotationModal({ isOpen, onClose, quotation, onSucce
                   {!isAddingVendor ? (
                     <button
                       onClick={() => setIsAddingVendor(true)}
-                      className="w-full py-2.5 border-2 border-dashed border-slate-200 rounded-xl text-xs font-bold text-slate-400 hover:border-emerald-400 hover:text-emerald-600 transition-all flex items-center justify-center gap-2"
+                      className="w-full py-2.5 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-400 dark:text-slate-500 hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <Plus className="h-3.5 w-3.5" /> ADD NEW VENDOR
                     </button>
                   ) : (
-                    <div className="space-y-4 p-4 bg-emerald-50/50 rounded-xl border border-emerald-100 animate-in slide-in-from-top-2 duration-200">
+                    <div className="space-y-4 p-4 bg-emerald-50/50 dark:bg-emerald-500/5 rounded-xl border border-emerald-100 dark:border-emerald-500/20 animate-in slide-in-from-top-2 duration-200">
                       <div className="space-y-3">
                         <div>
-                          <label className="text-[10px] font-black text-emerald-700 uppercase tracking-wider ml-1 mb-1 block">Company / Vendor Name <span className="text-rose-500">*</span></label>
+                          <label className="text-[10px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-wider ml-1 mb-1 block">Company / Vendor Name <span className="text-rose-500">*</span></label>
                           <input 
                             autoFocus
                             placeholder="e.g. PNP Enterprises"
-                            className="w-full rounded-lg border border-emerald-200 p-2.5 text-sm focus:border-emerald-500 outline-none"
+                            className="w-full rounded-lg border border-emerald-200 dark:border-emerald-500/30 bg-white dark:bg-[#161f32] text-slate-900 dark:text-white p-2.5 text-sm focus:border-emerald-500 outline-none"
                             value={newVendorName}
                             onChange={e => setNewVendorName(e.target.value)}
                           />
                         </div>
                         <div>
-                          <label className="text-[10px] font-black text-emerald-700 uppercase tracking-wider ml-1 mb-1 block">Phone Number <span className="text-rose-500">*</span></label>
+                          <label className="text-[10px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-wider ml-1 mb-1 block">Phone Number <span className="text-rose-500">*</span></label>
                           <input 
                             type="tel"
                             maxLength={10}
                             placeholder="10-digit number"
-                            className="w-full rounded-lg border border-emerald-200 p-2.5 text-sm focus:border-emerald-500 outline-none"
+                            className="w-full rounded-lg border border-emerald-200 dark:border-emerald-500/30 bg-white dark:bg-[#161f32] text-slate-900 dark:text-white p-2.5 text-sm focus:border-emerald-500 outline-none"
                             value={newVendorPhone}
                             onChange={e => {
                               const val = e.target.value.replace(/\D/g, "");
@@ -315,21 +315,21 @@ export default function EditQuotationModal({ isOpen, onClose, quotation, onSucce
                       </div>
                       
                       {newContactsList.length > 0 && (
-                        <div className="space-y-3 max-h-[240px] overflow-y-auto pr-1 mt-4 border-t border-emerald-100/50 pt-4">
-                          <label className="text-[10px] font-black text-emerald-700 uppercase tracking-wider ml-1 block">Additional Contacts</label>
+                        <div className="space-y-3 max-h-[240px] overflow-y-auto pr-1 mt-4 border-t border-emerald-100/50 dark:border-emerald-500/20 pt-4">
+                          <label className="text-[10px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-wider ml-1 block">Additional Contacts</label>
                           {newContactsList.map((contact, index) => (
-                            <div key={index} className="space-y-3 p-3 bg-white rounded-lg border border-emerald-100 relative group">
+                            <div key={index} className="space-y-3 p-3 bg-white dark:bg-slate-900 rounded-lg border border-emerald-100 dark:border-emerald-500/20 relative group">
                               <button 
                                 onClick={() => setNewContactsList(newContactsList.filter((_, i) => i !== index))}
-                                className="absolute -top-2 -right-2 h-6 w-6 bg-white border border-rose-200 text-rose-500 rounded-full flex items-center justify-center hover:bg-rose-50 hover:text-rose-600 transition-colors shadow-sm z-10"
+                                className="absolute -top-2 -right-2 h-6 w-6 bg-white dark:bg-slate-800 border border-rose-200 dark:border-rose-900/50 text-rose-500 rounded-full flex items-center justify-center hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-600 transition-colors shadow-sm z-10 cursor-pointer"
                               >
                                 <Trash2 className="h-3 w-3" />
                               </button>
                               <div>
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider ml-1 mb-1 block">Person Name (Optional)</label>
+                                <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1 mb-1 block">Person Name (Optional)</label>
                                 <input 
                                   placeholder="e.g. John Doe"
-                                  className="w-full rounded-lg border border-slate-200 p-2 text-sm focus:border-emerald-500 outline-none"
+                                  className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#161f32] text-slate-900 dark:text-white p-2 text-sm focus:border-emerald-500 outline-none"
                                   value={contact.name}
                                   onChange={e => {
                                     const newList = [...newContactsList];
@@ -339,12 +339,12 @@ export default function EditQuotationModal({ isOpen, onClose, quotation, onSucce
                                 />
                               </div>
                               <div>
-                                <label className="text-[10px] font-black text-emerald-700 uppercase tracking-wider ml-1 mb-1 block">Phone Number <span className="text-rose-500">*</span></label>
+                                <label className="text-[10px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-wider ml-1 mb-1 block">Phone Number <span className="text-rose-500">*</span></label>
                                 <input 
                                   type="tel"
                                   maxLength={10}
                                   placeholder="10-digit number"
-                                  className="w-full rounded-lg border border-emerald-200 p-2 text-sm focus:border-emerald-500 outline-none"
+                                  className="w-full rounded-lg border border-emerald-200 dark:border-emerald-500/30 bg-white dark:bg-[#161f32] text-slate-900 dark:text-white p-2 text-sm focus:border-emerald-500 outline-none"
                                   value={contact.phone}
                                   onChange={e => {
                                     const val = e.target.value.replace(/\D/g, "");
@@ -364,17 +364,17 @@ export default function EditQuotationModal({ isOpen, onClose, quotation, onSucce
                       {newContactsList.length < 9 && (
                         <button 
                           onClick={() => setNewContactsList([...newContactsList, { name: "", phone: "" }])}
-                          className="w-full py-2 border border-dashed border-emerald-300 rounded-lg text-xs font-bold text-emerald-600 hover:bg-emerald-50 transition-colors flex items-center justify-center gap-1.5 mt-2"
+                          className="w-full py-2 border border-dashed border-emerald-300 dark:border-emerald-500/40 rounded-lg text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors flex items-center justify-center gap-1.5 mt-2 cursor-pointer"
                         >
                           <Plus className="h-3.5 w-3.5" /> ADD ANOTHER CONTACT
                         </button>
                       )}
                       
-                      <div className="flex gap-2 pt-2 border-t border-emerald-100 mt-4">
+                      <div className="flex gap-2 pt-2 border-t border-emerald-100 dark:border-emerald-500/20 mt-4">
                         <button
                           onClick={handleAddVendor}
                           disabled={isLoading || !newVendorName.trim() || newVendorPhone.length !== 10}
-                          className="flex-1 bg-emerald-600 text-white rounded-lg py-2 text-xs font-bold hover:bg-emerald-700 disabled:opacity-50"
+                          className="flex-1 bg-emerald-600 text-white rounded-lg py-2 text-xs font-bold hover:bg-emerald-700 disabled:opacity-50 cursor-pointer"
                         >
                           {isLoading ? (
                             <Loader2 className="h-3.5 w-3.5 animate-spin mx-auto" />
@@ -384,7 +384,7 @@ export default function EditQuotationModal({ isOpen, onClose, quotation, onSucce
                         </button>
                         <button
                           onClick={() => setIsAddingVendor(false)}
-                          className="px-4 border border-slate-200 bg-white text-slate-500 rounded-lg py-2 text-xs font-bold hover:bg-slate-50 transition-colors"
+                          className="px-4 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-lg py-2 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
                         >
                           CANCEL
                         </button>
@@ -399,17 +399,17 @@ export default function EditQuotationModal({ isOpen, onClose, quotation, onSucce
           {/* Amount Input */}
           {selectedVendorId && (
             <div className="space-y-2 animate-in slide-in-from-top-2 duration-200">
-              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
+              <label className="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest ml-1">
                 Quotation Amount (₹)
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <span className="text-slate-400 font-bold">₹</span>
+                  <span className="text-slate-400 dark:text-slate-500 font-bold">₹</span>
                 </div>
                 <input
                   type="number"
                   placeholder="e.g. 20,000"
-                  className="w-full rounded-xl border border-slate-200 py-4 pl-10 pr-4 text-xl font-bold text-slate-900 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all placeholder:text-slate-200"
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#161f32] py-4 pl-10 pr-4 text-xl font-bold text-slate-900 dark:text-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all placeholder:text-slate-300 dark:placeholder:text-slate-600"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                 />
@@ -419,17 +419,17 @@ export default function EditQuotationModal({ isOpen, onClose, quotation, onSucce
         </div>
 
         {/* Footer Buttons */}
-        <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex gap-3">
+        <div className="p-6 border-t border-slate-100 dark:border-white/8 bg-slate-50/50 dark:bg-white/[0.02] flex gap-3">
           <button
             onClick={handleClose}
-            className="flex-1 px-6 py-3 border border-slate-200 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 transition-colors"
+            className="flex-1 px-6 py-3 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             CANCEL
           </button>
           <button
             onClick={handleSave}
             disabled={isLoading || !selectedFieldId || !selectedVendorId || !amount}
-            className="flex-[2] px-6 py-3 bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 disabled:translate-y-0 flex items-center justify-center gap-2"
+            className="flex-[2] px-6 py-3 bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 disabled:translate-y-0 flex items-center justify-center gap-2 cursor-pointer"
           >
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />

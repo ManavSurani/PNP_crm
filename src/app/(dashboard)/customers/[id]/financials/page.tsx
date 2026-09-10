@@ -404,7 +404,7 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
   if (isLoading) {
     return (
       <div className="flex h-[80vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-slate-400 dark:text-slate-600" />
       </div>
     );
   }
@@ -412,28 +412,28 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
   if (!customer) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50/30">
+    <div className="min-h-screen bg-slate-50/30 dark:bg-[#090d16]">
 
       {/* --- COMPACT STICKY SUMMARY HEADER (Smart Adaptive Priority) --- */}
-      <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200 px-4 md:px-6 py-3 shadow-sm">
+      <div className="sticky top-0 z-30 bg-white/80 dark:bg-[#090d16]/90 backdrop-blur-md border-b border-slate-200 dark:border-white/8 px-4 md:px-6 py-3 shadow-sm">
         <div className="max-w-[1600px] mx-auto flex items-center gap-3">
 
           {/* ── LEFT: Identity block ── */}
           <div className="flex items-center gap-2 min-w-0 flex-shrink">
-            <Link href={`/customers/${id}`} className="shrink-0 p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-400">
+            <Link href={`/customers/${id}`} className="shrink-0 p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white">
               <ArrowLeft className="h-4 w-4" />
             </Link>
             <div className="min-w-0 flex flex-col justify-center">
               <div className="flex items-center gap-1.5">
-                <h1 className="text-sm font-black text-slate-900 tracking-tight truncate">
+                <h1 className="text-sm font-black text-slate-900 dark:text-white tracking-tight truncate">
                   {customer.customerName}
                 </h1>
-                <span className="shrink-0 text-[9px] text-slate-400 font-bold uppercase tracking-widest px-1.5 py-0.5 bg-slate-100 rounded whitespace-nowrap">
+                <span className="shrink-0 text-[9px] text-slate-400 dark:text-slate-400 font-bold uppercase tracking-widest px-1.5 py-0.5 bg-slate-100 dark:bg-white/5 rounded whitespace-nowrap">
                   Ledger
                 </span>
               </div>
               {/* Priority 6: subtitle hides first */}
-              <p className="hidden 2xl:block text-[9px] font-bold text-slate-400 uppercase tracking-tighter truncate opacity-80">
+              <p className="hidden 2xl:block text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter truncate opacity-80">
                 {customer.project?.name || "Standard Project"}
               </p>
             </div>
@@ -441,18 +441,18 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
 
           {/* ── CENTER: Summary widgets — flex-1 so they claim all available space ── */}
           <div className="hidden lg:flex items-center justify-center flex-1 min-w-0 gap-0 overflow-hidden">
-            <SummaryWidget label="Deal" value={initialDeal} color="text-slate-500" />
-            <div className="h-6 w-px bg-slate-200 mx-1 xl:mx-2 shrink-0" />
-            <SummaryWidget label="Expenses" value={totalExpense} color="text-rose-600" prefix="+" />
-            <div className="h-6 w-px bg-slate-200 mx-1 xl:mx-2 shrink-0" />
-            <SummaryWidget label="Total" value={currentTotal} color="text-slate-900" isBold />
-            <div className="h-6 w-px bg-slate-200 mx-1 xl:mx-2 shrink-0" />
-            <SummaryWidget label="Paid" value={totalReceived} color="text-emerald-600" />
-            <div className="h-6 w-px bg-slate-200 mx-1 xl:mx-2 shrink-0" />
+            <SummaryWidget label="Deal" value={initialDeal} color="text-slate-500 dark:text-slate-400" />
+            <div className="h-6 w-px bg-slate-200 dark:bg-white/10 mx-1 xl:mx-2 shrink-0" />
+            <SummaryWidget label="Expenses" value={totalExpense} color="text-rose-600 dark:text-rose-400" prefix="+" />
+            <div className="h-6 w-px bg-slate-200 dark:bg-white/10 mx-1 xl:mx-2 shrink-0" />
+            <SummaryWidget label="Total" value={currentTotal} color="text-slate-900 dark:text-white" isBold />
+            <div className="h-6 w-px bg-slate-200 dark:bg-white/10 mx-1 xl:mx-2 shrink-0" />
+            <SummaryWidget label="Paid" value={totalReceived} color="text-emerald-600 dark:text-emerald-400" />
+            <div className="h-6 w-px bg-slate-200 dark:bg-white/10 mx-1 xl:mx-2 shrink-0" />
             <SummaryWidget
               label="Due"
               value={remainingDue}
-              color={remainingDue > 0 ? "text-amber-600" : "text-emerald-600"}
+              color={remainingDue > 0 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}
               highlight={remainingDue > 0}
             />
           </div>
@@ -462,9 +462,9 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
 
             {/* Financially Closed badge — only on large screens */}
             {customer.isFinanciallyClosed && (
-              <div className="hidden 2xl:flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-lg">
-                <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                <span className="text-[9px] font-black text-emerald-700 uppercase tracking-widest whitespace-nowrap">Closed</span>
+              <div className="hidden 2xl:flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-lg">
+                <CheckCircle2 className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                <span className="text-[9px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest whitespace-nowrap">Closed</span>
               </div>
             )}
 
@@ -473,7 +473,7 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
               onClick={() => { setModalType("RECEIVED"); setEditingTransaction(null); setShowTransModal(true); }}
               disabled={customer.isFinanciallyClosed}
               className={cn(
-                "h-9 text-white text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-lg transition-all shadow-md flex items-center whitespace-nowrap",
+                "h-9 text-white text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-lg transition-all shadow-md flex items-center whitespace-nowrap cursor-pointer",
                 "px-2.5 gap-1.5",
                 customer.isFinanciallyClosed
                   ? "bg-emerald-600/40 cursor-not-allowed grayscale-[0.5]"
@@ -491,7 +491,7 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
               onClick={() => { setModalType("EXPENSE"); setEditingTransaction(null); setShowTransModal(true); }}
               disabled={customer.isFinanciallyClosed}
               className={cn(
-                "h-9 text-white text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-lg transition-all shadow-md flex items-center whitespace-nowrap",
+                "h-9 text-white text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-lg transition-all shadow-md flex items-center whitespace-nowrap cursor-pointer",
                 "px-2.5 gap-1.5",
                 customer.isFinanciallyClosed
                   ? "bg-rose-600/40 cursor-not-allowed grayscale-[0.5]"
@@ -508,7 +508,7 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
             <button
               onClick={handleExportPDF}
               disabled={isExportingPDF}
-              className="h-9 px-2.5 bg-white text-slate-700 text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-slate-50 transition-all border border-slate-200 flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap shadow-sm"
+              className="h-9 px-2.5 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-all border border-slate-200 dark:border-white/10 flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap shadow-sm cursor-pointer"
               title="Export PDF"
             >
               {isExportingPDF ? (
@@ -534,15 +534,15 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
 
         {/* --- INITIAL DEAL SETUP / EDIT --- */}
         {!hasFinanceSetup ? (
-          <div className="mb-8 bg-white border-2 border-dashed border-slate-200 rounded-2xl p-12 text-center max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="h-16 w-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
-              <IndianRupee className="h-8 w-8 text-slate-400" />
+          <div className="mb-8 bg-white dark:bg-slate-900 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-2xl p-12 text-center max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="h-16 w-16 bg-slate-50 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
+              <IndianRupee className="h-8 w-8 text-slate-400 dark:text-slate-500" />
             </div>
-            <h2 className="text-xl font-black text-slate-900 mb-2 tracking-tight">Setup Project Finance</h2>
-            <p className="text-slate-500 text-sm mb-8 font-medium">Enter the final agreed deal amount to activate the accounting workspace.</p>
+            <h2 className="text-xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">Setup Project Finance</h2>
+            <p className="text-slate-500 dark:text-slate-400 text-sm mb-8 font-medium">Enter the final agreed deal amount to activate the accounting workspace.</p>
             <button
               onClick={() => setShowDealModal(true)}
-              className="bg-slate-900 text-white px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/20"
+              className="bg-slate-900 dark:bg-indigo-600 text-white px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-indigo-500 transition-all shadow-xl shadow-slate-900/20 dark:shadow-indigo-600/20 cursor-pointer"
             >
               Enter Final Deal Amount
             </button>
@@ -554,18 +554,18 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
             <div className="col-span-12 lg:col-span-9 space-y-6">
 
               {/* SEARCH & FILTERS */}
-              <div className="flex items-center gap-4 bg-white p-2 rounded-xl border border-slate-200 shadow-sm">
+              <div className="flex items-center gap-4 bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-200 dark:border-white/8 shadow-sm">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
                   <input
                     placeholder="Search transactions..."
-                    className="w-full pl-10 pr-4 py-2 bg-slate-50 border-none text-xs font-bold outline-none rounded-lg focus:ring-2 focus:ring-slate-900/5 transition-all"
+                    className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-[#161f32] text-slate-900 dark:text-white border-none text-xs font-bold outline-none rounded-lg focus:ring-2 focus:ring-slate-900/5 dark:focus:ring-indigo-500/20 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                   />
                 </div>
                 <div className="flex items-center gap-1 pr-1">
-                  <button onClick={() => setShowDealModal(true)} className="h-8 px-3 text-[10px] font-black uppercase text-slate-400 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-all flex items-center gap-1.5">
+                  <button onClick={() => setShowDealModal(true)} className="h-8 px-3 text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer">
                     <Pencil className="h-3 w-3" /> Edit Deal
                   </button>
                 </div>
@@ -574,44 +574,44 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                 {/* --- INCOME SECTION --- */}
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full">
-                  <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                    <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-white/8 shadow-sm overflow-hidden flex flex-col h-full">
+                  <div className="px-4 py-3 border-b border-slate-100 dark:border-white/8 flex items-center justify-between bg-slate-50/50 dark:bg-white/[0.02]">
+                    <h3 className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
                       <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                       Client Payments
                     </h3>
                   </div>
                   <div className="flex-1 overflow-auto max-h-[500px] compact-scrollbar">
                     <table className="w-full text-left">
-                      <thead className="sticky top-0 bg-white border-b border-slate-100 z-10">
+                      <thead className="sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-white/8 z-10">
                         <tr>
-                          <th className="px-4 py-2 text-[10px] font-black text-slate-400 uppercase tracking-tighter">Date</th>
-                          <th className="px-4 py-2 text-[10px] font-black text-slate-400 uppercase tracking-tighter">Party / Note</th>
-                          <th className="px-4 py-2 text-right text-[10px] font-black text-slate-400 uppercase tracking-tighter">Amount</th>
+                          <th className="px-4 py-2 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-tighter">Date</th>
+                          <th className="px-4 py-2 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-tighter">Party / Note</th>
+                          <th className="px-4 py-2 text-right text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-tighter">Amount</th>
                           <th className="px-4 py-2 w-10"></th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-50">
+                      <tbody className="divide-y divide-slate-50 dark:divide-white/5">
                         {filteredIncome.map(t => (
-                          <tr key={t.id} className="group hover:bg-slate-50/50 transition-colors">
-                            <td className="px-4 py-2 whitespace-nowrap text-[10px] font-bold text-slate-500 italic">{format(new Date(t.date), "dd MMM")}</td>
+                          <tr key={t.id} className="group hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors">
+                            <td className="px-4 py-2 whitespace-nowrap text-[10px] font-bold text-slate-500 dark:text-slate-400 italic">{format(new Date(t.date), "dd MMM")}</td>
                             <td className="px-4 py-2">
-                              <p className="text-[11px] font-black text-slate-800 leading-tight">{t.paidTo}</p>
-                              <p className="text-[9px] text-slate-400 font-medium truncate max-w-[120px]">{t.description || t.category}</p>
+                              <p className="text-[11px] font-black text-slate-800 dark:text-white leading-tight">{t.paidTo}</p>
+                              <p className="text-[9px] text-slate-400 dark:text-slate-500 font-medium truncate max-w-[120px]">{t.description || t.category}</p>
                             </td>
-                            <td className="px-4 py-2 text-right text-[11px] font-black text-emerald-600">₹{t.amount.toLocaleString()}</td>
+                            <td className="px-4 py-2 text-right text-[11px] font-black text-emerald-600 dark:text-emerald-400">₹{t.amount.toLocaleString()}</td>
                             <td className="px-4 py-2">
                               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => { setEditingTransaction(t); setModalType("RECEIVED"); setShowTransModal(true); }} className="p-1 text-slate-400 hover:text-slate-900"><Pencil className="h-3 w-3" /></button>
+                                <button onClick={() => { setEditingTransaction(t); setModalType("RECEIVED"); setShowTransModal(true); }} className="p-1 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer"><Pencil className="h-3 w-3" /></button>
                                 {t.category !== "Final Payment" && (
-                                  <button onClick={() => handleDeleteTransaction(t.id)} className="p-1 text-slate-400 hover:text-rose-600"><Trash2 className="h-3 w-3" /></button>
+                                  <button onClick={() => handleDeleteTransaction(t.id)} className="p-1 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer"><Trash2 className="h-3 w-3" /></button>
                                 )}
                               </div>
                             </td>
                           </tr>
                         ))}
                         {filteredIncome.length === 0 && (
-                          <tr><td colSpan={4} className="py-20 text-center text-[10px] font-bold text-slate-300 uppercase tracking-widest">No entries</td></tr>
+                          <tr><td colSpan={4} className="py-20 text-center text-[10px] font-bold text-slate-300 dark:text-slate-600 uppercase tracking-widest">No entries</td></tr>
                         )}
                       </tbody>
                     </table>
@@ -619,47 +619,47 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
                 </div>
 
                 {/* --- EXPENSE SECTION --- */}
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full">
-                  <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                    <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-white/8 shadow-sm overflow-hidden flex flex-col h-full">
+                  <div className="px-4 py-3 border-b border-slate-100 dark:border-white/8 flex items-center justify-between bg-slate-50/50 dark:bg-white/[0.02]">
+                    <h3 className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
                       <div className="h-1.5 w-1.5 rounded-full bg-rose-500" />
                       Project Expenses (Cost)
                     </h3>
-                    <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded">₹{totalExpense.toLocaleString()}</span>
+                    <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 px-2 py-0.5 rounded">₹{totalExpense.toLocaleString()}</span>
                   </div>
                   <div className="flex-1 overflow-auto max-h-[500px] compact-scrollbar">
                     <table className="w-full text-left">
-                      <thead className="sticky top-0 bg-white border-b border-slate-100 z-10">
+                      <thead className="sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-white/8 z-10">
                         <tr>
-                          <th className="px-4 py-2 text-[10px] font-black text-slate-400 uppercase tracking-tighter">Date</th>
-                          <th className="px-4 py-2 text-[10px] font-black text-slate-400 uppercase tracking-tighter">Vendor / Item</th>
-                          <th className="px-4 py-2 text-right text-[10px] font-black text-slate-400 uppercase tracking-tighter">Amount</th>
+                          <th className="px-4 py-2 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-tighter">Date</th>
+                          <th className="px-4 py-2 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-tighter">Vendor / Item</th>
+                          <th className="px-4 py-2 text-right text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-tighter">Amount</th>
                           <th className="px-4 py-2 w-10"></th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-50">
+                      <tbody className="divide-y divide-slate-50 dark:divide-white/5">
                         {filteredExpense.map(t => (
-                          <tr key={t.id} className="group hover:bg-slate-50/50 transition-colors">
-                            <td className="px-4 py-2 whitespace-nowrap text-[10px] font-bold text-slate-500 italic">{format(new Date(t.date), "dd MMM")}</td>
+                          <tr key={t.id} className="group hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors">
+                            <td className="px-4 py-2 whitespace-nowrap text-[10px] font-bold text-slate-500 dark:text-slate-400 italic">{format(new Date(t.date), "dd MMM")}</td>
                             <td className="px-4 py-2">
                               <div className="flex items-center gap-2">
-                                <p className="text-[11px] font-black text-slate-800 leading-tight">{t.paidTo}</p>
+                                <p className="text-[11px] font-black text-slate-800 dark:text-white leading-tight">{t.paidTo}</p>
                               </div>
-                              <p className="text-[9px] text-slate-400 font-medium truncate max-w-[120px]">{t.description || t.category}</p>
+                              <p className="text-[9px] text-slate-400 dark:text-slate-500 font-medium truncate max-w-[120px]">{t.description || t.category}</p>
                             </td>
-                            <td className="px-4 py-2 text-right text-[11px] font-black text-rose-600">₹{t.amount.toLocaleString()}</td>
+                            <td className="px-4 py-2 text-right text-[11px] font-black text-rose-600 dark:text-rose-400">₹{t.amount.toLocaleString()}</td>
                             <td className="px-4 py-2">
                               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => { setEditingTransaction(t); setModalType("EXPENSE"); setShowTransModal(true); }} className="p-1 text-slate-400 hover:text-slate-900"><Pencil className="h-3 w-3" /></button>
+                                <button onClick={() => { setEditingTransaction(t); setModalType("EXPENSE"); setShowTransModal(true); }} className="p-1 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer"><Pencil className="h-3 w-3" /></button>
                                 {t.category !== "Final Payment" && (
-                                  <button onClick={() => handleDeleteTransaction(t.id)} className="p-1 text-slate-400 hover:text-rose-600"><Trash2 className="h-3 w-3" /></button>
+                                  <button onClick={() => handleDeleteTransaction(t.id)} className="p-1 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer"><Trash2 className="h-3 w-3" /></button>
                                 )}
                               </div>
                             </td>
                           </tr>
                         ))}
                         {filteredExpense.length === 0 && (
-                          <tr><td colSpan={4} className="py-20 text-center text-[10px] font-bold text-slate-300 uppercase tracking-widest">No entries</td></tr>
+                          <tr><td colSpan={4} className="py-20 text-center text-[10px] font-bold text-slate-300 dark:text-slate-600 uppercase tracking-widest">No entries</td></tr>
                         )}
                       </tbody>
                     </table>
@@ -671,13 +671,13 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
 
             {/* --- RIGHT SIDEBAR: HISTORY LOGS --- */}
             <div className="col-span-12 lg:col-span-3 space-y-6">
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col max-h-[calc(100vh-180px)]">
-                <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
-                  <History className="h-3.5 w-3.5 text-slate-400" />
-                  <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Financial History</h3>
+              <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-white/8 shadow-sm overflow-hidden flex flex-col max-h-[calc(100vh-180px)]">
+                <div className="px-4 py-3 border-b border-slate-100 dark:border-white/8 bg-slate-50/50 dark:bg-white/[0.02] flex items-center gap-2">
+                  <History className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
+                  <h3 className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-widest">Financial History</h3>
                 </div>
                 <div className="flex-1 overflow-auto p-4 compact-scrollbar">
-                  <div className="space-y-6 relative before:absolute before:left-2 before:top-2 before:bottom-2 before:w-px before:bg-slate-100">
+                  <div className="space-y-6 relative before:absolute before:left-2 before:top-2 before:bottom-2 before:w-px before:bg-slate-100 dark:before:bg-white/10">
                     {logs.map((log, i) => {
                       const isDeal = log.action === "DEAL_UPDATE";
                       const isIncome = log.action === "INCOME_ADDED" || (log.action === "TRANSACTION_UPDATED" && log.details.includes("Income"));
@@ -692,7 +692,7 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
                       return (
                         <div key={log.id} className="relative flex items-start gap-4 animate-in fade-in slide-in-from-right-2 duration-300" style={{ animationDelay: `${i * 50}ms` }}>
                           <div className={cn(
-                            "h-4 w-4 rounded-full border-2 border-white ring-1 ring-slate-100 flex items-center justify-center shrink-0 relative z-10",
+                            "h-4 w-4 rounded-full border-2 border-white dark:border-slate-900 ring-1 ring-slate-100 dark:ring-slate-800 flex items-center justify-center shrink-0 relative z-10",
                             isDeal ? "bg-indigo-500" :
                               isIncome ? "bg-emerald-500" :
                                 isExpense ? "bg-rose-500" : "bg-slate-400"
@@ -702,16 +702,16 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
                                 isExpense ? <TrendingDown className="h-2 w-2 text-white" /> : <Plus className="h-1.5 w-1.5 text-white" />}
                           </div>
                           <div className="flex-1">
-                            <p className="text-[10px] font-black text-slate-800 leading-tight mb-0.5">{actionText}</p>
-                            <p className="text-[8px] font-bold text-slate-400 uppercase">{format(new Date(log.createdAt), "dd MMM, HH:mm")}</p>
+                            <p className="text-[10px] font-black text-slate-800 dark:text-slate-200 leading-tight mb-0.5">{actionText}</p>
+                            <p className="text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase">{format(new Date(log.createdAt), "dd MMM, HH:mm")}</p>
                           </div>
                         </div>
                       );
                     })}
                     {logs.length === 0 && (
                       <div className="text-center py-10 opacity-30">
-                        <Info className="h-8 w-8 mx-auto mb-2" />
-                        <p className="text-[9px] font-black uppercase tracking-widest">No History</p>
+                        <Info className="h-8 w-8 mx-auto mb-2 text-slate-400 dark:text-slate-500" />
+                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">No History</p>
                       </div>
                     )}
                   </div>
@@ -752,8 +752,8 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
 
 function SummaryWidget({ label, value, color, isBold = false, prefix = "", highlight = false }: any) {
   return (
-    <div className={cn("px-4 py-1.5 transition-all", highlight && "bg-slate-50 rounded-lg")}>
-      <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">{label}</p>
+    <div className={cn("px-4 py-1.5 transition-all", highlight && "bg-slate-50 dark:bg-white/5 rounded-lg")}>
+      <p className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-0.5">{label}</p>
       <p className={cn("text-xs font-black tracking-tight", color, isBold ? "text-sm scale-105" : "")}>
         {prefix}₹{(value ?? 0).toLocaleString()}
       </p>
@@ -824,43 +824,43 @@ function TransactionModal({ type, leadId, customerName, editingData, onClose, on
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in duration-200">
+      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs" onClick={onClose} />
+      <div className="relative w-full max-w-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in duration-200">
         <div className={cn("px-6 py-4 flex items-center justify-between text-white", type === "RECEIVED" ? "bg-emerald-600" : "bg-rose-600")}>
           <h2 className="text-sm font-black uppercase tracking-widest">{editingData ? "Edit" : "New"} {type === "RECEIVED" ? "Income" : "Expense"}</h2>
-          <button onClick={onClose} className="p-1 hover:bg-black/10 rounded-full transition-colors">
+          <button onClick={onClose} className="p-1 hover:bg-black/10 rounded-full transition-colors cursor-pointer">
             <X className="h-4 w-4" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {type === "RECEIVED" && (!initialDeal || initialDeal <= 0) && (
-            <div className="bg-amber-50 border border-amber-200 p-3 rounded-xl flex items-start gap-3">
+            <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 p-3 rounded-xl flex items-start gap-3">
               <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
               <div>
-                <p className="text-[9px] font-bold text-amber-900 uppercase tracking-tight">Financial Warning</p>
-                <p className="text-[8px] text-amber-700 font-medium leading-tight mt-1">
+                <p className="text-[9px] font-bold text-amber-900 dark:text-amber-300 uppercase tracking-tight">Financial Warning</p>
+                <p className="text-[8px] text-amber-700 dark:text-amber-400 font-medium leading-tight mt-1">
                   Initial deal amount is ₹0. Set the base project value before recording payments to avoid negative balances.
                 </p>
               </div>
             </div>
           )}
-          {err && <div className="p-2 bg-rose-50 border border-rose-100 text-rose-600 text-[9px] font-black uppercase rounded-lg">{err}</div>}
+          {err && <div className="p-2 bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 text-[9px] font-black uppercase rounded-lg">{err}</div>}
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Amount (₹)</label>
+              <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Amount (₹)</label>
               <input
                 type="number" value={amount} onChange={e => setAmount(e.target.value)}
                 placeholder="0"
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-black outline-none focus:ring-2 focus:ring-slate-900/5 transition-all"
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-[#161f32] text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-black outline-none focus:ring-2 focus:ring-slate-900/5 dark:focus:ring-indigo-500/20 transition-all"
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Date</label>
+              <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Date</label>
               <input
                 type="date" value={date} onChange={e => setDate(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-slate-900/5 transition-all"
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-[#161f32] text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-slate-900/5 dark:focus:ring-indigo-500/20 transition-all"
               />
             </div>
           </div>
@@ -868,16 +868,16 @@ function TransactionModal({ type, leadId, customerName, editingData, onClose, on
           {type === "RECEIVED" && (
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Party Name</label>
+                <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Party Name</label>
                 <input
                   value={paidTo} onChange={e => setPaidTo(e.target.value)}
                   placeholder="e.g. Client Name"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-slate-900/5 transition-all"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-[#161f32] text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-slate-900/5 dark:focus:ring-indigo-500/20 transition-all"
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Category</label>
-                <select value={category} onChange={e => setCategory(e.target.value)} className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-bold outline-none cursor-pointer">
+                <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Category</label>
+                <select value={category} onChange={e => setCategory(e.target.value)} className="w-full px-3 py-2 bg-slate-50 dark:bg-[#161f32] text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold outline-none cursor-pointer">
                   {categories.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
@@ -885,19 +885,19 @@ function TransactionModal({ type, leadId, customerName, editingData, onClose, on
           )}
 
           <div className="space-y-1">
-            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Note {type === "EXPENSE" && "*"}</label>
+            <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Note {type === "EXPENSE" && "*"}</label>
             <input
               value={description} onChange={e => setDescription(e.target.value)}
               placeholder={type === "EXPENSE" ? "Required: Details of expense..." : "Internal remark..."}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-medium outline-none focus:ring-2 focus:ring-slate-900/5 transition-all"
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-[#161f32] text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium outline-none focus:ring-2 focus:ring-slate-900/5 dark:focus:ring-indigo-500/20 transition-all"
             />
           </div>
 
           <button
             type="submit" disabled={isSaving}
             className={cn(
-              "w-full mt-4 py-3 rounded-xl text-white text-[10px] font-black uppercase tracking-widest shadow-xl transition-all disabled:opacity-50",
-              type === "RECEIVED" ? "bg-emerald-600 shadow-emerald-600/20" : "bg-rose-600 shadow-rose-600/20"
+              "w-full mt-4 py-3 rounded-xl text-white text-[10px] font-black uppercase tracking-widest shadow-xl transition-all disabled:opacity-50 cursor-pointer",
+              type === "RECEIVED" ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20" : "bg-rose-600 hover:bg-rose-700 shadow-rose-600/20"
             )}
           >
             {isSaving ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : (editingData ? "Update Record" : `Add ${type === "RECEIVED" ? "Income" : "Expense"}`)}
@@ -961,29 +961,29 @@ function DealAmountModal({ leadId, currentAmount, currentNotes, onClose, onSucce
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden">
-        <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs" onClick={onClose} />
+      <div className="relative w-full max-w-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden">
+        <div className="px-6 py-4 bg-slate-900 dark:bg-slate-800 border-b border-transparent dark:border-white/8 text-white flex items-center justify-between">
           <h2 className="text-[10px] font-black uppercase tracking-widest">Initial Deal Amount</h2>
-          <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full transition-colors"><X className="h-4 w-4" /></button>
+          <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full transition-colors cursor-pointer"><X className="h-4 w-4" /></button>
         </div>
         <div className="p-6 space-y-4">
           <div className="space-y-1">
-            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Final Agreed Amount (₹)</label>
+            <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Final Agreed Amount (₹)</label>
             <input
               type="number" value={amount} onChange={e => setAmount(e.target.value)}
               placeholder="Enter amount..."
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-lg font-black outline-none focus:ring-4 focus:ring-slate-900/5 transition-all"
+              className="w-full px-4 py-3 bg-slate-50 dark:bg-[#161f32] text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-xl text-lg font-black outline-none focus:ring-4 focus:ring-slate-900/5 dark:focus:ring-indigo-500/20 transition-all"
               autoFocus
             />
           </div>
           <div className="space-y-1">
-            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Deal Notes (Optional)</label>
+            <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Deal Notes (Optional)</label>
             <textarea
               value={notes} onChange={e => setNotes(e.target.value)}
               placeholder="e.g. Inclusive of GST, Excludes electrical work..."
               rows={3}
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-medium outline-none resize-none focus:ring-4 focus:ring-slate-900/5 transition-all"
+              className="w-full px-4 py-3 bg-slate-50 dark:bg-[#161f32] text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium outline-none resize-none focus:ring-4 focus:ring-slate-900/5 dark:focus:ring-indigo-500/20 transition-all"
             />
           </div>
 
@@ -991,14 +991,14 @@ function DealAmountModal({ leadId, currentAmount, currentNotes, onClose, onSucce
             {(currentAmount !== null && currentAmount !== undefined) && (
               <button
                 onClick={handleDelete}
-                className="p-3 text-rose-500 hover:bg-rose-50 rounded-xl transition-all border border-rose-100"
+                className="p-3 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-xl transition-all border border-rose-100 dark:border-rose-500/20 cursor-pointer"
               >
                 <Trash2 className="h-5 w-5" />
               </button>
             )}
             <button
               onClick={handleSave} disabled={isSaving}
-              className="flex-1 bg-slate-900 text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-slate-900/20 disabled:opacity-50"
+              className="flex-1 bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-500 text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-slate-900/20 dark:shadow-indigo-600/20 disabled:opacity-50 cursor-pointer transition-all"
             >
               {isSaving ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : "Save Deal Amount"}
             </button>

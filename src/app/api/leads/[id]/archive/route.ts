@@ -11,6 +11,16 @@ export async function POST(
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    let archiveReason: string | undefined;
+    let tentativeDate: string | undefined;
+    try {
+      const body = await request.json();
+      archiveReason = body?.archiveReason;
+      tentativeDate = body?.tentativeDate;
+    } catch {
+      // Body may be empty
+    }
+
     const result = await prisma.$transaction(async (tx) => {
       const lead = await tx.lead.findUnique({
         where: { id },
@@ -19,21 +29,31 @@ export async function POST(
 
       if (!lead) throw new Error("Lead not found");
 
-      const updated = await (tx.lead as any).update({
+      const finalReason = archiveReason || "Client Will Call";
+      const finalTentative = tentativeDate ? new Date(tentativeDate) : null;
+
+      const updated = await tx.lead.update({
         where: { id },
         data: {
           isArchived: true,
           archivedAt: new Date(),
+          archiveReason: finalReason,
+          tentativeDate: finalTentative,
           isCancelled: false,
           cancelReason: null
         }
       });
 
+      // Format optional timeline note
+      const dateFormatted = finalTentative 
+        ? ` (Expected: ${finalTentative.toLocaleString("default", { month: "short", year: "numeric" })})` 
+        : "";
+
       // Log note in timeline
       await tx.leadNote.create({
         data: {
           leadId: id,
-          content: "📦 Lead moved to Passive Archive (Customer will call back)"
+          content: `📦 Lead moved to Passive Archive — Reason: ${finalReason}${dateFormatted}`
         }
       });
 

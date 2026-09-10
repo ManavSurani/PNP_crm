@@ -2,6 +2,7 @@
 import { use, useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { ChevronRight, Plus, X, Loader2, CheckCircle2, ArrowLeft } from "lucide-react";
+import { useTheme } from "@/components/providers/ThemeProvider";
 
 interface MS {
   id: string; sequence: number; name: string; description: string | null;
@@ -36,17 +37,19 @@ function fmt(d: string | null | number, short = false) {
 
 const CARD_W = 120, CARD_H = 64, START_X = 60;
 
-const PHASES: Record<string, { fill: string; stroke: string; text: string; dot: string }> = {
-  "Survey & Design": { fill: "#FFEDD5", stroke: "#F97316", text: "#9A3412", dot: "#F97316" }, // Orange
-  "Civil & Structural": { fill: "#FEF08A", stroke: "#EAB308", text: "#854D0E", dot: "#EAB308" }, // Yellow
-  "Elec & Plumbing": { fill: "#DBEAFE", stroke: "#3B82F6", text: "#1E40AF", dot: "#3B82F6" }, // Blue
-  "Finishing": { fill: "#DCFCE7", stroke: "#22C55E", text: "#14532D", dot: "#22C55E" }, // Green
-  "General": { fill: "#F3F4F6", stroke: "#9CA3AF", text: "#374151", dot: "#9CA3AF" }, // Gray
+const PHASES: Record<string, { fill: string; stroke: string; text: string; dot: string; darkFill: string; darkStroke: string; darkText: string }> = {
+  "Survey & Design": { fill: "#FFEDD5", stroke: "#F97316", text: "#9A3412", dot: "#F97316", darkFill: "rgba(249,115,22,0.18)", darkStroke: "#FB923C", darkText: "#FDBA74" }, // Orange
+  "Civil & Structural": { fill: "#FEF08A", stroke: "#EAB308", text: "#854D0E", dot: "#EAB308", darkFill: "rgba(234,179,8,0.18)", darkStroke: "#FACC15", darkText: "#FDE047" }, // Yellow
+  "Elec & Plumbing": { fill: "#DBEAFE", stroke: "#3B82F6", text: "#1E40AF", dot: "#3B82F6", darkFill: "rgba(59,130,246,0.18)", darkStroke: "#60A5FA", darkText: "#93C5FD" }, // Blue
+  "Finishing": { fill: "#DCFCE7", stroke: "#22C55E", text: "#14532D", dot: "#22C55E", darkFill: "rgba(34,197,94,0.18)", darkStroke: "#4ADE80", darkText: "#86EFAC" }, // Green
+  "General": { fill: "#F3F4F6", stroke: "#9CA3AF", text: "#374151", dot: "#9CA3AF", darkFill: "rgba(148,163,184,0.18)", darkStroke: "#94A3B8", darkText: "#CBD5E1" }, // Gray
 };
 
 const STATUS_LBL: Record<string, string> = { done: "Completed", in_progress: "Active", delay: "Delayed", pending: "Pending" };
 
 function GanttSVG({ milestones, onEdit }: { milestones: MS[]; onEdit: (m: MS) => void; }) {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
   const [hovered, setHovered] = useState<string | null>(null);
 
   // Helper to get start of day in local time for consistent comparison
@@ -152,14 +155,14 @@ function GanttSVG({ milestones, onEdit }: { milestones: MS[]; onEdit: (m: MS) =>
     <div style={{ overflowX: "auto", paddingBottom: 10 }}>
       <svg viewBox={`0 0 ${svgW} ${svgH}`} width={svgW} height={svgH} style={{ overflow: "visible", display: "block" }}>
         {/* Axis */}
-        <line x1={START_X - 10} y1={AXIS_Y} x2={endX + 20} y2={AXIS_Y} stroke="#9CA3AF" strokeWidth={1} />
-        <polygon points={`${endX + 22},${AXIS_Y - 3} ${endX + 30},${AXIS_Y} ${endX + 22},${AXIS_Y + 3}`} fill="#9CA3AF" />
+        <line x1={START_X - 10} y1={AXIS_Y} x2={endX + 20} y2={AXIS_Y} stroke={isDark ? "#475569" : "#9CA3AF"} strokeWidth={1} />
+        <polygon points={`${endX + 22},${AXIS_Y - 3} ${endX + 30},${AXIS_Y} ${endX + 22},${AXIS_Y + 3}`} fill={isDark ? "#475569" : "#9CA3AF"} />
 
         {/* Month ticks */}
         {ticks.map((t, i) => (
           <g key={i}>
-            <line x1={t.x} y1={AXIS_Y - 4} x2={t.x} y2={AXIS_Y + 4} stroke="#D1D5DB" strokeWidth={1} />
-            <text x={t.x} y={AXIS_Y - 10} textAnchor="middle" fontSize={10} fontWeight={500} fill="#6B7280">{t.l}</text>
+            <line x1={t.x} y1={AXIS_Y - 4} x2={t.x} y2={AXIS_Y + 4} stroke={isDark ? "#334155" : "#D1D5DB"} strokeWidth={1} />
+            <text x={t.x} y={AXIS_Y - 10} textAnchor="middle" fontSize={10} fontWeight={500} fill={isDark ? "#94a3b8" : "#6B7280"}>{t.l}</text>
           </g>
         ))}
 
@@ -167,7 +170,7 @@ function GanttSVG({ milestones, onEdit }: { milestones: MS[]; onEdit: (m: MS) =>
         <g>
           <line x1={todayX} y1={AXIS_Y - 10} x2={todayX} y2={svgH - 20} stroke="#EF4444" strokeWidth={1.5} strokeDasharray="4,3" />
           <path d={`M${todayX - 5},${AXIS_Y - 12} L${todayX + 5},${AXIS_Y - 12} L${todayX},${AXIS_Y - 2} Z`} fill="#EF4444" />
-          <rect x={todayX - 20} y={svgH - 20} width={40} height={16} rx={4} fill="#FEF2F2" stroke="#EF4444" strokeWidth={1} />
+          <rect x={todayX - 20} y={svgH - 20} width={40} height={16} rx={4} fill={isDark ? "#450a0a" : "#FEF2F2"} stroke="#EF4444" strokeWidth={1} />
           <text x={todayX} y={svgH - 9} textAnchor="middle" fontSize={9} fontWeight={600} fill="#EF4444">TODAY</text>
         </g>
 
@@ -188,19 +191,19 @@ function GanttSVG({ milestones, onEdit }: { milestones: MS[]; onEdit: (m: MS) =>
               <g style={{ cursor: "pointer" }}
                 onClick={() => onEdit(m)}
                 onMouseEnter={() => setHovered(m.id)} onMouseLeave={() => setHovered(null)}>
-                <rect x={rx} y={cy} width={CARD_W} height={CARD_H} rx={8} fill={col.fill} stroke={col.stroke} strokeWidth={isDone ? 1 : 1.5}
-                  style={{ filter: isHov ? "drop-shadow(0 4px 6px rgba(0,0,0,0.1))" : "drop-shadow(0 1px 2px rgba(0,0,0,0.05))" }} />
+                <rect x={rx} y={cy} width={CARD_W} height={CARD_H} rx={8} fill={isDark ? col.darkFill : col.fill} stroke={isDark ? col.darkStroke : col.stroke} strokeWidth={isDone ? 1 : 1.5}
+                  style={{ filter: isHov ? (isDark ? "drop-shadow(0 4px 12px rgba(0,0,0,0.5))" : "drop-shadow(0 4px 6px rgba(0,0,0,0.1))") : (isDark ? "drop-shadow(0 2px 4px rgba(0,0,0,0.3))" : "drop-shadow(0 1px 2px rgba(0,0,0,0.05))") }} />
 
                 {m.phase === "Project Completed" ? (
-                  <text x={rx + 8} y={cy + 28} fontSize={10} fontWeight={700} fill={col.text}>
+                  <text x={rx + 8} y={cy + 28} fontSize={10} fontWeight={700} fill={isDark ? col.darkText : col.text}>
                     Project Completed
                   </text>
                 ) : (
                   <>
-                    <text x={rx + 8} y={cy + 16} fontSize={10} fontWeight={700} fill={col.text}>
+                    <text x={rx + 8} y={cy + 16} fontSize={10} fontWeight={700} fill={isDark ? col.darkText : col.text}>
                       {m.phase.length > 18 ? m.phase.substring(0, 18) + "..." : m.phase}
                     </text>
-                    <text x={rx + 8} y={cy + 28} fontSize={9} fontWeight={500} fill={col.text} opacity={0.7}>
+                    <text x={rx + 8} y={cy + 28} fontSize={9} fontWeight={500} fill={isDark ? col.darkText : col.text} opacity={0.8}>
                       {m.name.length > 20 ? m.name.substring(0, 20) + "..." : m.name}
                     </text>
                   </>
@@ -208,14 +211,14 @@ function GanttSVG({ milestones, onEdit }: { milestones: MS[]; onEdit: (m: MS) =>
 
                 {m.status === "in_progress" && (
                   <>
-                    <rect x={rx + 8} y={cy + 36} width={CARD_W - 16} height={6} rx={3} fill="#FFFFFF" opacity={0.5} />
-                    <rect x={rx + 8} y={cy + 36} width={(CARD_W - 16) * (m.progress ?? 0) / 100} height={6} rx={3} fill={col.stroke} />
-                    <text x={rx + CARD_W - 8} y={cy + 34} fontSize={8} fontWeight={700} fill={col.text} textAnchor="end">{m.progress ?? 0}%</text>
+                    <rect x={rx + 8} y={cy + 36} width={CARD_W - 16} height={6} rx={3} fill={isDark ? "rgba(255,255,255,0.15)" : "#FFFFFF"} opacity={0.5} />
+                    <rect x={rx + 8} y={cy + 36} width={(CARD_W - 16) * (m.progress ?? 0) / 100} height={6} rx={3} fill={isDark ? col.darkStroke : col.stroke} />
+                    <text x={rx + CARD_W - 8} y={cy + 34} fontSize={8} fontWeight={700} fill={isDark ? col.darkText : col.text} textAnchor="end">{m.progress ?? 0}%</text>
                   </>
                 )}
 
                 {m.status === "delay" && (
-                  <text x={rx + 8} y={cy + 42} fontSize={9} fontWeight={600} fill="#DC2626">{m.delayDays} days delayed</text>
+                  <text x={rx + 8} y={cy + 42} fontSize={9} fontWeight={600} fill={isDark ? "#F87171" : "#DC2626"}>{m.delayDays} days delayed</text>
                 )}
 
                 {isDone && (
@@ -228,8 +231,8 @@ function GanttSVG({ milestones, onEdit }: { milestones: MS[]; onEdit: (m: MS) =>
                 {/* Tooltip on hover */}
                 {isHov && (
                   <g transform={`translate(${rx}, ${cy - 24})`}>
-                    <rect x={0} y={0} width={CARD_W} height={18} rx={4} fill="#111827" />
-                    <text x={CARD_W / 2} y={12} textAnchor="middle" fontSize={9} fontWeight={500} fill="white">{dateStr}</text>
+                    <rect x={0} y={0} width={CARD_W} height={18} rx={4} fill={isDark ? "#1E293B" : "#111827"} stroke={isDark ? "rgba(255,255,255,0.12)" : "none"} strokeWidth={1} />
+                    <text x={CARD_W / 2} y={12} textAnchor="middle" fontSize={9} fontWeight={500} fill={isDark ? "#F1F5F9" : "white"}>{dateStr}</text>
                   </g>
                 )}
               </g>
@@ -359,53 +362,53 @@ function Modal({ mode, init, projectId, isProjectCompleted, existingMilestones =
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, backdropFilter: "blur(2px)" }}>
-      <div style={{ background: "white", borderRadius: 16, padding: 24, width: 400, boxShadow: "0 20px 60px rgba(0,0,0,0.15)", maxHeight: "90vh", overflowY: "auto" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <p style={{ fontSize: 16, fontWeight: 700, color: "#111827", margin: 0 }}>{mode === "add" ? "Add Milestone" : "Edit Milestone"}</p>
-          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#6B7280", padding: 4 }}><X size={18} /></button>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-6 w-[400px] shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-4">
+          <p className="text-base font-bold text-slate-900 dark:text-white m-0">{mode === "add" ? "Add Milestone" : "Edit Milestone"}</p>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 cursor-pointer"><X size={18} /></button>
         </div>
 
-        {err && <p style={{ fontSize: 13, color: "#EF4444", marginBottom: 12, fontWeight: 500 }}>{err}</p>}
+        {err && <p className="text-xs text-rose-500 mb-3 font-medium">{err}</p>}
 
         {isAddingPhase ? (
-          <div style={{ background: "#F9FAFB", padding: 16, borderRadius: 8, marginBottom: 16, border: "1px solid #E5E7EB" }}>
-            <p style={{ fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 12, marginTop: 0 }}>Create New Phase</p>
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ fontSize: 11, fontWeight: 600, color: "#6B7280", textTransform: "uppercase" }}>Phase Name</label>
+          <div className="bg-slate-50 dark:bg-[#161f32] p-4 rounded-xl mb-4 border border-slate-200 dark:border-white/8">
+            <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 mb-3 mt-0">Create New Phase</p>
+            <div className="mb-3">
+              <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase">Phase Name</label>
               <input value={newPhaseName} onChange={e => setNewPhaseName(e.target.value)} placeholder="e.g. Landscaping"
-                style={{ width: "100%", marginTop: 4, border: "1px solid #D1D5DB", borderRadius: 8, padding: "8px 10px", fontSize: 13, outline: "none", boxSizing: "border-box" }} />
+                className="w-full mt-1 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-lg px-2.5 py-2 text-xs outline-none focus:border-indigo-500" />
             </div>
             <div>
-              <label style={{ fontSize: 11, fontWeight: 600, color: "#6B7280", textTransform: "uppercase" }}>Subcategories</label>
+              <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase">Subcategories</label>
               {newSubcats.map((sub, i) => (
-                <div key={i} style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                <div key={i} className="flex gap-2 mt-1">
                   <input value={sub} onChange={e => {
                     const next = [...newSubcats];
                     next[i] = e.target.value;
                     setNewSubcats(next);
-                  }} placeholder="Subcategory name" style={{ flex: 1, border: "1px solid #D1D5DB", borderRadius: 8, padding: "8px 10px", fontSize: 13, outline: "none", boxSizing: "border-box" }} />
+                  }} placeholder="Subcategory name" className="flex-1 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-lg px-2.5 py-2 text-xs outline-none focus:border-indigo-500" />
                   {newSubcats.length > 1 && (
-                    <button onClick={() => setNewSubcats(newSubcats.filter((_, idx) => idx !== i))} style={{ background: "none", border: "none", color: "#EF4444", cursor: "pointer", padding: 0 }}><X size={16} /></button>
+                    <button onClick={() => setNewSubcats(newSubcats.filter((_, idx) => idx !== i))} className="text-rose-500 p-0 cursor-pointer"><X size={16} /></button>
                   )}
                 </div>
               ))}
-              <button onClick={() => setNewSubcats([...newSubcats, ""])} style={{ marginTop: 8, background: "none", border: "none", color: "#2563EB", fontSize: 12, fontWeight: 600, cursor: "pointer", padding: 0 }}>+ Add another subcategory</button>
+              <button onClick={() => setNewSubcats([...newSubcats, ""])} className="mt-2 text-blue-600 dark:text-indigo-400 text-xs font-semibold cursor-pointer hover:underline">+ Add another subcategory</button>
             </div>
-            <div style={{ display: "flex", gap: 8, marginTop: 16, justifyContent: "flex-end" }}>
-              <button onClick={() => setIsAddingPhase(false)} style={{ background: "white", border: "1px solid #FCA5A5", color: "#EF4444", borderRadius: 6, padding: "6px 12px", fontSize: 12, cursor: "pointer" }}>Cancel</button>
-              <button onClick={handleAddNewPhase} style={{ background: "#2563EB", color: "white", border: "none", borderRadius: 6, padding: "6px 12px", fontSize: 12, cursor: "pointer" }}>Save Phase</button>
+            <div className="flex gap-2 mt-4 justify-end">
+              <button onClick={() => setIsAddingPhase(false)} className="bg-white dark:bg-slate-800 border border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 rounded-lg px-3 py-1.5 text-xs font-semibold cursor-pointer">Cancel</button>
+              <button onClick={handleAddNewPhase} className="bg-blue-600 dark:bg-indigo-600 text-white rounded-lg px-3 py-1.5 text-xs font-semibold hover:bg-blue-700 dark:hover:bg-indigo-500 cursor-pointer">Save Phase</button>
             </div>
           </div>
         ) : (
           <>
-            <div style={{ marginBottom: 12 }}>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <label style={{ fontSize: 11, fontWeight: 600, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>Phase</label>
-                <button onClick={() => setIsAddingPhase(true)} style={{ background: "none", border: "none", color: "#2563EB", fontSize: 11, fontWeight: 600, cursor: "pointer", padding: 0 }}>➕ Add New Phase</button>
+            <div className="mb-3">
+              <div className="flex justify-between">
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Phase</label>
+                <button onClick={() => setIsAddingPhase(true)} className="text-blue-600 dark:text-indigo-400 text-[11px] font-semibold cursor-pointer">➕ Add New Phase</button>
               </div>
               <select value={phase} onChange={e => { setPhase(e.target.value); setErr(""); }}
-                style={{ width: "100%", marginTop: 4, border: "1px solid #D1D5DB", borderRadius: 8, padding: "8px 10px", fontSize: 13, outline: "none", boxSizing: "border-box" }}>
+                className="w-full mt-1 border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#161f32] text-slate-900 dark:text-white rounded-lg px-2.5 py-2 text-xs outline-none focus:border-indigo-500">
                 {Object.keys(availablePhaseData).length === 0 ? (
                   <option disabled>All phases completed</option>
                 ) : (
@@ -415,20 +418,20 @@ function Modal({ mode, init, projectId, isProjectCompleted, existingMilestones =
             </div>
 
             {phase !== "Project Completed" && (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12, marginBottom: 12 }}>
+              <div className="grid grid-cols-1 gap-3 mb-3">
                 <div>
-                  <label style={{ fontSize: 11, fontWeight: 600, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>Subcategory</label>
+                  <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Subcategory</label>
                   <select value={subcategory} onChange={e => { setSubcategory(e.target.value); setErr(""); }}
                     disabled={!phase || !availablePhaseData[phase]}
-                    style={{ width: "100%", marginTop: 4, border: "1px solid #D1D5DB", borderRadius: 8, padding: "8px 10px", fontSize: 13, outline: "none", boxSizing: "border-box", background: (!phase || !availablePhaseData[phase]) ? "#F3F4F6" : "white" }}>
+                    className="w-full mt-1 border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#161f32] disabled:bg-slate-100 dark:disabled:bg-slate-800/50 text-slate-900 dark:text-white rounded-lg px-2.5 py-2 text-xs outline-none focus:border-indigo-500">
                     {availablePhaseData[phase]?.map((s: string) => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
               </div>
             )}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12, marginBottom: 12 }}>
+            <div className="grid grid-cols-1 gap-3 mb-3">
               <div>
-                <label style={{ fontSize: 11, fontWeight: 600, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>Date</label>
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Date</label>
                 <input type="date" value={sdate} max={todayStr}
                   onChange={e => {
                     const val = e.target.value;
@@ -439,14 +442,14 @@ function Modal({ mode, init, projectId, isProjectCompleted, existingMilestones =
                       setErr("");
                     }
                   }}
-                  style={{ width: "100%", marginTop: 4, border: "1px solid #D1D5DB", borderRadius: 8, padding: "8px 10px", fontSize: 13, boxSizing: "border-box", outline: "none" }} />
+                  className="w-full mt-1 border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#161f32] text-slate-900 dark:text-white rounded-lg px-2.5 py-2 text-xs outline-none focus:border-indigo-500" />
               </div>
             </div>
 
             {mode === "add" && !isProjectCompleted && (
-              <div style={{ marginBottom: 16, paddingTop: 10, borderTop: "1px solid #E5E7EB" }}>
+              <div className="mb-4 pt-2.5 border-t border-slate-200 dark:border-white/8">
                 <button onClick={markProjectDone} disabled={saving}
-                  style={{ width: "100%", background: "#F0FDF4", color: "#166534", border: "1px solid #BBF7D0", borderRadius: 8, padding: "10px", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, transition: "all 0.2s" }}>
+                  className="w-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 rounded-lg p-2.5 text-xs font-bold flex items-center justify-center gap-2 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-all cursor-pointer">
                   <CheckCircle2 size={16} /> Mark Entire Project as Completed
                 </button>
               </div>
@@ -454,26 +457,25 @@ function Modal({ mode, init, projectId, isProjectCompleted, existingMilestones =
           </>
         )}
 
-        <div style={{ display: "flex", gap: 8, justifyContent: "space-between", alignItems: "center", marginTop: 16 }}>
+        <div className="flex gap-2 justify-between items-center mt-4">
           {mode === "edit" ? (
-            <button onClick={del} disabled={saving} style={{ color: "#EF4444", background: "none", border: "none", fontSize: 13, fontWeight: 600, cursor: "pointer", padding: "6px 10px" }}>Delete</button>
+            <button onClick={del} disabled={saving} className="text-rose-600 dark:text-rose-400 text-xs font-semibold px-2.5 py-1.5 hover:underline cursor-pointer">Delete</button>
           ) : <div></div>}
 
-          <div style={{ display: "flex", gap: 8 }}>
+          <div className="flex gap-2">
             <button 
               onClick={onClose} 
-              className="border border-slate-200 bg-white rounded-lg px-4 py-2 text-sm font-semibold text-slate-600 hover:text-rose-600 hover:border-rose-200 transition-colors"
+              className="border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 rounded-lg px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-200 dark:hover:border-rose-900/40 transition-colors cursor-pointer"
             >
               Close
             </button>
             <button onClick={save} disabled={saving || isAddingPhase || Object.keys(availablePhaseData).length === 0}
-              style={{ background: "#2563EB", color: "white", border: "none", borderRadius: 8, padding: "8px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer", opacity: (saving || isAddingPhase || Object.keys(availablePhaseData).length === 0) ? 0.7 : 1, display: "flex", alignItems: "center", gap: 6 }}>
-              {saving && <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />} Save
+              className="bg-blue-600 dark:bg-indigo-600 hover:bg-blue-700 dark:hover:bg-indigo-500 text-white rounded-lg px-5 py-2 text-xs font-semibold flex items-center gap-1.5 disabled:opacity-50 transition-all cursor-pointer">
+              {saving && <Loader2 size={14} className="animate-spin" />} Save
             </button>
           </div>
         </div>
       </div>
-      <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
     </div>
   );
 }
@@ -575,73 +577,73 @@ export default function ProgressPage({ params }: { params: Promise<{ id: string 
     setShowModal(false);
   };
 
-  if (loading) return (<div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh" }}><Loader2 size={32} style={{ color: "#3B82F6", animation: "spin 1s linear infinite" }} /></div>);
-  if (!project) return (<div style={{ maxWidth: 600, margin: "60px auto", textAlign: "center", color: "#6B7280" }}><div style={{ fontSize: 48, marginBottom: 16 }}>🏗️</div><h2 style={{ fontSize: 18, fontWeight: 700, color: "#111827", marginBottom: 8 }}>No Project Found</h2><p>A project is auto-created when a lead is converted to a customer.</p><Link href={`/customers/${id}`} style={{ display: "inline-block", marginTop: 20, padding: "8px 20px", background: "#3B82F6", color: "white", borderRadius: 8, fontSize: 13, fontWeight: 600, textDecoration: "none" }}>← Back to Profile</Link></div>);
+  if (loading) return (<div className="flex items-center justify-center min-h-[60vh]"><Loader2 size={32} className="text-blue-600 dark:text-indigo-400 animate-spin" /></div>);
+  if (!project) return (<div className="max-w-[600px] mx-auto my-[60px] text-center text-slate-500 dark:text-slate-400"><div className="text-5xl mb-4">🏗️</div><h2 className="text-lg font-bold text-slate-900 dark:text-white mb-2">No Project Found</h2><p>A project is auto-created when a lead is converted to a customer.</p><Link href={`/customers/${id}`} className="inline-block mt-5 px-5 py-2 bg-blue-600 dark:bg-indigo-600 hover:bg-blue-700 dark:hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold">← Back to Profile</Link></div>);
 
   return (
-    <div style={{ maxWidth: "100%", paddingBottom: 60 }}>
+    <div className="max-w-full pb-16">
       {/* Navigation & Breadcrumb */}
       <div className="flex items-center justify-between px-2 pt-2 mb-6">
         <Link
           href={`/customers/${id}`}
-          className="group flex items-center gap-2 text-[10px] font-black text-slate-400 hover:text-slate-900 transition-all uppercase tracking-[0.2em]"
+          className="group flex items-center gap-2 text-[10px] font-black text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-all uppercase tracking-[0.2em]"
         >
-          <div className="h-7 w-7 rounded-full border border-slate-200 flex items-center justify-center group-hover:border-slate-400 transition-colors bg-white shadow-sm">
+          <div className="h-7 w-7 rounded-full border border-slate-200 dark:border-white/10 flex items-center justify-center group-hover:border-slate-400 dark:group-hover:border-white/20 transition-colors bg-white dark:bg-slate-900 shadow-sm">
             <ArrowLeft className="h-3.5 w-3.5" />
           </div>
           BACK
         </Link>
 
         <div className="flex items-center gap-2 text-[10px] font-black tracking-[0.2em] uppercase">
-          <Link href="/customers" className="text-slate-300 hover:text-slate-500 transition-colors">Customer Directory</Link>
-          <ChevronRight className="h-3 w-3 text-slate-200" />
-          <Link href={`/customers/${id}`} className="text-slate-300 hover:text-slate-500 transition-colors">{customer?.customerName?.toUpperCase() || "CUSTOMER"}</Link>
-          <ChevronRight className="h-3 w-3 text-slate-200" />
-          <span className="text-slate-900">PROGRESS</span>
+          <Link href="/customers" className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">Customer Directory</Link>
+          <ChevronRight className="h-3 w-3 text-slate-300 dark:text-slate-600" />
+          <Link href={`/customers/${id}`} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">{customer?.customerName?.toUpperCase() || "CUSTOMER"}</Link>
+          <ChevronRight className="h-3 w-3 text-slate-300 dark:text-slate-600" />
+          <span className="text-slate-900 dark:text-white">PROGRESS</span>
         </div>
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 10 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: "#111827", margin: 0 }}>
+      <div className="flex items-center justify-between mb-5 flex-wrap gap-2.5">
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white m-0">
             {customer?.project?.name ? `Project: ${customer.project.name}` : "Project Timeline"}
           </h1>
           {project.isCompleted ? (
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "#F0FDF4", color: "#166534", border: "1px solid #BBF7D0", borderRadius: 20, padding: "4px 12px", fontSize: 12, fontWeight: 600 }}>
+            <span className="inline-flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 rounded-full px-3 py-1 text-xs font-semibold">
               <CheckCircle2 size={14} /> Completed
             </span>
           ) : (
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "#EFF6FF", color: "#1E40AF", borderRadius: 20, padding: "4px 12px", fontSize: 11, fontWeight: 600 }}>
-              <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#3B82F6", display: "inline-block" }} /> Active Project
+            <span className="inline-flex items-center gap-1.5 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-100 dark:border-blue-500/20 rounded-full px-3 py-1 text-xs font-semibold">
+              <span className="w-2 h-2 rounded-full bg-blue-500 dark:bg-indigo-400 inline-block animate-pulse" /> Active Project
             </span>
           )}
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: 12, marginBottom: 24, flexWrap: "wrap" }}>
-        <div style={{ background: "white", borderRadius: 12, padding: "16px 20px", border: "1px solid #E5E7EB", flex: 1, minWidth: 200, boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
-          <p style={{ fontSize: 24, fontWeight: 800, color: "#2563EB", margin: "0 0 4px" }}>{totalDays} Days</p>
-          <p style={{ fontSize: 12, color: "#6B7280", margin: 0, fontWeight: 500 }}>Active Work Days</p>
+      <div className="flex gap-3 mb-6 flex-wrap">
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-white/8 flex-1 min-w-[200px] shadow-sm">
+          <p className="text-2xl font-extrabold text-blue-600 dark:text-indigo-400 mb-1">{totalDays} Days</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium m-0">Active Work Days</p>
         </div>
-        <div style={{ background: "white", borderRadius: 12, padding: "16px 20px", border: "1px solid #E5E7EB", flex: 1, minWidth: 200, boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
-          <p style={{ fontSize: 24, fontWeight: 800, color: "#111827", margin: "0 0 4px" }}>{totalProjectDaysDisplay}</p>
-          <p style={{ fontSize: 12, color: "#6B7280", margin: 0, fontWeight: 500 }}>Project Duration</p>
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-white/8 flex-1 min-w-[200px] shadow-sm">
+          <p className="text-2xl font-extrabold text-slate-900 dark:text-white mb-1">{totalProjectDaysDisplay}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium m-0">Project Duration</p>
         </div>
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-        <span style={{ fontSize: 13, color: "#6B7280", fontWeight: 500 }}>
+      <div className="flex items-center justify-between mb-4">
+        <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
           Click any milestone to edit details or update status.
         </span>
         <button onClick={() => { setModalMode("add"); setModalMs(null); setShowModal(true); }}
-          style={{ display: "flex", alignItems: "center", gap: 6, background: "#111827", color: "white", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }}>
+          className="flex items-center gap-1.5 bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-500 text-white rounded-lg px-4 py-2 text-xs font-semibold cursor-pointer shadow-sm transition-all">
           <Plus size={16} /> Add Milestone
         </button>
       </div>
 
-      <div style={{ background: "white", border: "1px solid #E5E7EB", borderRadius: 16, padding: "24px 0", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)" }}>
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/8 rounded-2xl py-6 shadow-sm">
         {milestones.length === 0 ? (
-          <p style={{ textAlign: "center", color: "#9CA3AF", fontSize: 14, padding: "60px 0" }}>Timeline is empty. Add a milestone to map the progress.</p>
+          <p className="text-center text-slate-400 dark:text-slate-500 text-sm py-15">Timeline is empty. Add a milestone to map the progress.</p>
         ) : (
           <GanttSVG milestones={milestones} onEdit={m => { setModalMode("edit"); setModalMs(m); setShowModal(true); }} />
         )}

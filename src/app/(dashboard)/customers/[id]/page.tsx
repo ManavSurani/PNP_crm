@@ -23,7 +23,7 @@ const HubCard = ({ title, subtitle, icon, href, badge, badgeColor, iconBg }: Hub
   return (
     <Link 
       href={href}
-      className="group flex flex-col p-4 bg-white rounded-[14px] border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] transition-all duration-300 hover:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.08)] hover:-translate-y-1 relative h-full"
+      className="group flex flex-col p-4 bg-white dark:bg-slate-900 rounded-[14px] border border-slate-100 dark:border-white/8 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] transition-all duration-300 hover:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.08)] dark:hover:border-emerald-500/30 hover:-translate-y-1 relative h-full"
     >
       <div className="flex items-start justify-between mb-3">
         <div className={cn("p-2.5 rounded-lg transition-colors duration-300", iconBg)}>
@@ -37,21 +37,21 @@ const HubCard = ({ title, subtitle, icon, href, badge, badgeColor, iconBg }: Hub
       </div>
       
       <div className="flex-1 space-y-0.5">
-        <h3 className="text-base font-bold text-slate-900 tracking-tight group-hover:text-emerald-600 transition-colors">
+        <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
           {title}
         </h3>
         {subtitle && (
-          <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
+          <p className="text-[11px] text-slate-400 dark:text-slate-400 font-medium leading-relaxed">
             {subtitle}
           </p>
         )}
       </div>
 
-      <div className="mt-3 pt-3 border-t border-slate-50 flex items-center justify-between">
-        <span className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] group-hover:text-emerald-600 transition-colors">
+      <div className="mt-3 pt-3 border-t border-slate-50 dark:border-slate-800 flex items-center justify-between">
+        <span className="text-[10px] font-black text-slate-300 dark:text-slate-500 uppercase tracking-[0.2em] group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
           OPEN MODULE
         </span>
-        <div className="h-6 w-6 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-all border border-slate-100 group-hover:border-emerald-100">
+        <div className="h-6 w-6 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-950/40 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-all border border-slate-100 dark:border-slate-700 group-hover:border-emerald-100 dark:group-hover:border-emerald-500/30">
           <ChevronRight className="h-3 w-3" />
         </div>
       </div>
@@ -126,10 +126,10 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
       <div className="flex items-center justify-between px-2 pt-2">
         <Link 
           href="/customers"
-          className="group flex items-center gap-2 text-[10px] font-black text-slate-400 hover:text-slate-900 transition-all uppercase tracking-[0.2em]"
+          className="group flex items-center gap-2 text-[10px] font-black text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all uppercase tracking-[0.2em]"
         >
-          <div className="h-7 w-7 rounded-full border border-slate-200 flex items-center justify-center group-hover:border-slate-400 transition-colors bg-white shadow-sm">
-            <ArrowLeft className="h-3.5 w-3.5" />
+          <div className="h-7 w-7 rounded-full border border-slate-200 dark:border-slate-800 flex items-center justify-center group-hover:border-slate-400 dark:group-hover:border-slate-600 transition-colors bg-white dark:bg-slate-900 shadow-sm">
+            <ArrowLeft className="h-3.5 w-3.5 text-slate-700 dark:text-slate-300" />
           </div>
           BACK
         </Link>
@@ -138,20 +138,20 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
           {customer?.isProjectCompleted ? (
             <Link href="/customers/completed" className="text-blue-400 hover:text-blue-500 transition-colors">Complete Projects</Link>
           ) : (
-            <Link href="/customers" className="text-slate-300 hover:text-slate-500 transition-colors">Customer Directory</Link>
+            <Link href="/customers" className="text-slate-300 dark:text-slate-500 hover:text-slate-500 dark:hover:text-slate-300 transition-colors">Customer Directory</Link>
           )}
-          <ChevronRight className="h-3 w-3 text-slate-200" /> 
-          <span className="text-slate-900">{customer?.customerName?.toUpperCase()}</span>
+          <ChevronRight className="h-3 w-3 text-slate-200 dark:text-slate-700" /> 
+          <span className="text-slate-900 dark:text-white">{customer?.customerName?.toUpperCase()}</span>
         </div>
       </div>
 
       {/* 🧑💼 Workspace Header (Hero Section) */}
-      <div className="bg-white p-4 md:p-5 rounded-[20px] border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 p-4 md:p-5 rounded-[20px] border border-slate-100 dark:border-white/8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-[100px] -mr-32 -mt-32" />
         
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 rounded-full border border-emerald-100 dark:border-emerald-500/30">
                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                <span className="text-[10px] font-black uppercase tracking-widest">Active Workspace</span>
             </div>
@@ -161,7 +161,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                 <div className="flex items-center gap-2">
                   <input
                     autoFocus
-                    className="text-xl md:text-2xl font-black text-slate-900 tracking-tight outline-none border-b-2 border-emerald-500 bg-transparent uppercase"
+                    className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight outline-none border-b-2 border-emerald-500 bg-transparent uppercase"
                     value={tempProject}
                     onChange={(e) => setTempProject(e.target.value)}
                     onKeyDown={(e) => {
@@ -172,7 +172,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                   />
                   <div className="flex gap-1">
                     <button onClick={handleUpdateProject} disabled={isSubmitting} className="p-1.5 bg-emerald-600 text-white rounded-lg shadow-sm hover:bg-emerald-700 transition-all"><Check className="h-5 w-5" /></button>
-                    <button onClick={() => setIsEditingProject(false)} className="p-1.5 bg-slate-100 text-slate-500 rounded-lg hover:bg-slate-200 transition-all"><X className="h-5 w-5" /></button>
+                    <button onClick={() => setIsEditingProject(false)} className="p-1.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"><X className="h-5 w-5" /></button>
                   </div>
                 </div>
               ) : (
@@ -182,7 +182,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                       setTempProject(customer?.project?.name || "");
                       setIsEditingProject(true);
                     }}
-                    className="text-xl md:text-2xl font-black text-slate-900 tracking-tight uppercase cursor-pointer hover:opacity-80 transition-opacity"
+                    className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight uppercase cursor-pointer hover:opacity-80 transition-opacity"
                     title="Double-click to edit"
                   >
                     {primaryTitle}
@@ -192,7 +192,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                       setTempProject(customer?.project?.name || "");
                       setIsEditingProject(true);
                     }}
-                    className="p-1.5 bg-slate-50 text-slate-300 hover:text-emerald-600 rounded-lg border border-slate-100 transition-colors"
+                    className="p-1.5 bg-slate-50 dark:bg-slate-800 text-slate-300 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg border border-slate-100 dark:border-slate-700 transition-colors"
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
@@ -200,19 +200,19 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
               )}
             </div>
 
-            <p className="text-slate-400 font-medium max-w-xl leading-relaxed text-sm">
+            <p className="text-slate-400 dark:text-slate-400 font-medium max-w-xl leading-relaxed text-sm">
               Welcome to your centralized project hub. Manage quotations, track design progress, and monitor site execution in real-time.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-             <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex items-center gap-3">
-                <div className="h-9 w-9 bg-slate-900 rounded-lg flex items-center justify-center text-white shadow-lg">
+             <div className="bg-slate-50 dark:bg-[#161f32] p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 flex items-center gap-3">
+                <div className="h-9 w-9 bg-slate-900 dark:bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-lg">
                    <LayoutGrid className="h-5.5 w-5.5" />
                 </div>
                 <div className="space-y-0.5">
-                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Verified Client</p>
-                   <p className="text-xs font-bold text-slate-900 tracking-tight">Partner ID: #619F</p>
+                   <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Verified Client</p>
+                   <p className="text-xs font-bold text-slate-900 dark:text-white tracking-tight">Partner ID: #619F</p>
                 </div>
              </div>
              <Link 
@@ -228,7 +228,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
       {/* 📦 Project Modules Section */}
       <div className="flex items-center gap-4 px-2 pt-2">
          <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] whitespace-nowrap">Project Modules</h2>
-         <div className="h-px w-full bg-slate-100" />
+         <div className="h-px w-full bg-slate-100 dark:bg-slate-800" />
       </div>
 
       {/* 🧱 Module Card Grid */}
@@ -236,50 +236,50 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
         <HubCard 
           title="Quotations"
           subtitle="Proposals, cost estimates & approvals."
-          icon={<FileText className="h-6 w-6 text-indigo-500" />}
+          icon={<FileText className="h-6 w-6 text-indigo-500 dark:text-indigo-400" />}
           href={`/customers/${id}/quotations`}
-          iconBg="bg-indigo-50"
+          iconBg="bg-indigo-50 dark:bg-indigo-950/50"
         />
         <HubCard 
           title="Design Expenses"
           subtitle="Track renders, layouts & design costs."
-          icon={<Palette className="h-6 w-6 text-rose-500" />}
+          icon={<Palette className="h-6 w-6 text-rose-500 dark:text-rose-400" />}
           href={`/customers/${id}/design`}
-          iconBg="bg-rose-50"
+          iconBg="bg-rose-50 dark:bg-rose-950/50"
         />
         <HubCard 
           title="Financials"
           subtitle="Payments, ledger & expenses."
-          icon={<Wallet className="h-6 w-6 text-emerald-500" />}
+          icon={<Wallet className="h-6 w-6 text-emerald-500 dark:text-emerald-400" />}
           href={`/customers/${id}/financials`}
           badge="AUDIT SYNC"
-          badgeColor="bg-emerald-50 text-emerald-600 border-emerald-100"
-          iconBg="bg-emerald-50"
+          badgeColor="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-500/30"
+          iconBg="bg-emerald-50 dark:bg-emerald-950/50"
         />
         <HubCard 
           title="Project Progress"
           subtitle="Site milestones & execution logs."
-          icon={<Activity className="h-6 w-6 text-blue-500" />}
+          icon={<Activity className="h-6 w-6 text-blue-500 dark:text-blue-400" />}
           href={`/customers/${id}/progress`}
           badge="LIVE STATUS"
-          badgeColor="bg-blue-50 text-blue-600 border-blue-100"
-          iconBg="bg-blue-50"
+          badgeColor="bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-500/30"
+          iconBg="bg-blue-50 dark:bg-blue-950/50"
         />
         <HubCard 
           title="Customer Logistics"
           subtitle="Address, contacts & preferences."
-          icon={<User className="h-6 w-6 text-slate-500" />}
+          icon={<User className="h-6 w-6 text-slate-500 dark:text-slate-400" />}
           href={`/customers/${id}/details`}
-          iconBg="bg-slate-50"
+          iconBg="bg-slate-50 dark:bg-slate-800"
         />
         
         {/* Support Card Style (Empty State Style) */}
-        <div className="flex flex-col items-center justify-center p-4 bg-slate-50/30 rounded-[14px] border-2 border-dashed border-slate-200 group hover:bg-emerald-50/20 hover:border-emerald-200 transition-all duration-300 h-full">
-           <div className="h-10 w-10 bg-white rounded-xl border border-slate-200 flex items-center justify-center mb-2 text-slate-300 shadow-sm group-hover:scale-110 transition-transform">
+        <div className="flex flex-col items-center justify-center p-4 bg-slate-50/30 dark:bg-slate-900/40 rounded-[14px] border-2 border-dashed border-slate-200 dark:border-slate-800 group hover:bg-emerald-50/20 dark:hover:bg-emerald-950/20 hover:border-emerald-200 dark:hover:border-emerald-500/30 transition-all duration-300 h-full">
+           <div className="h-10 w-10 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-center mb-2 text-slate-300 dark:text-slate-500 shadow-sm group-hover:scale-110 transition-transform">
               <HelpCircle className="h-5 w-5" />
            </div>
-           <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest text-center mb-1 group-hover:text-emerald-600 transition-colors">PORTAL SUPPORT</p>
-           <p className="text-[10px] font-bold text-slate-200 uppercase tracking-tighter">24/7 ASSISTANCE</p>
+           <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest text-center mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">PORTAL SUPPORT</p>
+           <p className="text-[10px] font-bold text-slate-200 dark:text-slate-600 uppercase tracking-tighter">24/7 ASSISTANCE</p>
         </div>
       </div>
     </div>

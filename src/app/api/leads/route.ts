@@ -12,13 +12,21 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
     const isArchivedParam = searchParams.get("archived") === "true";
+    const includeArchivedParam = searchParams.get("includeArchived") === "true";
 
-    const leads = await (prisma.lead as any).findMany({
-      where: {
-        ...(status ? { status: status as any } : {}),
-        isCancelled: false,
-        isArchived: isArchivedParam
-      },
+    const whereClause: any = {
+      ...(status ? { status: status as any } : {}),
+      isCancelled: false,
+    };
+
+    if (isArchivedParam) {
+      whereClause.isArchived = true;
+    } else if (!includeArchivedParam) {
+      whereClause.isArchived = false;
+    }
+
+    const leads = await prisma.lead.findMany({
+      where: whereClause,
       orderBy: isArchivedParam ? { archivedAt: "desc" } : { createdAt: "desc" },
       select: {
         id: true,
@@ -34,6 +42,8 @@ export async function GET(request: Request) {
         isHotLead: true,
         isArchived: true,
         archivedAt: true,
+        archiveReason: true,
+        tentativeDate: true,
         budgetRange: true,
         requirementDetails: true,
         assignedStaffId: true,

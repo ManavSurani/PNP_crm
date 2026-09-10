@@ -115,14 +115,14 @@ export default function CompletedProjectsPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-10">
       {/* Header Section - Matched to Customer Directory */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-8 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white dark:bg-slate-900 p-8 rounded-xl border border-slate-200 dark:border-white/8 shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500 rounded-full blur-[100px] opacity-10 -mr-24 -mt-24" />
         <div className="relative z-10">
-          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Complete Projects</h1>
-          <p className="text-slate-500 text-sm mt-1">Completed and archived project workspaces with full historical access.</p>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white tracking-tight">Complete Projects</h1>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Completed and archived project workspaces with full historical access.</p>
         </div>
-        <div className="relative z-10 bg-blue-50 border border-blue-100 px-4 py-2 rounded-lg">
-           <span className="text-blue-700 font-bold text-sm">{filteredCustomers.length} Total Completed Projects</span>
+        <div className="relative z-10 bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-800/50 px-4 py-2 rounded-lg">
+           <span className="text-blue-700 dark:text-blue-400 font-bold text-sm">{filteredCustomers.length} Total Completed Projects</span>
         </div>
       </div>
 
@@ -130,11 +130,11 @@ export default function CompletedProjectsPage() {
       <div className="flex flex-col md:flex-row items-center gap-4">
         <div className="relative flex-grow w-full md:max-w-xl group">
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-            <Search className="h-4 w-4 text-slate-400" />
+            <Search className="h-4 w-4 text-slate-400 dark:text-slate-500" />
           </div>
           <input
             type="text"
-            className="block w-full rounded-lg border border-slate-200 py-2.5 pl-11 pr-4 text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm bg-white transition-all outline-none"
+            className="block w-full rounded-lg border border-slate-200 dark:border-slate-800 py-2.5 pl-11 pr-4 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm bg-white dark:bg-[#161f32] transition-all outline-none"
             placeholder="Search completed projects..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -145,7 +145,7 @@ export default function CompletedProjectsPage() {
             onClick={() => setShowFilters(!showFilters)}
             className={cn(
               "flex items-center gap-2 px-4 py-2.5 border rounded-lg text-sm font-medium transition shadow-sm",
-              showFilters ? "bg-slate-900 text-white border-slate-900" : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+              showFilters ? "bg-slate-900 dark:bg-slate-800 text-white border-slate-900 dark:border-slate-700" : "bg-white dark:bg-[#161f32] border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
             )}
           >
             <Filter className="h-4 w-4" /> {showFilters ? "Hide Filters" : "Filters"}
@@ -157,7 +157,7 @@ export default function CompletedProjectsPage() {
                 setFilters({ source: "ALL", service: "ALL", startDate: "", endDate: "" });
                 setSortBy("NEWEST");
               }}
-              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 transition shadow-sm"
+              className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-[#161f32] border border-slate-200 dark:border-slate-800 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-sm"
             >
               <RotateCcw className="h-4 w-4" /> Reset
             </button>
@@ -167,71 +167,71 @@ export default function CompletedProjectsPage() {
 
       {/* Compact Filter Options */}
       {showFilters && (
-        <div className="bg-emerald-50/50 p-3 rounded-xl border border-emerald-100 shadow-sm animate-in slide-in-from-top-2 duration-200 shrink-0">
+        <div className="bg-emerald-50/50 dark:bg-emerald-950/20 p-3 rounded-xl border border-emerald-100 dark:border-emerald-900/40 shadow-sm animate-in slide-in-from-top-2 duration-200 shrink-0">
           <div className="flex flex-wrap items-end gap-3">
             <div className="min-w-[140px] flex-1">
-              <label className="block text-[9px] font-bold text-emerald-700 uppercase tracking-tight mb-1 ml-1">Acquisition Source</label>
+              <label className="block text-[9px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-tight mb-1 ml-1">Acquisition Source</label>
               <select 
-                className="w-full rounded-lg border border-emerald-200 bg-white/70 py-1.5 px-3 text-xs focus:bg-white focus:border-emerald-500 outline-none transition-all cursor-pointer"
+                className="w-full rounded-lg border border-emerald-200 dark:border-emerald-800/60 bg-white/70 dark:bg-[#161f32] py-1.5 px-3 text-xs text-slate-900 dark:text-slate-100 focus:bg-white dark:focus:bg-[#111827] focus:border-emerald-500 outline-none transition-all cursor-pointer"
                 value={filters.source}
                 onChange={e => setFilters({...filters, source: e.target.value})}
               >
-                <option value="ALL">All Sources</option>
-                <option value="WHATSAPP">WhatsApp</option>
-                <option value="FACEBOOK">Facebook</option>
-                <option value="INSTAGRAM">Instagram</option>
-                <option value="WEBSITE">Website</option>
-                <option value="DIRECT_CALL">Direct Call</option>
-                <option value="WALK_IN">Walk In</option>
-                <option value="THROUGH_REFERENCE">Reference</option>
+                <option value="ALL" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">All Sources</option>
+                <option value="WHATSAPP" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">WhatsApp</option>
+                <option value="FACEBOOK" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Facebook</option>
+                <option value="INSTAGRAM" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Instagram</option>
+                <option value="WEBSITE" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Website</option>
+                <option value="DIRECT_CALL" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Direct Call</option>
+                <option value="WALK_IN" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Walk In</option>
+                <option value="THROUGH_REFERENCE" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Reference</option>
               </select>
             </div>
             <div className="min-w-[140px] flex-1">
-              <label className="block text-[9px] font-bold text-emerald-700 uppercase tracking-tight mb-1 ml-1">Service Category</label>
+              <label className="block text-[9px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-tight mb-1 ml-1">Service Category</label>
               <select 
-                className="w-full rounded-lg border border-emerald-200 bg-white/70 py-1.5 px-3 text-xs focus:bg-white focus:border-emerald-500 outline-none transition-all cursor-pointer"
+                className="w-full rounded-lg border border-emerald-200 dark:border-emerald-800/60 bg-white/70 dark:bg-[#161f32] py-1.5 px-3 text-xs text-slate-900 dark:text-slate-100 focus:bg-white dark:focus:bg-[#111827] focus:border-emerald-500 outline-none transition-all cursor-pointer"
                 value={filters.service}
                 onChange={e => setFilters({...filters, service: e.target.value})}
               >
-                <option value="ALL">All Services</option>
-                <option value="Interior Design">Interior Design</option>
-                <option value="2BHK Interior">2BHK Interior</option>
-                <option value="3BHK Interior">3BHK Interior</option>
-                <option value="4BHK Interior">4BHK Interior</option>
-                <option value="Raw house">Raw house</option>
-                <option value="Office">Office</option>
-                <option value="Other">Other</option>
+                <option value="ALL" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">All Services</option>
+                <option value="Interior Design" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Interior Design</option>
+                <option value="2BHK Interior" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">2BHK Interior</option>
+                <option value="3BHK Interior" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">3BHK Interior</option>
+                <option value="4BHK Interior" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">4BHK Interior</option>
+                <option value="Raw house" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Raw house</option>
+                <option value="Office" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Office</option>
+                <option value="Other" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Other</option>
               </select>
             </div>
             <div className="min-w-[140px] flex-1">
-              <label className="block text-[9px] font-bold text-emerald-700 uppercase tracking-tight mb-1 ml-1">Sort By</label>
+              <label className="block text-[9px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-tight mb-1 ml-1">Sort By</label>
               <select 
-                className="w-full rounded-lg border border-emerald-200 bg-white/70 py-1.5 px-3 text-xs focus:bg-white focus:border-emerald-500 outline-none transition-all cursor-pointer"
+                className="w-full rounded-lg border border-emerald-200 dark:border-emerald-800/60 bg-white/70 dark:bg-[#161f32] py-1.5 px-3 text-xs text-slate-900 dark:text-slate-100 focus:bg-white dark:focus:bg-[#111827] focus:border-emerald-500 outline-none transition-all cursor-pointer"
                 value={sortBy}
                 onChange={e => setSortBy(e.target.value)}
               >
-                <option value="NEWEST">Date: Newest First</option>
-                <option value="OLDEST">Date: Oldest First</option>
-                <option value="PROJECT_FIRST">Projects First</option>
-                <option value="A-Z">Alphabetical: A-Z</option>
-                <option value="Z-A">Alphabetical: Z-A</option>
+                <option value="NEWEST" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Date: Newest First</option>
+                <option value="OLDEST" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Date: Oldest First</option>
+                <option value="PROJECT_FIRST" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Projects First</option>
+                <option value="A-Z" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Alphabetical: A-Z</option>
+                <option value="Z-A" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Alphabetical: Z-A</option>
               </select>
             </div>
             <div className="flex-[1.5] flex items-center gap-2">
               <div className="flex-1">
-                <label className="block text-[9px] font-bold text-emerald-700 uppercase tracking-tight mb-1 ml-1">Completion From</label>
+                <label className="block text-[9px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-tight mb-1 ml-1">Completion From</label>
                 <input 
                   type="date"
-                  className="w-full rounded-lg border border-emerald-200 bg-white/70 py-1.5 px-3 text-xs focus:bg-white focus:border-emerald-500 outline-none transition-all"
+                  className="w-full rounded-lg border border-emerald-200 dark:border-emerald-800/60 bg-white/70 dark:bg-[#161f32] py-1.5 px-3 text-xs text-slate-900 dark:text-slate-100 focus:bg-white dark:focus:bg-[#111827] focus:border-emerald-500 outline-none transition-all"
                   value={filters.startDate}
                   onChange={e => setFilters({...filters, startDate: e.target.value})}
                 />
               </div>
               <div className="flex-1">
-                <label className="block text-[9px] font-bold text-emerald-700 uppercase tracking-tight mb-1 ml-1">Completion To</label>
+                <label className="block text-[9px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-tight mb-1 ml-1">Completion To</label>
                 <input 
                   type="date"
-                  className="w-full rounded-lg border border-emerald-200 bg-white/70 py-1.5 px-3 text-xs focus:bg-white focus:border-emerald-500 outline-none transition-all"
+                  className="w-full rounded-lg border border-emerald-200 dark:border-emerald-800/60 bg-white/70 dark:bg-[#161f32] py-1.5 px-3 text-xs text-slate-900 dark:text-slate-100 focus:bg-white dark:focus:bg-[#111827] focus:border-emerald-500 outline-none transition-all"
                   value={filters.endDate}
                   onChange={e => setFilters({...filters, endDate: e.target.value})}
                 />
@@ -242,34 +242,34 @@ export default function CompletedProjectsPage() {
       )}
 
       {/* Main List Container - Matched to Customer Directory */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-white/8 shadow-sm overflow-hidden flex-1 flex flex-col">
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center flex-1 text-slate-400 min-h-[400px]">
+          <div className="flex flex-col items-center justify-center flex-1 text-slate-400 dark:text-slate-500 min-h-[400px]">
             <Loader2 className="h-8 w-8 animate-spin text-emerald-500 mb-3" />
             <span className="text-sm font-medium">Loading Archive...</span>
           </div>
         ) : (
-          <div className="overflow-auto flex-1 scrollbar-thin scrollbar-thumb-slate-200" style={{ maxHeight: 'calc(100vh - 420px)' }}>
-            <table className="w-full divide-y divide-slate-200 table-fixed" style={{ minWidth: '1000px' }}>
-              <thead className="bg-slate-50/50 sticky top-0 z-20 backdrop-blur-sm">
+          <div className="overflow-auto flex-1 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800" style={{ maxHeight: 'calc(100vh - 420px)' }}>
+            <table className="w-full divide-y divide-slate-200 dark:divide-slate-800 table-fixed" style={{ minWidth: '1000px' }}>
+              <thead className="bg-slate-50/50 dark:bg-[#161f32]/80 sticky top-0 z-20 backdrop-blur-sm">
                 <tr>
-                  <th scope="col" className="w-[25%] py-4 pl-8 pr-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Customer / Project</th>
-                  <th scope="col" className="w-[20%] px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Service</th>
-                  <th scope="col" className="w-[12%] px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Completion</th>
-                  <th scope="col" className="w-[10%] px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Final Deal</th>
-                  <th scope="col" className="w-[13%] px-3 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                  <th scope="col" className="w-[25%] py-4 pl-8 pr-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Customer / Project</th>
+                  <th scope="col" className="w-[20%] px-3 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Service</th>
+                  <th scope="col" className="w-[12%] px-3 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Completion</th>
+                  <th scope="col" className="w-[10%] px-3 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Final Deal</th>
+                  <th scope="col" className="w-[13%] px-3 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
                   <th scope="col" className="w-[20%] relative py-4 pl-3 pr-8"><span className="sr-only">Actions</span></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 bg-white dark:bg-slate-900">
                 {filteredCustomers.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="py-20 text-center">
-                      <div className="h-12 w-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3 border border-slate-200 text-slate-300">
+                      <div className="h-12 w-12 bg-slate-50 dark:bg-[#161f32] rounded-full flex items-center justify-center mx-auto mb-3 border border-slate-200 dark:border-slate-800 text-slate-300 dark:text-slate-600">
                         <Briefcase className="h-6 w-6" />
                       </div>
-                      <h3 className="text-sm font-semibold text-slate-900">No Completed Projects</h3>
-                      <p className="mt-1 text-xs text-slate-500">Add a 'Project Completed' milestone to move a project here.</p>
+                      <h3 className="text-sm font-semibold text-slate-900 dark:text-white">No Completed Projects</h3>
+                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Add a 'Project Completed' milestone to move a project here.</p>
                     </td>
                   </tr>
                 ) : (
@@ -280,46 +280,46 @@ export default function CompletedProjectsPage() {
                     return (
                       <tr 
                         key={customer.id} 
-                        className="group hover:bg-slate-50 transition-colors cursor-pointer relative"
+                        className="group hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer relative"
                       >
                         <td onClick={() => router.push(`/customers/${customer.id}`)} className="whitespace-nowrap py-5 pl-8 pr-3">
                           <div className="flex items-center">
-                            <div className="h-10 w-10 flex-shrink-0 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600 font-semibold border border-blue-100">
+                            <div className="h-10 w-10 flex-shrink-0 bg-blue-50 dark:bg-blue-950/50 rounded-lg flex items-center justify-center text-blue-600 dark:text-blue-400 font-semibold border border-blue-100 dark:border-blue-900/50">
                               {displayName.charAt(0)}
                             </div>
                             <div className="ml-4">
-                              <div className="text-sm font-semibold text-slate-900 group-hover:text-blue-600 transition-colors flex items-center gap-2">
+                              <div className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors flex items-center gap-2">
                                 {displayName}
                               </div>
-                              <div className="mt-0.5 text-xs text-slate-500 flex items-center gap-1.5 uppercase tracking-tighter font-bold opacity-60">
+                              <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 uppercase tracking-tighter font-bold opacity-60">
                                 {customer.customerName}
                               </div>
                             </div>
                           </div>
                         </td>
                         <td onClick={() => router.push(`/customers/${customer.id}`)} className="whitespace-nowrap px-3 py-5">
-                          <div className="text-xs font-semibold text-slate-900 flex items-center gap-1.5 uppercase tracking-wide">
+                          <div className="text-xs font-semibold text-slate-900 dark:text-white flex items-center gap-1.5 uppercase tracking-wide">
                             <Zap className="h-3.5 w-3.5 text-emerald-500" />
                             {customer.serviceType.replace("_", " ")}
                           </div>
                         </td>
                         <td onClick={() => router.push(`/customers/${customer.id}`)} className="whitespace-nowrap px-3 py-5">
-                          <div className="text-xs font-medium text-slate-600 italic">
+                          <div className="text-xs font-medium text-slate-600 dark:text-slate-300 italic">
                              {format(new Date(compDate), "dd MMM yyyy")}
                           </div>
                         </td>
                         <td onClick={() => router.push(`/customers/${customer.id}`)} className="whitespace-nowrap px-3 py-5">
-                          <div className="text-sm font-bold text-slate-900 tracking-tight">
+                          <div className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">
                             ₹{customer.initialDealAmount.toLocaleString()}
                           </div>
                         </td>
                         <td onClick={() => router.push(`/customers/${customer.id}`)} className="whitespace-nowrap px-3 py-5">
                            <div className="flex flex-col gap-1">
-                              <span className="inline-flex items-center w-fit px-2 py-0.5 rounded text-[9px] font-black bg-emerald-50 text-emerald-700 border border-emerald-100 uppercase tracking-widest">
+                              <span className="inline-flex items-center w-fit px-2 py-0.5 rounded text-[9px] font-black bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800/50 uppercase tracking-widest">
                                  COMPLETED
                               </span>
                               {customer.isFinanciallyClosed && (
-                                 <span className="inline-flex items-center w-fit px-2 py-0.5 rounded text-[9px] font-black bg-indigo-50 text-indigo-700 border border-indigo-100 uppercase tracking-widest">
+                                 <span className="inline-flex items-center w-fit px-2 py-0.5 rounded text-[9px] font-black bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-800/50 uppercase tracking-widest">
                                     FIN. CLOSED
                                  </span>
                               )}
@@ -332,7 +332,7 @@ export default function CompletedProjectsPage() {
                                  e.stopPropagation();
                                  router.push(`/customers/${customer.id}`);
                                }}
-                               className="text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 border border-emerald-100"
+                               className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-950/70 px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 border border-emerald-100 dark:border-emerald-800/50"
                              >
                                Open Profile <ExternalLink className="h-3 w-3" />
                              </button>
@@ -342,7 +342,7 @@ export default function CompletedProjectsPage() {
                                  handleReactivate(customer.id);
                                }}
                                disabled={isReactivating === customer.id}
-                               className="text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 px-3 py-2 rounded-lg text-xs font-bold transition-all border border-slate-200 flex items-center gap-2 shadow-sm"
+                               className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-[#161f32] hover:bg-slate-50 dark:hover:bg-slate-800 px-3 py-2 rounded-lg text-xs font-bold transition-all border border-slate-200 dark:border-slate-700 flex items-center gap-2 shadow-sm"
                              >
                                {isReactivating === customer.id ? (
                                  <Loader2 className="h-3 w-3 animate-spin" />

@@ -99,11 +99,11 @@ export default function FieldsPage() {
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-10">
       {/* Header */}
-      <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 p-8 rounded-xl border border-slate-200 dark:border-white/8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-violet-500 rounded-full blur-[100px] opacity-5 -mr-32 -mt-32" />
         <div className="relative z-10 space-y-1">
-          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Work Fields</h1>
-          <p className="text-slate-500 text-sm">Manage reusable work categories (e.g. Electrical, Plumbing, Civil).</p>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white tracking-tight">Work Fields</h1>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">Manage reusable work categories (e.g. Electrical, Plumbing, Civil).</p>
         </div>
         <div className="relative z-10">
           <button
@@ -117,12 +117,12 @@ export default function FieldsPage() {
 
       {/* Add Field inline */}
       {isAdding && (
-        <div className="bg-violet-50 border border-violet-200 rounded-xl p-5 flex items-center gap-3 animate-in slide-in-from-top-2 duration-200">
+        <div className="bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-800/60 rounded-xl p-5 flex items-center gap-3 animate-in slide-in-from-top-2 duration-200">
           <Wrench className="h-5 w-5 text-violet-500 shrink-0" />
           <input
             autoFocus
             placeholder="Field name (e.g. Electrical Work)"
-            className="flex-1 bg-white border border-violet-200 rounded-lg px-4 py-2.5 text-sm font-medium focus:border-violet-500 outline-none transition-all"
+            className="flex-1 bg-white dark:bg-[#161f32] border border-violet-200 dark:border-violet-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg px-4 py-2.5 text-sm font-medium focus:border-violet-500 outline-none transition-all"
             value={newFieldName}
             onChange={(e) => setNewFieldName(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); if (e.key === "Escape") setIsAdding(false); }}
@@ -134,7 +134,7 @@ export default function FieldsPage() {
           >
             {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Save
           </button>
-          <button onClick={() => setIsAdding(false)} className="p-2 hover:bg-violet-100 rounded-lg transition-colors">
+          <button onClick={() => setIsAdding(false)} className="p-2 hover:bg-violet-100 dark:hover:bg-violet-900/50 rounded-lg transition-colors">
             <X className="h-4 w-4 text-violet-400" />
           </button>
         </div>
@@ -142,10 +142,10 @@ export default function FieldsPage() {
 
       {/* Search */}
       <div className="relative max-w-md">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
         <input
           type="text"
-          className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-12 pr-4 text-sm focus:border-violet-400 focus:ring-4 focus:ring-violet-400/10 outline-none transition-all"
+          className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161f32] py-3 pl-12 pr-4 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-violet-400 outline-none transition-all"
           placeholder="Search fields..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -154,13 +154,13 @@ export default function FieldsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-white border border-slate-100 rounded-xl p-5 shadow-sm">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Fields</p>
-          <p className="text-3xl font-black text-slate-900 mt-1">{fields.length}</p>
+        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/8 rounded-xl p-5 shadow-sm">
+          <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Total Fields</p>
+          <p className="text-3xl font-black text-slate-900 dark:text-white mt-1">{fields.length}</p>
         </div>
-        <div className="bg-white border border-violet-100 rounded-xl p-5 shadow-sm">
-          <p className="text-[10px] font-black text-violet-400/60 uppercase tracking-widest">Showing</p>
-          <p className="text-3xl font-black text-violet-600 mt-1">{filtered.length}</p>
+        <div className="bg-white dark:bg-slate-900 border border-violet-100 dark:border-violet-900/40 rounded-xl p-5 shadow-sm">
+          <p className="text-[10px] font-black text-violet-400/60 dark:text-violet-400/80 uppercase tracking-widest">Showing</p>
+          <p className="text-3xl font-black text-violet-600 dark:text-violet-400 mt-1">{filtered.length}</p>
         </div>
       </div>
 
@@ -170,29 +170,29 @@ export default function FieldsPage() {
           <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="py-24 text-center border-2 border-dashed border-slate-200 rounded-xl">
-          <Layers className="h-10 w-10 text-slate-200 mx-auto mb-4" />
-          <h3 className="text-sm font-bold text-slate-900">No fields found</h3>
-          <p className="text-xs text-slate-400 mt-1">Add your first work field using the button above.</p>
+        <div className="py-24 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
+          <Layers className="h-10 w-10 text-slate-200 dark:text-slate-700 mx-auto mb-4" />
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white">No fields found</h3>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Add your first work field using the button above.</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <table className="min-w-full divide-y divide-slate-100">
-            <thead className="bg-slate-50/50">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-white/8 shadow-sm overflow-hidden">
+          <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800">
+            <thead className="bg-slate-50/50 dark:bg-[#161f32]/95 border-b border-slate-200 dark:border-slate-800">
               <tr>
-                <th className="py-4 pl-6 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Field Name</th>
-                <th className="py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Linked Vendors</th>
-                <th className="py-4 pr-6 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Actions</th>
+                <th className="py-4 pl-6 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Field Name</th>
+                <th className="py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Linked Vendors</th>
+                <th className="py-4 pr-6 text-right text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
+            <tbody className="divide-y divide-slate-50 dark:divide-slate-800/60">
               {filtered.map((field) => (
-                <tr key={field.id} className="group hover:bg-slate-50 transition-colors">
+                <tr key={field.id} className="group hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
                   <td className="py-4 pl-6">
                     {editingId === field.id ? (
                       <input
                         autoFocus
-                        className="border border-violet-300 rounded-lg px-3 py-2 text-sm font-bold focus:border-violet-500 outline-none w-64"
+                        className="border border-violet-300 dark:border-violet-700 bg-white dark:bg-[#161f32] text-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm font-bold focus:border-violet-500 outline-none w-64"
                         value={editingName}
                         onChange={(e) => setEditingName(e.target.value)}
                         onKeyDown={(e) => {
@@ -202,15 +202,15 @@ export default function FieldsPage() {
                       />
                     ) : (
                       <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-lg bg-violet-50 border border-violet-100 flex items-center justify-center">
+                        <div className="h-8 w-8 rounded-lg bg-violet-50 dark:bg-violet-950/50 border border-violet-100 dark:border-violet-800/50 flex items-center justify-center">
                           <Wrench className="h-4 w-4 text-violet-500" />
                         </div>
-                        <span className="text-sm font-bold text-slate-900">{field.name}</span>
+                        <span className="text-sm font-bold text-slate-900 dark:text-white">{field.name}</span>
                       </div>
                     )}
                   </td>
                   <td className="py-4">
-                    <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[10px] font-bold border border-slate-200">
+                    <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[10px] font-bold border border-slate-200 dark:border-slate-700">
                       {field._count?.vendors ?? "—"} vendor{(field._count?.vendors ?? 0) !== 1 ? "s" : ""}
                     </span>
                   </td>
@@ -225,7 +225,7 @@ export default function FieldsPage() {
                         </button>
                         <button
                           onClick={() => setEditingId(null)}
-                          className="p-2 border border-slate-200 text-slate-400 rounded-lg hover:bg-slate-100 transition-all"
+                          className="p-2 border border-slate-200 dark:border-slate-700 text-slate-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
                         >
                           <X className="h-4 w-4" />
                         </button>
@@ -234,13 +234,13 @@ export default function FieldsPage() {
                       <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => { setEditingId(field.id); setEditingName(field.name); }}
-                          className="p-2 hover:bg-violet-50 text-slate-400 hover:text-violet-600 rounded-lg transition-all"
+                          className="p-2 hover:bg-violet-50 dark:hover:bg-violet-950/40 text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 rounded-lg transition-all"
                         >
                           <Pencil className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(field)}
-                          className="p-2 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg transition-all"
+                          className="p-2 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition-all"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>

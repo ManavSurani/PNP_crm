@@ -97,6 +97,8 @@ model Lead {
   isHotLead           Boolean            @default(false)
   isArchived          Boolean            @default(false)
   archivedAt          DateTime?
+  archiveReason       String?
+  tentativeDate       DateTime?
   cancelReason        String?
   isFinanciallyClosed Boolean            @default(false)
   isProjectCompleted  Boolean            @default(false)

@@ -204,7 +204,7 @@ PNP Interior`;
       <div className="flex h-[80vh] items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-10 w-10 animate-spin text-emerald-500" strokeWidth={1.5} />
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Loading Quotations</p>
+          <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Loading Quotations</p>
         </div>
       </div>
     );
@@ -216,51 +216,51 @@ PNP Interior`;
       <div className="flex items-center justify-between px-2 pt-2 mb-4">
         <Link 
           href={`/customers/${customerId}`}
-          className="group flex items-center gap-2 text-[10px] font-black text-slate-400 hover:text-slate-900 transition-all uppercase tracking-[0.2em]"
+          className="group flex items-center gap-2 text-[10px] font-black text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-all uppercase tracking-[0.2em]"
         >
-          <div className="h-7 w-7 rounded-full border border-slate-200 flex items-center justify-center group-hover:border-slate-400 transition-colors bg-white shadow-sm">
+          <div className="h-7 w-7 rounded-full border border-slate-200 dark:border-white/10 flex items-center justify-center group-hover:border-slate-400 dark:group-hover:border-white/20 transition-colors bg-white dark:bg-slate-900 shadow-sm text-slate-600 dark:text-slate-300">
             <ArrowLeft className="h-3.5 w-3.5" />
           </div>
           BACK
         </Link>
         
         <div className="flex items-center gap-2 text-[10px] font-black tracking-[0.2em] uppercase">
-          <Link href="/customers" className="text-slate-300 hover:text-slate-500 transition-colors">Customer Directory</Link>
-          <ChevronRight className="h-3 w-3 text-slate-200" /> 
-          <Link href={`/customers/${customerId}`} className="text-slate-300 hover:text-slate-500 transition-colors">{customer?.customerName?.toUpperCase() || "CUSTOMER"}</Link>
-          <ChevronRight className="h-3 w-3 text-slate-200" /> 
-          <span className="text-slate-900">QUOTATIONS</span>
+          <Link href="/customers" className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">Customer Directory</Link>
+          <ChevronRight className="h-3 w-3 text-slate-300 dark:text-slate-600" /> 
+          <Link href={`/customers/${customerId}`} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">{customer?.customerName?.toUpperCase() || "CUSTOMER"}</Link>
+          <ChevronRight className="h-3 w-3 text-slate-300 dark:text-slate-600" /> 
+          <span className="text-slate-900 dark:text-white">QUOTATIONS</span>
         </div>
       </div>
 
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-8 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white dark:bg-slate-900 p-8 rounded-2xl border border-slate-200 dark:border-white/8 shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500 rounded-full blur-[100px] opacity-5 -mr-32 -mt-32" />
         <div className="relative z-10 space-y-1">
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Quotations</h1>
-          <p className="text-slate-500 text-sm font-medium">Manage project proposals, cost estimates & approvals for {customer?.project?.name || customer?.customerName}.</p>
+          <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Quotations</h1>
+          <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Manage project proposals, cost estimates & approvals for {customer?.project?.name || customer?.customerName}.</p>
         </div>
         <div className="relative z-10 flex flex-wrap items-center gap-3">
           {quotations.length > 0 && (
-            <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200 shadow-sm mr-2">
+            <div className="flex items-center gap-1 bg-slate-50 dark:bg-white/5 p-1 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm mr-2">
               <button 
                 onClick={handleWhatsAppSummary}
                 title="Send WhatsApp Summary"
-                className="p-2.5 hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 rounded-lg transition-all"
+                className="p-2.5 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 text-slate-400 dark:text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg transition-all cursor-pointer"
               >
                 <MessageCircle className="h-5 w-5" />
               </button>
               <button 
                 onClick={handleGroupShareSummary}
                 title="Share Summary to Group"
-                className="p-2.5 hover:bg-slate-100 text-slate-400 hover:text-slate-900 rounded-lg transition-all"
+                className="p-2.5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white rounded-lg transition-all cursor-pointer"
               >
                 <Users className="h-5 w-5" />
               </button>
               <button 
                 onClick={handleCopySummary}
                 title="Copy Summary"
-                className="p-2.5 hover:bg-slate-100 text-slate-400 hover:text-slate-900 rounded-lg transition-all"
+                className="p-2.5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white rounded-lg transition-all cursor-pointer"
               >
                 <Copy className="h-5 w-5" />
               </button>
@@ -268,7 +268,7 @@ PNP Interior`;
           )}
           <button 
             onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center gap-2 bg-emerald-600 text-white px-6 py-3 rounded-xl text-sm font-bold shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 hover:-translate-y-0.5 active:translate-y-0 transition-all"
+            className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl text-sm font-bold shadow-lg shadow-emerald-600/20 hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
           >
             <Plus className="h-4 w-4" /> Add New Field
           </button>
@@ -283,12 +283,12 @@ PNP Interior`;
         return (
           <div className="grid grid-cols-3 gap-4">
             {[
-              { label: "Total Quoted", value: grandTotal, colorClass: "text-slate-900", borderClass: "border-slate-100", bgClass: "bg-white" },
-              { label: "Total Paid", value: grandPaid, colorClass: "text-emerald-600", borderClass: "border-emerald-100", bgClass: "bg-emerald-50/50" },
-              { label: "Outstanding", value: grandPending, colorClass: grandPending > 0 ? "text-amber-600" : "text-emerald-600", borderClass: grandPending > 0 ? "border-amber-100" : "border-emerald-100", bgClass: grandPending > 0 ? "bg-amber-50/50" : "bg-emerald-50/50" },
+              { label: "Total Quoted", value: grandTotal, colorClass: "text-slate-900 dark:text-white", borderClass: "border-slate-100 dark:border-white/8", bgClass: "bg-white dark:bg-slate-900" },
+              { label: "Total Paid", value: grandPaid, colorClass: "text-emerald-600 dark:text-emerald-400", borderClass: "border-emerald-100 dark:border-emerald-500/20", bgClass: "bg-emerald-50/50 dark:bg-emerald-500/5" },
+              { label: "Outstanding", value: grandPending, colorClass: grandPending > 0 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400", borderClass: grandPending > 0 ? "border-amber-100 dark:border-amber-500/20" : "border-emerald-100 dark:border-emerald-500/20", bgClass: grandPending > 0 ? "bg-amber-50/50 dark:bg-amber-500/5" : "bg-emerald-50/50 dark:bg-emerald-500/5" },
             ].map((card) => (
               <div key={card.label} className={`${card.bgClass} ${card.borderClass} border rounded-xl p-5 shadow-sm`}>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{card.label}</p>
+                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{card.label}</p>
                 <p className={`text-2xl font-black mt-2 ${card.colorClass}`}>₹{card.value.toLocaleString("en-IN")}</p>
               </div>
             ))}
@@ -301,11 +301,11 @@ PNP Interior`;
       <div className="space-y-4">
         <div className="flex items-center justify-between px-2">
            <div className="flex items-center gap-3">
-              <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Quotation Ledger</h3>
-              <div className="h-4 w-px bg-slate-200" />
+              <h3 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Quotation Ledger</h3>
+              <div className="h-4 w-px bg-slate-200 dark:bg-white/10" />
               <div className="flex items-center gap-2">
-                <AlertCircle className="h-3.5 w-3.5 text-slate-300" />
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                <AlertCircle className="h-3.5 w-3.5 text-slate-300 dark:text-slate-600" />
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                   {isLocked ? "Priority locked" : "Drag rows to set priority"}
                 </span>
               </div>
@@ -314,10 +314,10 @@ PNP Interior`;
            <button 
              onClick={toggleLock}
              className={cn(
-               "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[10px] font-black uppercase tracking-widest transition-all",
+               "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer",
                isLocked 
                 ? "bg-emerald-600 border-emerald-600 text-white shadow-md" 
-                : "bg-white border-slate-200 text-slate-400 hover:border-emerald-500 hover:text-emerald-600"
+                : "bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-400 hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400"
              )}
            >
              {isLocked ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
@@ -345,13 +345,13 @@ PNP Interior`;
       </div>
 
       {/* Footer Info */}
-      <div className="flex items-center gap-4 p-6 bg-slate-50 rounded-2xl border border-slate-200 border-dashed">
-         <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center border border-slate-200 text-slate-400">
+      <div className="flex items-center gap-4 p-6 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-white/8 border-dashed">
+         <div className="h-10 w-10 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-white/10 text-slate-400 dark:text-slate-500">
            <Info className="h-5 w-5" />
          </div>
          <div>
-            <p className="text-xs font-bold text-slate-900">Commercial Summary</p>
-            <p className="text-[10px] font-medium text-slate-500 leading-relaxed">
+            <p className="text-xs font-bold text-slate-900 dark:text-white">Commercial Summary</p>
+            <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 leading-relaxed">
               Total estimated project cost is calculated based on active field quotations. 
               Status updates automatically as payments are recorded against individual vendors.
             </p>
