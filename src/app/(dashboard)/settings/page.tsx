@@ -7,13 +7,13 @@ import {
   Key, Globe, Clock, Monitor, RefreshCcw, AlertCircle,
   Zap, Check, Settings as SettingsIcon, Database, Lock,
   Trash2, MoreHorizontal, ExternalLink, AlertTriangle, Search, Filter, RotateCcw, Activity, MapPin, ChevronRight, Phone,
-  Cloud, CloudDownload, Timer, CalendarClock, Palette, Sun, Moon, Laptop, Keyboard, Sparkles
+  Cloud, CloudDownload, Timer, CalendarClock, Palette, Sun, Moon, Laptop, Keyboard, Sparkles, Pencil
 } from "lucide-react";
 import PinModal from "@/components/analytics/PinModal";
 import { cn } from "@/lib/utils";
 import { ClockTimePicker } from "@/components/ui/ClockTimePicker";
 import { format } from "date-fns";
-import { useTheme, type ThemeMode } from "@/components/providers/ThemeProvider";
+import { useTheme, validateShortcut, type ThemeMode } from "@/components/providers/ThemeProvider";
 
 export default function SettingsPage() {
   const { data: session, update } = useSession();
@@ -1382,15 +1382,77 @@ function AppearanceTabSection() {
   const [dayTime, setDayTime] = useState(config.schedule.dayTime || "07:00");
   const [nightTime, setNightTime] = useState(config.schedule.nightTime || "19:00");
   const [isSaved, setIsSaved] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [conflictError, setConflictError] = useState<string | null>(null);
+
+  // Global keydown capture while recording custom shortcut
+  useEffect(() => {
+    if (!isRecording) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Cancel on Escape
+      if (e.key === "Escape") {
+        setIsRecording(false);
+        setConflictError(null);
+        return;
+      }
+
+      // Ignore if user only presses modifier keys alone
+      if (["Control", "Shift", "Alt", "Meta"].includes(e.key)) {
+        return;
+      }
+
+      const modifiers: string[] = [];
+      if (e.ctrlKey || e.metaKey) modifiers.push("Ctrl");
+      if (e.altKey) modifiers.push("Alt");
+      if (e.shiftKey) modifiers.push("Shift");
+
+      let mainKey = e.key;
+      if (mainKey.length === 1) {
+        mainKey = mainKey.toUpperCase();
+      } else if (/^F\d{1,2}$/i.test(mainKey)) {
+        mainKey = mainKey.toUpperCase();
+      } else if (mainKey === " ") {
+        mainKey = "Space";
+      }
+
+      const combo = [...modifiers, mainKey].join(" + ");
+
+      const validation = validateShortcut(combo);
+      if (!validation.valid) {
+        setConflictError(validation.reason || `"${combo}" is a reserved shortcut. Choose another combination.`);
+        return;
+      }
+
+      updateConfig({ shortcutKey: combo });
+      setIsRecording(false);
+      setConflictError(null);
+    };
+
+    window.addEventListener("keydown", onKeyDown, { capture: true });
+    return () => window.removeEventListener("keydown", onKeyDown, { capture: true });
+  }, [isRecording, updateConfig]);
+
+  // Sync local inputs when config.schedule updates from localStorage or background
+  useEffect(() => {
+    if (config.schedule) {
+      setDayTime(config.schedule.dayTime || "07:00");
+      setNightTime(config.schedule.nightTime || "19:00");
+    }
+  }, [config.schedule?.dayTime, config.schedule?.nightTime]);
 
   const handleSaveSchedule = () => {
-    updateConfig({
+    updateConfig(prev => ({
+      ...prev,
       schedule: {
-        ...config.schedule,
+        ...prev.schedule,
         dayTime,
         nightTime,
       },
-    });
+    }));
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 2500);
   };
@@ -1421,13 +1483,6 @@ function AppearanceTabSection() {
       icon: Clock,
       tag: "AUTOMATED",
     },
-  ];
-
-  const shortcuts = [
-    { label: "Ctrl + Shift + D (Default)", value: "Ctrl+Shift+D" },
-    { label: "Ctrl + \\", value: "Ctrl+\\" },
-    { label: "Ctrl + Shift + L", value: "Ctrl+Shift+L" },
-    { label: "Alt + T", value: "Alt+T" },
   ];
 
   return (
@@ -1523,9 +1578,19 @@ function AppearanceTabSection() {
       {/* Desktop Shortcut Configurator */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden transition-colors">
         <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between">
-          <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
-            <Keyboard className="h-4 w-4 text-indigo-600 dark:text-indigo-400" /> Desktop Keyboard Shortcut
-          </h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
+              <Keyboard className="h-4 w-4 text-indigo-600 dark:text-indigo-400" /> Desktop Keyboard Shortcut
+            </h2>
+            <span className={cn(
+              "text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border",
+              config.shortcutEnabled 
+                ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700"
+            )}>
+              {config.shortcutEnabled ? "Active" : "Disabled"}
+            </span>
+          </div>
           <label className="relative inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
@@ -1537,31 +1602,108 @@ function AppearanceTabSection() {
           </label>
         </div>
         <div className="p-8 space-y-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div className="max-w-md">
               <p className="text-sm font-semibold text-slate-900 dark:text-white">Active Key Combination</p>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 Press this keyboard shortcut anywhere inside the desktop app to instantly toggle between light and dark modes.
               </p>
             </div>
-            <select
-              value={config.shortcutKey}
-              onChange={(e) => updateConfig({ shortcutKey: e.target.value })}
-              disabled={!config.shortcutEnabled}
-              className="px-4 py-2.5 bg-slate-50 dark:bg-[#161f32] border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white focus:border-indigo-600 outline-none cursor-pointer disabled:opacity-50"
-            >
-              {shortcuts.map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
+
+            {/* Interactive Shortcut Recorder Box */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <div 
+                onClick={() => {
+                  if (config.shortcutEnabled && !isRecording) {
+                    setIsRecording(true);
+                    setConflictError(null);
+                  }
+                }}
+                className={cn(
+                  "px-4 py-2.5 rounded-xl border transition-all flex items-center gap-2 min-h-[44px] shrink-0",
+                  !config.shortcutEnabled && "opacity-40 pointer-events-none select-none bg-slate-50 dark:bg-[#161f32] border-slate-200 dark:border-slate-800",
+                  config.shortcutEnabled && !isRecording && "bg-slate-50 dark:bg-[#161f32] border-slate-200 dark:border-slate-700 hover:border-indigo-500/50 cursor-pointer shadow-xs",
+                  isRecording && "bg-indigo-50/50 dark:bg-indigo-950/40 border-indigo-500 ring-2 ring-indigo-500/20 shadow-sm animate-pulse cursor-default"
+                )}
+              >
+                {isRecording ? (
+                  <div className="flex items-center gap-2 text-xs font-semibold text-indigo-600 dark:text-indigo-400 whitespace-nowrap">
+                    <span className="h-2 w-2 rounded-full bg-indigo-600 dark:bg-indigo-400 animate-ping shrink-0" />
+                    <span>Press any key or combination... <span className="text-slate-400 dark:text-slate-500 font-normal">(Esc to cancel)</span></span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5 flex-nowrap whitespace-nowrap">
+                    {config.shortcutKey.split("+").map((keyPart, i) => (
+                      <span key={i} className="flex items-center gap-1.5 shrink-0 whitespace-nowrap">
+                        <kbd className="px-2.5 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-mono font-bold text-slate-800 dark:text-slate-200 shadow-xs">
+                          {keyPart.trim()}
+                        </kbd>
+                        {i < config.shortcutKey.split("+").length - 1 && (
+                          <span className="text-xs font-bold text-slate-400 dark:text-slate-500">+</span>
+                        )}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2 shrink-0">
+                {!isRecording ? (
+                  <button
+                    type="button"
+                    disabled={!config.shortcutEnabled}
+                    onClick={() => {
+                      setIsRecording(true);
+                      setConflictError(null);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-600 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800/40 transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    <Pencil className="h-3.5 w-3.5" /> Edit
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsRecording(false);
+                      setConflictError(null);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  disabled={!config.shortcutEnabled || config.shortcutKey.replace(/\s+/g, "") === "Ctrl+Shift+D"}
+                  onClick={() => {
+                    updateConfig({ shortcutKey: "Ctrl + Shift + D" });
+                    setIsRecording(false);
+                    setConflictError(null);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                  title="Reset to default (Ctrl + Shift + D)"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" /> Reset
+                </button>
+              </div>
+            </div>
           </div>
-          <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded-xl flex items-center justify-between">
+
+          {/* Conflict Warning */}
+          {conflictError && (
+            <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-xl flex items-center gap-2 text-xs font-semibold text-rose-700 dark:text-rose-300 animate-in fade-in duration-200">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>{conflictError}</span>
+            </div>
+          )}
+
+          <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded-xl flex items-center justify-between gap-4">
             <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
               💡 <span className="font-semibold text-slate-700 dark:text-slate-300">Smart Guard:</span> Shortcut is automatically suspended while typing inside inputs and textareas to avoid interruptions.
             </p>
-            <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-800/40 px-2 py-1 rounded-md">
+            <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-800/40 px-2.5 py-1 rounded-md whitespace-nowrap shrink-0">
               {config.shortcutKey}
             </span>
           </div>
@@ -1571,54 +1713,89 @@ function AppearanceTabSection() {
       {/* Automated Day/Night Schedule Settings */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden transition-colors">
         <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between">
-          <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
-            <Clock className="h-4 w-4 text-amber-500" /> Automated Day/Night Schedule
-          </h2>
-          {isSaved && (
-            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-              <Check className="h-3.5 w-3.5" /> Schedule Saved!
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
+              <Clock className="h-4 w-4 text-amber-500" /> Automated Day/Night Schedule
+            </h2>
+            <span className={cn(
+              "text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border",
+              config.schedule?.enabled
+                ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700"
+            )}>
+              {config.schedule?.enabled ? "Active" : "Paused"}
             </span>
-          )}
+            {isSaved && (
+              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 ml-2">
+                <Check className="h-3.5 w-3.5" /> Schedule Saved!
+              </span>
+            )}
+          </div>
+
+          {/* Master Toggle Switch */}
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={Boolean(config.schedule?.enabled)}
+              onChange={(e) => updateConfig(prev => ({
+                ...prev,
+                schedule: { ...prev.schedule, enabled: e.target.checked }
+              }))}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
+          </label>
         </div>
         <div className="p-8 space-y-6">
           <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
             When "Day/Night Schedule" mode is active, the app dynamically checks local system time every 30 seconds and transitions modes automatically without reloading.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2 p-5 bg-slate-50/50 dark:bg-[#161f32] border border-slate-100 dark:border-slate-700/60 rounded-xl">
-              <div className="flex items-center gap-2">
-                <Sun className="h-4 w-4 text-amber-500" />
-                <label className="text-xs font-bold text-slate-900 dark:text-white">Daytime Start (Switch to Light Mode)</label>
-              </div>
-              <p className="text-[11px] text-slate-400">Time when the app will automatically switch to Light mode.</p>
-              <input
-                type="time"
-                value={dayTime}
-                onChange={(e) => setDayTime(e.target.value)}
-                className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-600"
-              />
+
+          {/* Paused Helper Banner */}
+          {!config.schedule?.enabled && (
+            <div className="p-3 bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/50 rounded-xl flex items-center gap-2 text-xs font-medium text-amber-800 dark:text-amber-300">
+              <AlertCircle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+              <span>Automatic schedule transitions are paused. Turn on the master switch above to re-enable automated time checks.</span>
             </div>
-            <div className="space-y-2 p-5 bg-slate-50/50 dark:bg-[#161f32] border border-slate-100 dark:border-slate-700/60 rounded-xl">
-              <div className="flex items-center gap-2">
-                <Moon className="h-4 w-4 text-indigo-400" />
-                <label className="text-xs font-bold text-slate-900 dark:text-white">Nighttime Start (Switch to Dark Mode)</label>
+          )}
+
+          <div className={cn("space-y-6 transition-all duration-200", !config.schedule?.enabled && "opacity-40 pointer-events-none select-none")}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2 p-5 bg-slate-50/50 dark:bg-[#161f32] border border-slate-100 dark:border-slate-700/60 rounded-xl">
+                <div className="flex items-center gap-2">
+                  <Sun className="h-4 w-4 text-amber-500" />
+                  <label className="text-xs font-bold text-slate-900 dark:text-white">Daytime Start (Switch to Light Mode)</label>
+                </div>
+                <p className="text-[11px] text-slate-400">Time when the app will automatically switch to Light mode.</p>
+                <input
+                  type="time"
+                  value={dayTime}
+                  onChange={(e) => setDayTime(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-600"
+                />
               </div>
-              <p className="text-[11px] text-slate-400">Time when the app will automatically switch to Dark mode.</p>
-              <input
-                type="time"
-                value={nightTime}
-                onChange={(e) => setNightTime(e.target.value)}
-                className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-600"
-              />
+              <div className="space-y-2 p-5 bg-slate-50/50 dark:bg-[#161f32] border border-slate-100 dark:border-slate-700/60 rounded-xl">
+                <div className="flex items-center gap-2">
+                  <Moon className="h-4 w-4 text-indigo-400" />
+                  <label className="text-xs font-bold text-slate-900 dark:text-white">Nighttime Start (Switch to Dark Mode)</label>
+                </div>
+                <p className="text-[11px] text-slate-400">Time when the app will automatically switch to Dark mode.</p>
+                <input
+                  type="time"
+                  value={nightTime}
+                  onChange={(e) => setNightTime(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-indigo-600"
+                />
+              </div>
             </div>
-          </div>
-          <div className="flex justify-end">
-            <button
-              onClick={handleSaveSchedule}
-              className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-200 dark:shadow-[0_0_15px_rgba(99,102,241,0.3)] transition-all active:scale-95 cursor-pointer"
-            >
-              <Save className="h-3.5 w-3.5" /> Save Schedule Hours
-            </button>
+            <div className="flex justify-end">
+              <button
+                onClick={handleSaveSchedule}
+                className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-200 dark:shadow-[0_0_15px_rgba(99,102,241,0.3)] transition-all active:scale-95 cursor-pointer"
+              >
+                <Save className="h-3.5 w-3.5" /> Save Schedule Hours
+              </button>
+            </div>
           </div>
         </div>
       </div>

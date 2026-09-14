@@ -115,5 +115,17 @@ export async function PATCH(req: Request) {
     }
   }
 
+  // Update Theme Settings
+  if (data.type === "theme") {
+    const { themeConfig } = data;
+    const serialized = typeof themeConfig === "string" ? themeConfig : JSON.stringify(themeConfig);
+    await prisma.systemSetting.upsert({
+      where: { id: "global" },
+      update: { themeConfig: serialized },
+      create: { id: "global", themeConfig: serialized, sessionMaxAge: 2592000 }
+    });
+    return NextResponse.json({ message: "Theme configuration updated" });
+  }
+
   return NextResponse.json({ error: "Invalid request" }, { status: 400 });
 }

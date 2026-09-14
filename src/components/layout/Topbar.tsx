@@ -3,12 +3,14 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
-import { Search, User as UserIcon, LogOut, Loader2, MapPin, Phone, ArrowRight } from "lucide-react";
+import { Search, User as UserIcon, LogOut, Loader2, MapPin, Phone, ArrowRight, Sun, Moon, Laptop } from "lucide-react";
 import NotificationBell from "./NotificationBell";
-import ThemeToggle from "./ThemeToggle";
+import { useTheme } from "@/components/providers/ThemeProvider";
+import { cn } from "@/lib/utils";
 
 export default function Topbar() {
   const { data: session, status } = useSession();
+  const { mode, setMode } = useTheme();
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<any[]>([]);
@@ -143,7 +145,6 @@ export default function Topbar() {
           )}
         </div>
         <div className="flex items-center gap-x-3 lg:gap-x-4">
-          <ThemeToggle />
           <NotificationBell />
 
           {/* Separator */}
@@ -164,7 +165,7 @@ export default function Topbar() {
             </button>
             <div 
               suppressHydrationWarning
-              className="hidden group-hover:block absolute right-0 top-full mt-2 w-48 origin-top-right rounded-xl bg-white dark:bg-slate-900 py-1 shadow-2xl border border-slate-100 dark:border-slate-800 ring-1 ring-black/5 dark:ring-white/10 focus:outline-none z-[60]"
+              className="hidden group-hover:block absolute right-0 top-full mt-2 w-56 origin-top-right rounded-xl bg-white dark:bg-slate-900 py-1 shadow-2xl border border-slate-100 dark:border-slate-800 ring-1 ring-black/5 dark:ring-white/10 focus:outline-none z-[60]"
             >
               <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800">
                 <p className="text-sm font-medium text-slate-900 dark:text-white">
@@ -174,6 +175,58 @@ export default function Topbar() {
                   {status === "loading" ? "..." : (session?.user?.role?.toLowerCase() || "Role")}
                 </p>
               </div>
+
+              {/* Theme Selector Segmented Control */}
+              <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800">
+                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 px-1">
+                  Theme
+                </p>
+                <div className="grid grid-cols-3 gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-lg border border-slate-200/60 dark:border-slate-700/60">
+                  <button
+                    type="button"
+                    onClick={() => setMode("light")}
+                    className={cn(
+                      "flex items-center justify-center gap-1.5 py-1 px-2 rounded-md text-xs font-semibold transition-all cursor-pointer",
+                      mode === "light"
+                        ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs"
+                        : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                    )}
+                    title="Light Mode"
+                  >
+                    <Sun className="h-3.5 w-3.5" />
+                    <span className="text-[11px]">Light</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMode("dark")}
+                    className={cn(
+                      "flex items-center justify-center gap-1.5 py-1 px-2 rounded-md text-xs font-semibold transition-all cursor-pointer",
+                      mode === "dark"
+                        ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs"
+                        : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                    )}
+                    title="Dark Mode"
+                  >
+                    <Moon className="h-3.5 w-3.5" />
+                    <span className="text-[11px]">Dark</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMode("system")}
+                    className={cn(
+                      "flex items-center justify-center gap-1.5 py-1 px-2 rounded-md text-xs font-semibold transition-all cursor-pointer",
+                      mode === "system"
+                        ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs"
+                        : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                    )}
+                    title="System Mode"
+                  >
+                    <Laptop className="h-3.5 w-3.5" />
+                    <span className="text-[11px]">Auto</span>
+                  </button>
+                </div>
+              </div>
+
               <button
                 onClick={() => signOut({ callbackUrl: "/login" })}
                 className="flex w-full items-center px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"

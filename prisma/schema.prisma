@@ -61,6 +61,7 @@ model SystemSetting {
   isAutoBackupEnabled    Boolean   @default(false)
   autoBackupTime         String?
   autoBackupLastRun      DateTime?
+  themeConfig            String?
   updatedAt              DateTime  @updatedAt
 }
 
