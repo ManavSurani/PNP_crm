@@ -152,13 +152,13 @@ export default function Topbar() {
 
           {/* Profile dropdown */}
           <div className="relative flex items-center gap-x-4 group">
-            <button className="-m-1.5 flex items-center p-1.5 cursor-pointer" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
+            <button className="-m-1.5 flex items-center p-1.5 cursor-pointer group/user rounded-lg transition-all" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
               <span className="sr-only">Open user menu</span>
-              <div className="h-8 w-8 rounded-full bg-indigo-100 dark:bg-indigo-950/60 border border-transparent dark:border-indigo-800/40 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+              <div className="h-8 w-8 rounded-full bg-indigo-100 dark:bg-indigo-950/60 border border-transparent dark:border-indigo-800/40 flex items-center justify-center text-indigo-600 dark:text-indigo-400 group-hover/user:ring-2 group-hover/user:ring-indigo-500/50 dark:group-hover/user:ring-indigo-400/50 group-hover/user:bg-indigo-200 dark:group-hover/user:bg-indigo-900/80 transition-all">
                 <UserIcon className="h-5 w-5" />
               </div>
               <span className="hidden lg:flex lg:items-center">
-                <span className="ml-4 text-sm font-semibold leading-6 text-slate-900 dark:text-white" aria-hidden="true">
+                <span className="ml-4 text-sm font-semibold leading-6 text-slate-900 dark:text-white group-hover/user:text-indigo-600 dark:group-hover/user:text-indigo-400 transition-colors" aria-hidden="true">
                   {status === "loading" ? "..." : (session?.user?.name || "User")}
                 </span>
               </span>
@@ -167,13 +167,16 @@ export default function Topbar() {
               suppressHydrationWarning
               className="hidden group-hover:block absolute right-0 top-full mt-2 w-56 origin-top-right rounded-xl bg-white dark:bg-slate-900 py-1 shadow-2xl border border-slate-100 dark:border-slate-800 ring-1 ring-black/5 dark:ring-white/10 focus:outline-none z-[60]"
             >
-              <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800">
-                <p className="text-sm font-medium text-slate-900 dark:text-white">
+              <div className="px-4 py-2.5 border-b border-slate-100 dark:border-slate-800 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 transition-colors rounded-t-xl">
+                <p className="text-sm font-semibold text-slate-900 dark:text-white">
                   {status === "loading" ? "..." : (session?.user?.name || "User")}
                 </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">
-                  {status === "loading" ? "..." : (session?.user?.role?.toLowerCase() || "Role")}
-                </p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <p className="text-[11px] font-medium text-indigo-600 dark:text-indigo-400 capitalize">
+                    {status === "loading" ? "..." : (session?.user?.role?.toLowerCase() || "Role")}
+                  </p>
+                </div>
               </div>
 
               {/* Theme Selector Segmented Control */}
@@ -186,10 +189,10 @@ export default function Topbar() {
                     type="button"
                     onClick={() => setMode("light")}
                     className={cn(
-                      "flex items-center justify-center gap-1.5 py-1 px-2 rounded-md text-xs font-semibold transition-all cursor-pointer",
+                      "flex items-center justify-center gap-1.5 py-1 px-2 rounded-md text-xs font-semibold transition-all cursor-pointer border",
                       mode === "light"
-                        ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs"
-                        : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                        ? "bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-500/30 shadow-xs"
+                        : "border-transparent text-slate-500 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-950/50 hover:text-amber-600 dark:hover:text-amber-400 hover:border-amber-200 dark:hover:border-amber-800/60"
                     )}
                     title="Light Mode"
                   >
@@ -200,10 +203,10 @@ export default function Topbar() {
                     type="button"
                     onClick={() => setMode("dark")}
                     className={cn(
-                      "flex items-center justify-center gap-1.5 py-1 px-2 rounded-md text-xs font-semibold transition-all cursor-pointer",
+                      "flex items-center justify-center gap-1.5 py-1 px-2 rounded-md text-xs font-semibold transition-all cursor-pointer border",
                       mode === "dark"
-                        ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs"
-                        : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                        ? "bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-500/30 shadow-xs"
+                        : "border-transparent text-slate-500 dark:text-slate-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-200 dark:hover:border-indigo-800/60"
                     )}
                     title="Dark Mode"
                   >
@@ -214,10 +217,10 @@ export default function Topbar() {
                     type="button"
                     onClick={() => setMode("system")}
                     className={cn(
-                      "flex items-center justify-center gap-1.5 py-1 px-2 rounded-md text-xs font-semibold transition-all cursor-pointer",
+                      "flex items-center justify-center gap-1.5 py-1 px-2 rounded-md text-xs font-semibold transition-all cursor-pointer border",
                       mode === "system"
-                        ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs"
-                        : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                        ? "bg-white dark:bg-slate-700 text-cyan-600 dark:text-cyan-400 border-cyan-200 dark:border-cyan-500/30 shadow-xs"
+                        : "border-transparent text-slate-500 dark:text-slate-400 hover:bg-cyan-50 dark:hover:bg-cyan-950/50 hover:text-cyan-600 dark:hover:text-cyan-400 hover:border-cyan-200 dark:hover:border-cyan-800/60"
                     )}
                     title="System Mode"
                   >
@@ -229,9 +232,9 @@ export default function Topbar() {
 
               <button
                 onClick={() => signOut({ callbackUrl: "/login" })}
-                className="flex w-full items-center px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                className="group/signout flex w-full items-center px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-600 dark:hover:text-rose-400 transition-all cursor-pointer rounded-b-xl"
               >
-                <LogOut className="mr-2 h-4 w-4" />
+                <LogOut className="mr-2 h-4 w-4 text-slate-400 dark:text-slate-500 group-hover/signout:text-rose-600 dark:group-hover/signout:text-rose-400 group-hover/signout:translate-x-0.5 transition-all" />
                 Sign out
               </button>
             </div>

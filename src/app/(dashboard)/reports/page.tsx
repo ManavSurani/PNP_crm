@@ -39,17 +39,32 @@ export default function ReportsPage() {
   const SERVICE_PALETTE = ["#10b981", "#f59e0b", "#3b82f6", "#6366f1", "#ec4899", "#06b6d4"];
 
   const DottedLineCursor = (props: any) => {
-    const { x, width, height = 260, top = 5 } = props;
-    const cx = x + (width ? width / 2 : 0);
+    const { x, width, height, top = 5, points } = props;
+    let cx: number | null = null;
+    let y1 = typeof top === "number" ? top : 5;
+    let y2 = y1 + (typeof height === "number" ? height : 255);
+
+    if (points && Array.isArray(points) && points.length >= 2) {
+      cx = points[0].x;
+      y1 = points[0].y ?? y1;
+      y2 = points[1].y ?? y2;
+    } else if (typeof x === "number") {
+      cx = x + (width ? width / 2 : 0);
+    }
+
+    if (cx === null || isNaN(cx)) return null;
+
     return (
       <line
         x1={cx}
-        y1={top}
+        y1={y1}
         x2={cx}
-        y2={top + height}
-        stroke={isDark ? "#475569" : "#94a3b8"}
+        y2={y2}
+        stroke={isDark ? "#64748b" : "#94a3b8"}
         strokeWidth={1.5}
         strokeDasharray="3 3"
+        strokeLinecap="round"
+        pointerEvents="none"
       />
     );
   };
