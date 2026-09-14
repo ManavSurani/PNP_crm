@@ -935,3 +935,84 @@ A: Conducted a rigorous automated scan across all 21 routes in src/app/ and all 
 8. **Problem 8 (Quotations - `QuotationDetailDrawer.tsx:368`, `AddQuotationModal.tsx:466`):** Physically jumping buttons on hover with green shadows. (5 alternatives: Smooth inset highlight, neutral black luxury, unified indigo standard, subtle outline, full-width bottom bar).
 9. **Problem 9 (Leads - `leads/[id]/page.tsx:640`):** Raw `#25D366` neon WhatsApp button and blinking phone call icon. (5 alternatives: Forest emerald dark harmonized, ghost icon button, static phone icon, unified quick-action pill bar, labelled text button).
 10. **Problem 10 (System-wide - `analytics/page.tsx:205`, `details/page.tsx:385`):** "Font-black all-caps micro-text" addiction across empty states and cards. (5 alternatives: Standard enterprise section headers, human form labels, soft editorial empty states, medium badges, clean column headers).
+
+---
+
+## Session: 2026-09-11 — Dark Mode Anti-Slop Audit Part 2
+
+### User Request
+Read existing dark_mode_anti_slop_audit.md from Downloads, find any OTHER design-related dark mode issues NOT already covered in that file, and create a second .md file (dark_mode_anti_slop_audit_part2.md) in the same Downloads folder. Each new problem should include exact file + line location and 5+ suggestions.
+
+### What Was Done
+- Read dark_mode_anti_slop_audit.md in full to know all 10 problems already covered (neon glows, sci-fi copy, pulsing LEDs, etc.).
+- Performed a deep grep scan across the entire src/ directory for: blur- decorations, italic text, group-hover:scale-110, confirm() dialogs, shadow-2xl modals, sci-fi loading text, buzzword labels, off-brand colors, hardcoded dark-only cards, and unreadable micro-text.
+- Created C:\Users\Jay\Downloads\dark_mode_anti_slop_audit_part2.md (31,071 bytes) with 12 NEW problems not in Part 1.
+
+### 12 New Issues Found (Part 2)
+
+| # | Problem | Severity |
+| --- | --- | --- |
+| 11 | Invisible decorative blur-[100px] opacity-5 orbs on every single page header (17+ files) | Polish |
+| 12 | Hardcoded dark-only cards (bg-slate-900 text-white, no dark: prefix) in analytics sidebar — broken in Light Mode | HIGH |
+| 13 | Sci-fi loading text: "Aggregating Fiscal Intelligence...", "Synchronizing Intelligence...", "Intelligence Outage" | Medium |
+| 14 | Financial buzzwords as UI labels: "Gross Inflow", "Total Burn", "Net Liquidity", "Weekly Acquisition Velocity", "Cancellation Intel" | Medium |
+| 15 | Native window.confirm() used for 12+ destructive actions across 8 files — shatters dark mode UI with OS-level grey dialog | HIGH |
+| 16 | KPI card icon boxes zoom to group-hover:scale-110 — toy-like effect on a data dashboard (page, analytics, follow-ups, meetings) | Medium |
+| 17 | Italic text scattered on table date cells, empty states, data labels across 8+ files | Medium |
+| 18 | text-3xl font-black for "Total Fields" and "Showing" counters on the Fields page — 48px bold for a list of 5-10 items | Low |
+| 19 | Off-brand violet-600 color used throughout fields/page.tsx, isolated from the rest of the app's indigo design system | Medium |
+| 20 | shadow-2xl on every modal across the app creates a muddy dark smudge in dark mode | Medium |
+| 21 | text-[7px] labels ("Today", "Overdue", "Upcoming") in dashboard Follow-Up KPI card — unreadable at 7px | HIGH |
+| 22 | Analytics "Financial Health" and "Business Pulse" sidebar cards are hardcoded dark (bg-slate-900), fully broken in Light Mode | HIGH |
+
+### Key Files Scanned
+- src/app/(dashboard)/page.tsx (main dashboard)
+- src/app/(dashboard)/analytics/page.tsx
+- src/app/(dashboard)/reports/page.tsx
+- src/app/(dashboard)/canceled/page.tsx
+- src/app/(dashboard)/fields/page.tsx
+- src/app/(dashboard)/customers/completed/page.tsx
+- src/components/analytics/PinModal.tsx
+- All files found via grep for: blur-, italic, group-hover:scale-110, confirm(, shadow-2xl
+
+### Output Files
+- C:\Users\Jay\Downloads\dark_mode_anti_slop_audit_part2.md (31,071 bytes) — CREATED
+
+### User Standing Rules
+- Only suggestions, NO code changes, per user's standing directive.
+
+---
+
+## Session: 2026-09-11 — Dark Mode Anti-Slop Audit Part 3
+
+### User Request
+"Can you check again — did you not miss anything? Don't repeat anything. Only add other things if you find them."
+
+### What Was Done
+- Deep re-scan of all files not fully covered in Parts 1 and 2.
+- Scanned: interested/page.tsx, meetings/page.tsx, follow-ups/page.tsx, reports/page.tsx, settings/page.tsx (line 1140), customers/[id]/design/page.tsx, customers/[id]/financials/page.tsx.
+- Additional grep passes for: bg-amber-400 text-white (contrast), bg-slate-900 dark:bg-indigo-600 (inverted theming), shadow-xl colored shadows, slide-in animations duration-500, AI slop copy (Passively Active, Sleeping N days, entity identifier, etc.), text-[9px] labels.
+- Created C:\Users\Jay\Downloads\dark_mode_anti_slop_audit_part3.md (23,186 bytes) with 12 new problems.
+
+### 12 New Issues Found (Part 3)
+
+| # | Problem | Severity |
+| --- | --- | --- |
+| 23 | Inverted button theming — bg-slate-900 in Light / bg-indigo-600 in Dark | Medium |
+| 24 | Colored shadow-xl/shadow-lg on primary action buttons | Medium |
+| 25 | Sleeping N days anthropomorphic copy on archived lead cards | Medium |
+| 26 | Global System Pulse / CRM lifecycle drop-off rate / long-term trajectory chart buzzwords in Reports | Medium |
+| 27 | bg-amber-400 text-white fails WCAG contrast (~2.1:1 ratio) on filter tabs and status badges | HIGH |
+| 28 | Search placeholder jargon: entity identifier in meetings input | Low |
+| 29 | Passively Active, Analysing engagement data, Retrieving passive archives copy on Interested page | Medium |
+| 30 | Zero Interested Leads / Zero Archived Leads empty state headlines | Low |
+| 31 | Always-dark count badge (bg-slate-900 both modes) breaks Light Mode on Interested ARCHIVED tab | HIGH |
+| 32 | text-[9px] uppercase label + text-xl font-black number on Meetings/Follow-ups filter count cards | Medium |
+| 33 | No matching customers identified empty state copy in Settings | Low |
+| 34 | animate-in slide-in-from-bottom-4 duration-500 theatrical animation on Finance/Design setup cards | Low |
+
+### Output Files
+- C:\Users\Jay\Downloads\dark_mode_anti_slop_audit_part3.md (23,186 bytes) — CREATED
+
+### Standing Rule
+No code was changed. Suggestions only.
