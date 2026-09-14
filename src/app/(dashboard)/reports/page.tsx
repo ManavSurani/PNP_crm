@@ -11,7 +11,7 @@ import {
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   CartesianGrid, PieChart as RechartsPie, Cell, Pie, Legend, AreaChart, Area,
-  LineChart, Line, ComposedChart
+  LineChart, Line, ComposedChart, Sector
 } from "recharts";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -34,6 +34,166 @@ export default function ReportsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeChart, setActiveChart] = useState<number>(0);
   const [activeOverdueTab, setActiveOverdueTab] = useState<"calls" | "visits">("calls");
+  const [hoveredStatusIndex, setHoveredStatusIndex] = useState<number | null>(null);
+
+  const SERVICE_PALETTE = ["#10b981", "#f59e0b", "#3b82f6", "#6366f1", "#ec4899", "#06b6d4"];
+
+  const DottedLineCursor = (props: any) => {
+    const { x, width, height = 260, top = 5 } = props;
+    const cx = x + (width ? width / 2 : 0);
+    return (
+      <line
+        x1={cx}
+        y1={top}
+        x2={cx}
+        y2={top + height}
+        stroke={isDark ? "#475569" : "#94a3b8"}
+        strokeWidth={1.5}
+        strokeDasharray="3 3"
+      />
+    );
+  };
+
+  const PulseTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-3 shadow-xl min-w-[210px] pointer-events-none">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+            {label} Activity
+          </p>
+          <div className="space-y-2">
+            {payload.map((item: any, idx: number) => {
+              const isLeads = item.dataKey === "leads";
+              const color = isLeads
+                ? (isDark ? "#818cf8" : "#6366f1")
+                : (isDark ? "#c084fc" : "#9333ea");
+              const bgBadge = isLeads
+                ? (isDark ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/30" : "bg-indigo-50 text-indigo-700 border-indigo-200")
+                : (isDark ? "bg-purple-500/20 text-purple-300 border-purple-500/30" : "bg-purple-50 text-purple-700 border-purple-200");
+              return (
+                <div key={idx} className="flex items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="w-2.5 h-2.5 rounded-full shrink-0 ring-2 ring-white dark:ring-slate-800 shadow-sm"
+                      style={{ backgroundColor: color }}
+                    />
+                    <span className="font-semibold text-slate-800 dark:text-slate-100">
+                      {item.name}
+                    </span>
+                  </div>
+                  <span
+                    className={cn(
+                      "font-bold px-2 py-0.5 rounded-md text-[11px] shrink-0 border",
+                      bgBadge
+                    )}
+                  >
+                    {item.value} {isLeads ? (item.value === 1 ? "Lead" : "Leads") : (item.value === 1 ? "Task" : "Tasks")}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const ServiceDemandTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-3 shadow-xl min-w-[210px] pointer-events-none">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+            {label} Service Demand
+          </p>
+          <div className="space-y-2">
+            {payload.map((item: any, idx: number) => {
+              const color = SERVICE_PALETTE[idx % SERVICE_PALETTE.length];
+              const rawName = String(item.name || item.dataKey || "");
+              const formattedName = rawName
+                .replace(/_/g, " ")
+                .toLowerCase()
+                .replace(/\b\w/g, (c) => c.toUpperCase());
+              return (
+                <div key={idx} className="flex items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span
+                      className="w-2.5 h-2.5 rounded-full shrink-0 ring-2 ring-white dark:ring-slate-800 shadow-sm"
+                      style={{ backgroundColor: color }}
+                    />
+                    <span className="font-semibold text-slate-800 dark:text-slate-100 truncate">
+                      {formattedName}
+                    </span>
+                  </div>
+                  <span
+                    className="font-bold px-2 py-0.5 rounded-md text-[11px] shrink-0 border"
+                    style={{
+                      backgroundColor: `${color}18`,
+                      color: color,
+                      borderColor: `${color}35`,
+                    }}
+                  >
+                    {item.value} {item.value === 1 ? "Inquiry" : "Inquiries"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const FunnelTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const item = payload[0].payload;
+      return (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2.5 shadow-xl min-w-[170px] pointer-events-none">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400 mb-1.5">
+            Funnel Stage
+          </p>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <span
+                className="w-2.5 h-2.5 rounded-full shrink-0 ring-2 ring-white dark:ring-slate-800 shadow-sm"
+                style={{ backgroundColor: item.fill }}
+              />
+              <span className="text-xs font-semibold text-slate-800 dark:text-slate-100 truncate">
+                {item.stage}
+              </span>
+            </div>
+            <span className="text-xs font-bold text-slate-900 dark:text-white px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 shrink-0 border border-slate-200/50 dark:border-slate-700/50">
+              {item.value} {item.value === 1 ? "Lead" : "Leads"}
+            </span>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const renderActiveShape = (props: any) => {
+    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
+    return (
+      <g>
+        <Sector
+          cx={cx}
+          cy={cy}
+          innerRadius={innerRadius - 1}
+          outerRadius={outerRadius + 5}
+          startAngle={startAngle}
+          endAngle={endAngle}
+          fill={fill}
+          cornerRadius={6}
+          style={{
+            filter: `drop-shadow(0 0 8px ${fill}80)`,
+            transition: "all 300ms ease",
+          }}
+        />
+      </g>
+    );
+  };
 
   useEffect(() => {
     fetch("/api/reports")
@@ -52,6 +212,9 @@ export default function ReportsPage() {
   }
 
   const { alerts, charts, recentLeads, conversionRate } = data;
+  const leadsStatusData = charts?.leadsByStatus || [];
+  const totalPipelineLeads = leadsStatusData.reduce((acc: number, item: any) => acc + (item.count || 0), 0);
+  const activeStatusItem = hoveredStatusIndex !== null ? leadsStatusData[hoveredStatusIndex] : null;
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-10">
@@ -216,23 +379,40 @@ export default function ReportsPage() {
             <div className={cn("absolute inset-0 transition-opacity duration-500", activeChart === 0 ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none")}>
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={charts.systemPulse} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="pulseBarGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={isDark ? "#818cf8" : "#6366f1"} stopOpacity={1} />
+                      <stop offset="100%" stopColor={isDark ? "#4f46e5" : "#4338ca"} stopOpacity={0.7} />
+                    </linearGradient>
+                    <linearGradient id="pulseLineGrad" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#a855f7" />
+                      <stop offset="100%" stopColor="#6366f1" />
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#1e293b" : "#f1f5f9"} vertical={false} />
                   <XAxis dataKey="month" tick={{ fontSize: 11, fill: isDark ? '#94a3b8' : '#64748b' }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: isDark ? '#94a3b8' : '#64748b' }} axisLine={false} tickLine={false} />
                   <Tooltip 
-                    cursor={{ fill: isDark ? '#1e293b' : '#f8fafc' }}
-                    contentStyle={{
-                      backgroundColor: isDark ? '#111827' : '#ffffff',
-                      color: isDark ? '#f8fafc' : '#0f172a',
-                      borderRadius: '12px',
-                      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
-                      boxShadow: '0 10px 15px -3px rgba(0,0,0,0.3)',
-                      fontSize: '12px'
-                    }} 
+                    cursor={<DottedLineCursor />}
+                    content={<PulseTooltip />}
                   />
                   <Legend wrapperStyle={{ fontSize: '11px', color: isDark ? '#94a3b8' : '#64748b' }} />
-                  <Bar dataKey="leads" name="New Leads" fill={isDark ? "#6366f1" : "#818cf8"} radius={[4, 4, 0, 0]} maxBarSize={32} />
-                  <Line type="monotone" dataKey="tasks" name="Team Tasks (Calls/Meetings)" stroke={isDark ? "#a5b4fc" : "#4f46e5"} strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} />
+                  <Bar
+                    dataKey="leads"
+                    name="New Leads"
+                    fill="url(#pulseBarGrad)"
+                    radius={[6, 6, 0, 0]}
+                    maxBarSize={32}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="tasks"
+                    name="Team Tasks (Calls/Meetings)"
+                    stroke="url(#pulseLineGrad)"
+                    strokeWidth={3}
+                    dot={{ r: 4, strokeWidth: 2, fill: isDark ? "#0f172a" : "#ffffff", stroke: "#a855f7" }}
+                    activeDot={{ r: 6, strokeWidth: 3, fill: "#a855f7", stroke: "#ffffff" }}
+                  />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
@@ -244,20 +424,19 @@ export default function ReportsPage() {
                   <XAxis type="number" hide />
                   <YAxis type="category" dataKey="stage" tick={{ fontSize: 11, fill: isDark ? '#f8fafc' : '#1e293b', fontWeight: 600 }} axisLine={false} tickLine={false} />
                   <Tooltip 
-                    cursor={{ fill: isDark ? '#1e293b' : '#f8fafc' }}
-                    formatter={(v: any, n: any, props: any) => [v, props.payload.stage]}
-                    contentStyle={{
-                      backgroundColor: isDark ? '#111827' : '#ffffff',
-                      color: isDark ? '#f8fafc' : '#0f172a',
-                      borderRadius: '12px',
-                      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
-                      boxShadow: '0 10px 15px -3px rgba(0,0,0,0.3)',
-                      fontSize: '12px'
-                    }} 
+                    cursor={false}
+                    content={<FunnelTooltip />} 
                   />
-                  <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={28}>
+                  <Bar
+                    dataKey="value"
+                    radius={[0, 6, 6, 0]}
+                    barSize={28}
+                  >
                     {charts.globalFunnel?.map((entry: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={entry.fill}
+                      />
                     ))}
                   </Bar>
                 </BarChart>
@@ -268,35 +447,41 @@ export default function ReportsPage() {
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={charts.serviceDemand} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                   <defs>
-                    {charts.allServices?.map((srv: string, i: number) => (
-                      <linearGradient key={`grad-${i}`} id={`colorSrv${i}`} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={["#10b981", "#3b82f6", "#f59e0b", "#6366f1", "#ec4899"][i % 5]} stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor={["#10b981", "#3b82f6", "#f59e0b", "#6366f1", "#ec4899"][i % 5]} stopOpacity={0}/>
-                      </linearGradient>
-                    ))}
+                    {charts.allServices?.map((srv: string, i: number) => {
+                      const color = SERVICE_PALETTE[i % SERVICE_PALETTE.length];
+                      return (
+                        <linearGradient key={`grad-${i}`} id={`colorSrv${i}`} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor={color} stopOpacity={0.35} />
+                          <stop offset="50%" stopColor={color} stopOpacity={0.12} />
+                          <stop offset="95%" stopColor={color} stopOpacity={0.01} />
+                        </linearGradient>
+                      );
+                    })}
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#1e293b" : "#f1f5f9"} vertical={false} />
                   <XAxis dataKey="month" tick={{ fontSize: 11, fill: isDark ? '#94a3b8' : '#64748b' }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: isDark ? '#94a3b8' : '#64748b' }} axisLine={false} tickLine={false} />
                   <Tooltip 
-                    contentStyle={{
-                      backgroundColor: isDark ? '#111827' : '#ffffff',
-                      color: isDark ? '#f8fafc' : '#0f172a',
-                      borderRadius: '12px',
-                      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
-                      boxShadow: '0 10px 15px -3px rgba(0,0,0,0.3)',
-                      fontSize: '12px'
-                    }} 
+                    cursor={{ stroke: isDark ? '#334155' : '#cbd5e1', strokeWidth: 1, strokeDasharray: '3 3' }}
+                    content={<ServiceDemandTooltip />} 
                   />
-                  <Legend wrapperStyle={{ fontSize: '11px', color: isDark ? '#94a3b8' : '#64748b' }} formatter={(v) => String(v).replace(/_/g, " ")} />
+                  <Legend 
+                    wrapperStyle={{ fontSize: '11px', color: isDark ? '#94a3b8' : '#64748b' }} 
+                    formatter={(v) =>
+                      String(v)
+                        .replace(/_/g, " ")
+                        .toLowerCase()
+                        .replace(/\b\w/g, (c) => c.toUpperCase())
+                    } 
+                  />
                   {charts.allServices?.map((srv: string, i: number) => (
                     <Area 
                       key={`area-${i}`}
                       type="monotone" 
                       dataKey={srv} 
                       name={srv}
-                      stroke={["#10b981", "#3b82f6", "#f59e0b", "#6366f1", "#ec4899"][i % 5]} 
-                      strokeWidth={2} 
+                      stroke={SERVICE_PALETTE[i % SERVICE_PALETTE.length]} 
+                      strokeWidth={2.5} 
                       fillOpacity={1} 
                       fill={`url(#colorSrv${i})`} 
                     />
@@ -309,44 +494,134 @@ export default function ReportsPage() {
 
         {/* Pipeline Distribution */}
         <div className="bg-white dark:bg-slate-900 p-8 rounded-xl border border-slate-200 dark:border-white/8 shadow-sm">
-          <div className="flex items-center gap-3 mb-8">
+          <div className="flex items-center gap-3 mb-6">
             <div className="bg-indigo-50 dark:bg-indigo-950/50 p-2 rounded-lg"><BarChart3 className="h-5 w-5 text-indigo-600 dark:text-indigo-400" /></div>
             <div>
               <h2 className="text-base font-semibold text-slate-900 dark:text-white">Leads by Status</h2>
               <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">Distribution across pipeline</p>
             </div>
           </div>
-          <div className="h-56 min-w-0">
-            <ResponsiveContainer width="100%" height="100%">
-              <RechartsPie>
-                <Pie 
-                  data={charts.leadsByStatus} 
-                  dataKey="count" 
-                  nameKey="status" 
-                  cx="50%" 
-                  cy="50%" 
-                  outerRadius={70} 
-                  innerRadius={45} 
-                  stroke="none"
-                >
-                  {charts.leadsByStatus.map((entry: any, index: number) => (
-                    <Cell 
-                      key={`cell-${index}`} 
-                      fill={STATUS_COLORS[entry.status] || "#94a3b8"} 
+          <div className="h-56 min-w-0 flex flex-col justify-between relative">
+            <div className="relative h-40 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <RechartsPie>
+                  {/* Faint Background Gauge Track Ring */}
+                  <Pie
+                    data={[{ value: 1 }]}
+                    dataKey="value"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={46}
+                    outerRadius={68}
+                    stroke="none"
+                    fill={isDark ? "rgba(255,255,255,0.06)" : "rgba(15,23,42,0.05)"}
+                    isAnimationActive={false}
+                  />
+                  {/* Foreground Segmented Ring with Corner Radius & Gaps */}
+                  <Pie 
+                    data={leadsStatusData} 
+                    dataKey="count" 
+                    nameKey="status" 
+                    cx="50%" 
+                    cy="50%" 
+                    outerRadius={68} 
+                    innerRadius={46} 
+                    paddingAngle={4}
+                    cornerRadius={6}
+                    stroke={isDark ? "#0f172a" : "#ffffff"}
+                    strokeWidth={2}
+                    startAngle={90}
+                    endAngle={-270}
+                    animationBegin={100}
+                    animationDuration={1200}
+                    animationEasing="ease-out"
+                    activeShape={renderActiveShape}
+                    onMouseEnter={(_, index) => setHoveredStatusIndex(index)}
+                    onMouseLeave={() => setHoveredStatusIndex(null)}
+                  >
+                    {leadsStatusData.map((entry: any, index: number) => {
+                      const isHovered = hoveredStatusIndex === index;
+                      const isAnyHovered = hoveredStatusIndex !== null;
+                      const color = STATUS_COLORS[entry.status] || "#94a3b8";
+                      return (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={color}
+                          opacity={isAnyHovered && !isHovered ? 0.45 : 1}
+                          style={{
+                            filter: isHovered ? `drop-shadow(0 0 10px ${color}80)` : undefined,
+                            transition: "opacity 300ms ease, filter 300ms ease",
+                            cursor: "pointer",
+                          }}
+                        />
+                      );
+                    })}
+                  </Pie>
+                </RechartsPie>
+              </ResponsiveContainer>
+
+              {/* Dynamic Center Metric */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center select-none">
+                {activeStatusItem ? (
+                  <div className="animate-in fade-in zoom-in-95 duration-200 flex flex-col items-center">
+                    <span 
+                      className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md mb-0.5 leading-tight"
+                      style={{
+                        color: STATUS_COLORS[activeStatusItem.status] || "#94a3b8",
+                        backgroundColor: `${STATUS_COLORS[activeStatusItem.status] || "#94a3b8"}20`,
+                      }}
+                    >
+                      {activeStatusItem.status.replace(/_/g, " ")}
+                    </span>
+                    <span className="text-xl font-black text-slate-900 dark:text-white leading-tight">
+                      {activeStatusItem.count}
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">
+                      {totalPipelineLeads > 0 ? `${Math.round((activeStatusItem.count / totalPipelineLeads) * 100)}%` : "0%"}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="animate-in fade-in zoom-in-95 duration-200 flex flex-col items-center">
+                    <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
+                      {totalPipelineLeads}
+                    </span>
+                    <span className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                      Total Leads
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Interactive Pill Legend */}
+            <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1">
+              {leadsStatusData.map((item: any, i: number) => {
+                const isHovered = hoveredStatusIndex === i;
+                const color = STATUS_COLORS[item.status] || "#94a3b8";
+                const pct = totalPipelineLeads > 0 ? Math.round((item.count / totalPipelineLeads) * 100) : 0;
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    onMouseEnter={() => setHoveredStatusIndex(i)}
+                    onMouseLeave={() => setHoveredStatusIndex(null)}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[10px] font-bold tracking-tight transition-all duration-200 cursor-pointer border",
+                      isHovered
+                        ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border-slate-300 dark:border-slate-600 shadow-sm scale-105"
+                        : "bg-slate-50/80 dark:bg-slate-900/60 text-slate-500 dark:text-slate-400 border-slate-200/70 dark:border-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700"
+                    )}
+                  >
+                    <span 
+                      className={cn("h-2 w-2 rounded-full shrink-0 transition-transform", isHovered && "scale-125")}
+                      style={{ backgroundColor: color }}
                     />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(v: any, name: any) => [v, name.replace(/_/g, " ")]}
-                  contentStyle={{
-                    backgroundColor: isDark ? '#111827' : '#ffffff',
-                    color: isDark ? '#f8fafc' : '#0f172a',
-                    borderRadius: "12px",
-                    fontSize: '11px',
-                    border: isDark ? "1px solid #334155" : "1px solid #e2e8f0"
-                  }} />
-                <Legend formatter={(v) => <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-tight">{v.replace(/_/g, " ")}</span>} />
-              </RechartsPie>
-            </ResponsiveContainer>
+                    <span className="uppercase">{item.status.replace(/_/g, " ")}</span>
+                    <span className="text-slate-400 dark:text-slate-500 font-medium text-[9px]">({item.count} • {pct}%)</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>

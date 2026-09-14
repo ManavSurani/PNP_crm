@@ -9,7 +9,7 @@ import {
 import { format } from "date-fns";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  CartesianGrid, AreaChart, Area, LineChart, Line
+  CartesianGrid, AreaChart, Area, LineChart, Line, Cell
 } from "recharts";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -22,6 +22,50 @@ export default function Dashboard() {
   const [stats, setStats] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [timeframe, setTimeframe] = useState<"days" | "months" | "years">("days");
+
+  const LeadVolumeTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const item = payload[0];
+      const value = item.value ?? 0;
+      const isDays = timeframe === "days";
+      const isMonths = timeframe === "months";
+      const title = isDays
+        ? "Daily Leads"
+        : isMonths
+        ? "Monthly Volume"
+        : "Annual Inquiries";
+      const dotColor = isDark ? "#818cf8" : "#6366f1";
+      return (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-3 shadow-xl min-w-[190px] pointer-events-none">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+            {label} {isDays ? "Velocity" : "Acquisition"}
+          </p>
+          <div className="flex items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2">
+              <span
+                className="w-2.5 h-2.5 rounded-full shrink-0 ring-2 ring-white dark:ring-slate-800 shadow-sm"
+                style={{ backgroundColor: dotColor }}
+              />
+              <span className="font-semibold text-slate-800 dark:text-slate-100">
+                {title}
+              </span>
+            </div>
+            <span
+              className={cn(
+                "font-bold px-2 py-0.5 rounded-md text-[11px] shrink-0 border",
+                isDark
+                  ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/30"
+                  : "bg-indigo-50 text-indigo-700 border-indigo-200"
+              )}
+            >
+              {value} {value === 1 ? "Lead" : "Leads"}
+            </span>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
 
   useEffect(() => {
     fetch("/api/stats")
@@ -142,76 +186,117 @@ export default function Dashboard() {
                 <p className="text-xs text-slate-400 dark:text-slate-500">Weekly Acquisition Velocity</p>
               </div>
             </div>
-            <button 
-              onClick={() => {
-                if (timeframe === "days") setTimeframe("months");
-                else if (timeframe === "months") setTimeframe("years");
-                else setTimeframe("days");
-              }}
-              className="px-3 py-1 bg-slate-50 dark:bg-[#161f32] hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-medium text-slate-500 dark:text-slate-300 transition-colors cursor-pointer active:scale-95"
-            >
-               {timeframe === "days" ? "Last 7 Days" : timeframe === "months" ? "Months" : "Years"}
-            </button>
+            <div className="flex bg-slate-100 dark:bg-[#161f32] p-1 rounded-lg">
+              <button 
+                onClick={() => setTimeframe("days")}
+                className={cn(
+                  "px-3 py-1.5 text-[11px] font-bold rounded-md transition-all cursor-pointer",
+                  timeframe === "days"
+                    ? "bg-white dark:bg-slate-800 text-slate-800 dark:text-white shadow-sm"
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                )}
+              >
+                Last 7 Days
+              </button>
+              <button 
+                onClick={() => setTimeframe("months")}
+                className={cn(
+                  "px-3 py-1.5 text-[11px] font-bold rounded-md transition-all cursor-pointer",
+                  timeframe === "months"
+                    ? "bg-white dark:bg-slate-800 text-slate-800 dark:text-white shadow-sm"
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                )}
+              >
+                Months
+              </button>
+              <button 
+                onClick={() => setTimeframe("years")}
+                className={cn(
+                  "px-3 py-1.5 text-[11px] font-bold rounded-md transition-all cursor-pointer",
+                  timeframe === "years"
+                    ? "bg-white dark:bg-slate-800 text-slate-800 dark:text-white shadow-sm"
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                )}
+              >
+                Years
+              </button>
+            </div>
           </div>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height={300}>
               {timeframe === "days" ? (
                 <BarChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#1e293b" : "#f1f5f9"} vertical={false} />
-                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: isDark ? '#94a3b8' : '#64748b' }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: isDark ? '#94a3b8' : '#64748b' }} axisLine={false} tickLine={false} />
-                  <Tooltip
-                    cursor={{ fill: isDark ? '#1e293b' : '#f8fafc' }}
-                    contentStyle={{
-                      backgroundColor: isDark ? '#111827' : '#ffffff',
-                      color: isDark ? '#f8fafc' : '#0f172a',
-                      borderRadius: '12px',
-                      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
-                      boxShadow: '0 10px 15px -3px rgba(0,0,0,0.3)',
-                      fontSize: '12px'
-                    }}
-                  />
-                  <Bar dataKey="leads" name="Leads" fill={isDark ? "#6366f1" : "#4f46e5"} radius={[4, 4, 0, 0]} maxBarSize={32} />
-                </BarChart>
-              ) : timeframe === "months" ? (
-                <AreaChart data={chartDataMonths} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
                   <defs>
-                    <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={isDark ? "#6366f1" : "#4f46e5"} stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor={isDark ? "#6366f1" : "#4f46e5"} stopOpacity={0}/>
+                    <linearGradient id="leadBarGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={isDark ? "#818cf8" : "#6366f1"} stopOpacity={1} />
+                      <stop offset="100%" stopColor={isDark ? "#4f46e5" : "#4338ca"} stopOpacity={0.7} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#1e293b" : "#f1f5f9"} vertical={false} />
                   <XAxis dataKey="date" tick={{ fontSize: 11, fill: isDark ? '#94a3b8' : '#64748b' }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: isDark ? '#94a3b8' : '#64748b' }} axisLine={false} tickLine={false} />
                   <Tooltip
-                    contentStyle={{
-                      backgroundColor: isDark ? '#111827' : '#ffffff',
-                      color: isDark ? '#f8fafc' : '#0f172a',
-                      borderRadius: '12px',
-                      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
-                      boxShadow: '0 10px 15px -3px rgba(0,0,0,0.3)',
-                      fontSize: '12px'
-                    }}
+                    cursor={false}
+                    content={<LeadVolumeTooltip />}
                   />
-                  <Area type="monotone" dataKey="leads" name="Leads" stroke={isDark ? "#6366f1" : "#4f46e5"} strokeWidth={3} fillOpacity={1} fill="url(#colorLeads)" />
-                </AreaChart>
-              ) : (
-                <LineChart data={chartDataYears} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                  <Bar
+                    dataKey="leads"
+                    name="Leads"
+                    fill="url(#leadBarGrad)"
+                    radius={[6, 6, 0, 0]}
+                    maxBarSize={32}
+                  />
+                </BarChart>
+              ) : timeframe === "months" ? (
+                <AreaChart data={chartDataMonths} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={isDark ? "#818cf8" : "#6366f1"} stopOpacity={0.35} />
+                      <stop offset="50%" stopColor={isDark ? "#818cf8" : "#6366f1"} stopOpacity={0.12} />
+                      <stop offset="95%" stopColor={isDark ? "#818cf8" : "#6366f1"} stopOpacity={0.01} />
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#1e293b" : "#f1f5f9"} vertical={false} />
                   <XAxis dataKey="date" tick={{ fontSize: 11, fill: isDark ? '#94a3b8' : '#64748b' }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: isDark ? '#94a3b8' : '#64748b' }} axisLine={false} tickLine={false} />
                   <Tooltip
-                    contentStyle={{
-                      backgroundColor: isDark ? '#111827' : '#ffffff',
-                      color: isDark ? '#f8fafc' : '#0f172a',
-                      borderRadius: '12px',
-                      border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
-                      boxShadow: '0 10px 15px -3px rgba(0,0,0,0.3)',
-                      fontSize: '12px'
-                    }}
+                    cursor={{ stroke: isDark ? '#334155' : '#cbd5e1', strokeWidth: 1, strokeDasharray: '3 3' }}
+                    content={<LeadVolumeTooltip />}
                   />
-                  <Line type="monotone" dataKey="leads" name="Leads" stroke={isDark ? "#6366f1" : "#4f46e5"} strokeWidth={3} dot={{ r: 5, fill: isDark ? "#6366f1" : "#4f46e5", stroke: isDark ? "#111827" : "#fff", strokeWidth: 2 }} activeDot={{ r: 7 }} />
+                  <Area
+                    type="monotone"
+                    dataKey="leads"
+                    name="Leads"
+                    stroke={isDark ? "#818cf8" : "#6366f1"}
+                    strokeWidth={2.5}
+                    fillOpacity={1}
+                    fill="url(#colorLeads)"
+                  />
+                </AreaChart>
+              ) : (
+                <LineChart data={chartDataYears} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="leadLineGrad" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#a855f7" />
+                      <stop offset="100%" stopColor="#6366f1" />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#1e293b" : "#f1f5f9"} vertical={false} />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: isDark ? '#94a3b8' : '#64748b' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: isDark ? '#94a3b8' : '#64748b' }} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    cursor={{ stroke: isDark ? '#334155' : '#cbd5e1', strokeWidth: 1, strokeDasharray: '3 3' }}
+                    content={<LeadVolumeTooltip />}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="leads"
+                    name="Leads"
+                    stroke="url(#leadLineGrad)"
+                    strokeWidth={3}
+                    dot={{ r: 4, strokeWidth: 2, fill: isDark ? "#0f172a" : "#ffffff", stroke: "#a855f7" }}
+                    activeDot={{ r: 6, strokeWidth: 3, fill: "#a855f7", stroke: "#ffffff" }}
+                  />
                 </LineChart>
               )}
             </ResponsiveContainer>
