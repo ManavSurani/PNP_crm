@@ -21,6 +21,23 @@ export const metadata: Metadata = {
   description: "Furniture Business Management System",
 };
 
+function resolveScheduledDarkServer(dayTime?: string, nightTime?: string): boolean {
+  const now = new Date();
+  const cur = now.getHours() * 60 + now.getMinutes();
+  const parseM = (t?: string) => {
+    if (!t) return 0;
+    const parts = t.split(":");
+    return (parseInt(parts[0], 10) || 0) * 60 + (parseInt(parts[1], 10) || 0);
+  };
+  const dayM = parseM(dayTime || "07:00");
+  const nightM = parseM(nightTime || "19:00");
+  if (nightM > dayM) {
+    return cur >= nightM || cur < dayM;
+  } else {
+    return cur >= nightM && cur < dayM;
+  }
+}
+
 async function getServerThemeConfig(): Promise<{ config: ThemeConfig; isDark: boolean }> {
   let themeConfig: ThemeConfig = DEFAULT_THEME_CONFIG;
 
@@ -72,7 +89,16 @@ async function getServerThemeConfig(): Promise<{ config: ThemeConfig; isDark: bo
     // Graceful fallback to default
   }
 
-  const isDark = themeConfig.mode === "dark";
+  let isDark = false;
+  if (themeConfig.mode === "dark") {
+    isDark = true;
+  } else if (themeConfig.mode === "scheduled") {
+    isDark = resolveScheduledDarkServer(
+      themeConfig.schedule?.dayTime,
+      themeConfig.schedule?.nightTime
+    );
+  }
+
   return { config: themeConfig, isDark };
 }
 

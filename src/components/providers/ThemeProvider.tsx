@@ -47,7 +47,7 @@ function parseTimeToMinutes(timeStr: string): number {
   return h * 60 + m;
 }
 
-function resolveScheduledTheme(dayTime: string, nightTime: string): ResolvedTheme {
+export function resolveScheduledTheme(dayTime: string, nightTime: string): ResolvedTheme {
   const now = new Date();
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
   const dayMinutes = parseTimeToMinutes(dayTime);
@@ -322,6 +322,9 @@ export function ThemeProvider({ children, initialConfig }: ThemeProviderProps) {
     const base = initialConfig || DEFAULT_THEME_CONFIG;
     if (base.mode === "dark") return "dark";
     if (base.mode === "light") return "light";
+    if (base.mode === "scheduled") {
+      return resolveScheduledTheme(base.schedule?.dayTime || "07:00", base.schedule?.nightTime || "19:00");
+    }
     return "light";
   });
   const [mounted, setMounted] = useState(false);
@@ -331,10 +334,7 @@ export function ThemeProvider({ children, initialConfig }: ThemeProviderProps) {
     if (cfg.mode === "dark") return "dark";
     if (cfg.mode === "light") return "light";
     if (cfg.mode === "scheduled") {
-      if (cfg.schedule?.enabled) {
-        return resolveScheduledTheme(cfg.schedule.dayTime, cfg.schedule.nightTime);
-      }
-      return "light";
+      return resolveScheduledTheme(cfg.schedule?.dayTime || "07:00", cfg.schedule?.nightTime || "19:00");
     }
     // "system"
     if (typeof window !== "undefined" && window.matchMedia) {
@@ -358,17 +358,37 @@ export function ThemeProvider({ children, initialConfig }: ThemeProviderProps) {
   const updateConfig = useCallback((updater: Partial<ThemeConfig> | ((prev: ThemeConfig) => ThemeConfig)) => {
     setConfig(prev => {
       const partial = typeof updater === "function" ? updater(prev) : updater;
+
+      let targetMode = partial.mode !== undefined ? partial.mode : prev.mode;
+      let targetScheduleEnabled = typeof partial.schedule?.enabled === "boolean" 
+        ? partial.schedule.enabled 
+        : (prev.schedule?.enabled ?? DEFAULT_THEME_CONFIG.schedule.enabled);
+
+      if (partial.mode === "scheduled") {
+        targetScheduleEnabled = true;
+      } else if (partial.mode === "light" || partial.mode === "dark" || partial.mode === "system") {
+        targetScheduleEnabled = false;
+      } else if (partial.schedule?.enabled === true) {
+        targetMode = "scheduled";
+      } else if (partial.schedule?.enabled === false && targetMode === "scheduled") {
+        targetMode = "light";
+      }
+
       const next: ThemeConfig = {
         ...prev,
         ...partial,
+        mode: targetMode,
         schedule: {
           ...prev.schedule,
           ...(partial.schedule || {}),
-          enabled: typeof partial.schedule?.enabled === "boolean" 
-            ? partial.schedule.enabled 
-            : (prev.schedule?.enabled ?? DEFAULT_THEME_CONFIG.schedule.enabled),
+          enabled: targetScheduleEnabled,
         },
       };
+
+      // Immediately evaluate and apply resolved theme to DOM
+      const nextResolved = computeTheme(next);
+      setResolvedTheme(nextResolved);
+      applyThemeToDOM(nextResolved);
 
       const serialized = JSON.stringify(next);
 
@@ -397,7 +417,7 @@ export function ThemeProvider({ children, initialConfig }: ThemeProviderProps) {
 
       return next;
     });
-  }, []);
+  }, [computeTheme, applyThemeToDOM]);
 
   // Set mode directly
   const setMode = useCallback((mode: ThemeMode) => {

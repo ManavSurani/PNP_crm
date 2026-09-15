@@ -2744,3 +2744,70 @@ Execute the approved Master Implementation Plan across all 3 phases:
 - **Production Server Daemon**: Running on port 3000 (`HTTP/1.1 200 OK`).
 - **Archived Route**: `http://localhost:3000/interested?tab=archived` returned `HTTP/1.1 200 OK`.
 - **Search Prefix Ranking Verification**: Verified with query `'m'` — items starting with M (`manav`, `manishbhai`) received Score 1 and ranked at the top.
+
+
+---
+
+## Session: 2026-09-15 — Investigation & Plan: Automated Day/Night Theme Schedule System Fix
+
+### User Request
+The user reported that 'Phase 2: Automated Day/Night Theme Schedule System & Dynamic Status (/settings)' is not working properly, requested a re-check to identify the exact issues, and asked for a detailed implementation plan to fix it.
+
+### Root Causes Discovered
+1. **Disconnection Between Mode Grid & Schedule Switch**:
+   - In `/settings`, clicking the top 'Day/Night Schedule' mode card ran `setMode("scheduled")`, which updated `mode = "scheduled"` but left `schedule.enabled = false`.
+   - SQLite DB inspection confirmed the desync: `{"mode":"scheduled","schedule":{"enabled":false}}`.
+   - Because `schedule.enabled` was `false`, `computeTheme` returned `"light"` and never ran the schedule timer, while the bottom UI showed 'Paused'.
+2. **Bottom Banner False Status**:
+   - The bottom banner only inspected `config.schedule.enabled`, so if the user picked manual 'Light Mode' or 'Dark Mode' above while the switch was left on, the banner falsely claimed the schedule was active.
+3. **Saving Hours Did Not Trigger Live Transition**:
+   - Clicking 'Save Schedule Hours' saved the times but did not force a theme re-evaluation or auto-activate the schedule if it was paused.
+4. **Server-Side Rendering (SSR) Flash in `layout.tsx`**:
+   - In `layout.tsx`, `getServerThemeConfig()` evaluated `isDark = themeConfig.mode === "dark"`, which was always false for scheduled mode, causing a light-mode flash during nighttime loads.
+
+### Plan Summary
+- **Phase 1: Unify Theme Mode & Schedule in `ThemeProvider.tsx`**:
+  - Automatically synchronize `mode === "scheduled"` with `schedule.enabled = true`.
+  - Ensure `computeTheme` and DOM application trigger immediately whenever schedule hours or modes change.
+  - Export `resolveScheduledTheme`.
+- **Phase 2: Settings Page Unification & Live Dynamic Status**:
+  - Synchronize top mode cards and bottom toggle switch so they never disagree.
+  - Make 'Save Schedule Hours' immediately apply the new hours to the DOM and state.
+  - Dynamic live status banner tied to `mode === "scheduled"` and `resolvedTheme`.
+- **Phase 3: Server-Side SSR Flash Elimination (`layout.tsx`)**:
+  - Calculate scheduled theme on the server so initial HTML matches nighttime/daytime hours without flash.
+- **Verification Plan**:
+  - TypeScript validation (`0 errors`), production build across 52 routes, live test on port 3000.
+
+
+---
+
+## Session: 2026-09-15 — Execution Complete: Automated Day/Night Theme Schedule Fix
+
+### User Request
+Execute the complete fix for Phase 2: Automated Day/Night Theme Schedule System & Dynamic Status (/settings).
+
+### Files Modified & Exact Implementation
+1. `src/components/providers/ThemeProvider.tsx`:
+   - Synchronized `mode` and `schedule.enabled` inside `updateConfig`:
+     - `mode === "scheduled"` enforces `schedule.enabled = true`.
+     - Selecting manual mode (`light`, `dark`, `system`) sets `schedule.enabled = false`.
+     - Toggling switch ON sets `mode = "scheduled"`.
+     - Toggling switch OFF sets mode to current resolved theme.
+   - Synchronously computes and applies resolved theme to DOM on every config update.
+   - Initial `resolvedTheme` state now evaluates scheduled theme when starting in scheduled mode.
+2. `src/app/(dashboard)/settings/page.tsx`:
+   - Defined `isScheduleActive = mode === "scheduled" && Boolean(config.schedule?.enabled)`.
+   - Master toggle switch is checked strictly when `isScheduleActive` is true.
+   - Dynamic live status banner displays accurate Day/Night mode and next switch time in 12-hour AM/PM format.
+   - 'Save Schedule Hours' updates custom hours and automatically sets `mode = "scheduled"` and `enabled = true`, transitioning the theme immediately.
+3. `src/app/layout.tsx`:
+   - Added server-safe `resolveScheduledDarkServer()` to evaluate scheduled theme during SSR, eliminating night-time light flash.
+4. SQLite Database:
+   - Synchronized existing `themeConfig` so `schedule.enabled: true` matches `mode: "scheduled"`.
+
+### Verification Results
+- **TypeScript**: `npx tsc --noEmit` passed with **0 errors**.
+- **Production Build**: `npm run build` compiled successfully in 8.4s across all **52 routes**.
+- **Production Server**: Running on port 3000 (`HTTP/1.1 200 OK`).
+- **Settings Route**: Verified (`http://localhost:3000/settings` returned `HTTP/1.1 200 OK`).

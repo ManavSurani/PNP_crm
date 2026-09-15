@@ -1425,13 +1425,14 @@ function isCurrentlyDaytime(dayTimeStr: string, nightTimeStr: string) {
 }
 
 function AppearanceTabSection() {
-  const { theme, mode, config, setMode, updateConfig, toggleTheme } = useTheme();
+  const { theme, resolvedTheme, mode, config, setMode, updateConfig, toggleTheme } = useTheme();
   const [dayTime, setDayTime] = useState(config.schedule.dayTime || "07:00");
   const [nightTime, setNightTime] = useState(config.schedule.nightTime || "19:00");
   const [isSaved, setIsSaved] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [conflictError, setConflictError] = useState<string | null>(null);
 
+  const isScheduleActive = mode === "scheduled" && Boolean(config.schedule?.enabled);
   const isDaytime = isCurrentlyDaytime(dayTime, nightTime);
 
   // Global keydown capture while recording custom shortcut
@@ -1496,8 +1497,10 @@ function AppearanceTabSection() {
   const handleSaveSchedule = () => {
     updateConfig(prev => ({
       ...prev,
+      mode: "scheduled",
       schedule: {
         ...prev.schedule,
+        enabled: true,
         dayTime,
         nightTime,
       },
@@ -1768,11 +1771,11 @@ function AppearanceTabSection() {
             </h2>
             <span className={cn(
               "text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border",
-              config.schedule?.enabled
+              isScheduleActive
                 ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60"
                 : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700"
             )}>
-              {config.schedule?.enabled ? "Active" : "Paused"}
+              {isScheduleActive ? "Active" : "Paused"}
             </span>
             {isSaved && (
               <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 ml-2">
@@ -1785,14 +1788,14 @@ function AppearanceTabSection() {
           <label className="relative inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
-              checked={Boolean(config.schedule?.enabled)}
+              checked={isScheduleActive}
               onChange={(e) => {
                 const isEnabled = e.target.checked;
-                updateConfig(prev => ({
-                  ...prev,
-                  mode: isEnabled ? "scheduled" : (prev.mode === "scheduled" ? theme : prev.mode),
-                  schedule: { ...prev.schedule, enabled: isEnabled }
-                }));
+                if (isEnabled) {
+                  setMode("scheduled");
+                } else {
+                  setMode(resolvedTheme === "dark" ? "dark" : "light");
+                }
               }}
               className="sr-only peer"
             />
@@ -1805,8 +1808,8 @@ function AppearanceTabSection() {
           </p>
 
           {/* Dynamic Live Status Banner */}
-          {config.schedule?.enabled ? (
-            isDaytime ? (
+          {isScheduleActive ? (
+            resolvedTheme === "light" ? (
               <div className="p-4 bg-amber-500/10 dark:bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-center justify-between gap-3 text-xs font-medium text-amber-900 dark:text-amber-200">
                 <div className="flex items-center gap-2.5">
                   <Sun className="h-4 w-4 text-amber-500 shrink-0" />
@@ -1834,11 +1837,11 @@ function AppearanceTabSection() {
           ) : (
             <div className="p-3 bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/50 rounded-xl flex items-center gap-2 text-xs font-medium text-amber-800 dark:text-amber-300">
               <AlertCircle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
-              <span>Automatic schedule transitions are paused. Turn on the master switch above to re-enable automated time checks.</span>
+              <span>Automated schedule transitions are paused. Select &ldquo;Day/Night Schedule&rdquo; above or turn on the switch to activate.</span>
             </div>
           )}
 
-          <div className={cn("space-y-6 transition-all duration-200", !config.schedule?.enabled && "opacity-40 pointer-events-none select-none")}>
+          <div className={cn("space-y-6 transition-all duration-200", !isScheduleActive && "opacity-40 pointer-events-none select-none")}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2 p-5 bg-slate-50/50 dark:bg-[#161f32] border border-slate-100 dark:border-slate-700/60 rounded-xl">
                 <div className="flex items-center gap-2">
