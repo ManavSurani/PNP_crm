@@ -40,6 +40,10 @@ export const authConfig = {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
       const isAuthPage = nextUrl.pathname.startsWith("/login");
+      const isSetupPage = nextUrl.pathname === "/setup" || nextUrl.pathname.startsWith("/setup/");
+
+      // First-run setup is the only non-authenticated application page.
+      if (isSetupPage) return true;
       
       // 1. If user is logged in and tries to access login page, redirect to dashboard
       if (isAuthPage) {
