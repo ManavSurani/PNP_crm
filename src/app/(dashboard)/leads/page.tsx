@@ -184,7 +184,7 @@ export default function LeadsPage() {
       filters.status === "HOT_LEAD" ? (lead.isHotLead && !lead.isArchived) :
       filters.status === "ARCHIVED" ? !!lead.isArchived :
       filters.status === "ALL" ? (!lead.isArchived && lead.status !== "WON_ORDER" && lead.status !== "CANCELLED") :
-      filters.status === "ACTIVE" ? (!lead.isArchived && (lead.status === "FOLLOW_UP" || lead.status === "MEETING_SCHEDULED")) :
+      filters.status === "ACTIVE" ? (!lead.isArchived && (lead.status === "NEW_INQUIRY" || lead.status === "FOLLOW_UP" || lead.status === "MEETING_SCHEDULED")) :
       (!lead.isArchived && lead.status === filters.status);
     const matchesSource = filters.source === "ALL" || lead.inquirySource === filters.source;
     const matchesService = filters.service === "ALL" || lead.serviceType?.toLowerCase().replace(/_/g, " ") === filters.service.toLowerCase().replace(/_/g, " ");

@@ -2811,3 +2811,149 @@ Execute the complete fix for Phase 2: Automated Day/Night Theme Schedule System 
 - **Production Build**: `npm run build` compiled successfully in 8.4s across all **52 routes**.
 - **Production Server**: Running on port 3000 (`HTTP/1.1 200 OK`).
 - **Settings Route**: Verified (`http://localhost:3000/settings` returned `HTTP/1.1 200 OK`).
+
+
+---
+
+## Session: 2026-09-15 — KPI Cards Audit & Site Visits Data Plan
+
+### User Request
+"can you check the site visit thing card like did you see it's show a wrong data so check for each and every card like any all are working properly so create a detail plan"
+
+### Complete KPI Audit Results Across All 10 Cards
+
+1. **Total Leads (Card: 20 | DB: 20 | Page: 3)**:
+   - Database has 20 leads: 10 won, 6 canceled, 1 archived, 3 active.
+   - Discrepancy: Clicking "/leads" hides won, canceled, and archived leads by default, displaying only 3 rows.
+2. **Hot Leads (Card: 1 | DB: 1 | Page: 1)**:
+   - 100% Correct. 1 active hot lead ('nnif').
+3. **New Inquiries (Card: 1 | DB: 1 | Page: 1)**:
+   - 100% Correct. 1 new inquiry ('nndbu').
+4. **Follow-ups (Card: 0 TODAY | 2 Upcoming)**:
+   - Correct logic: 0 today, 2 upcoming tomorrow ('bhxunun' and 'nndbu').
+5. **Site Visits (Card: 0 TODAY | All cleared | DB: 9 Meetings)**:
+   - **Root Causes**:
+     - The card displays only Today's visits as the main number (0), whereas surrounding cards show total volume.
+     - `api/stats/route.ts` filters out meetings where leads are won or archived. The 2 scheduled meetings in DB belong to 'hasmukhbhai' (won) and 'manav' (archived), so active scheduled count is 0.
+     - 7 meetings are marked COMPLETED, but the `/meetings` page completely hides completed meetings with no tab to view them!
+6. **Current Leads (Card: 3 | DB: 3 | Page: 2)**:
+   - Discrepancy: In `leads/page.tsx`, filter 'ACTIVE' only included 'FOLLOW_UP' and 'MEETING_SCHEDULED', strictly excluding 'NEW_INQUIRY'. Clicking the card with 3 leads opened a page showing only 2!
+7. **Won Orders (Card: 9 | DB: 9 | Page: 9)**:
+   - 100% Correct. 9 active won customer projects.
+8. **Completed Projects (Card: 1 | DB: 1 | Page: 1)**:
+   - 100% Correct. 1 delivered project ('hasmukhbhai').
+9. **Archived Leads (Card: 1 | DB: 1 | Page: 1)**:
+   - 100% Correct. 1 archived lead ('manav').
+10. **Canceled Records (Card: 6 | DB: 6 | Page: 6)**:
+    - 100% Correct. 6 canceled leads.
+
+### Proposed Master Solution
+- **Site Visits**: Add "Scheduled", "Completed", and "All Visits" tabs to `/meetings` so all 7 historical visits are accessible. Update the card to show scheduled visits or clear breakdown.
+- **Current Leads Filter**: Fix `filters.status === "ACTIVE"` in `leads/page.tsx` to include 'NEW_INQUIRY', matching the 3-lead count.
+- **Total Leads Clarity**: Provide an "All Records" tab on `/leads` so clicking "Total Leads: 20" displays all 20 records.
+
+
+---
+
+## Session: 2026-09-15 — Recheck Confirmation: Total Leads & Current Leads Verified 100% Correct
+
+### User Request
+"first can you recheck a thing like you menstion in this plan that 1 Total Leads 20 (Registered inquiries) ... this is like a correct like in my caard i alrady see the 20 total leads 6 Current Leads 3 (Active in pipeline) ... this is also a correct show me so check for this that this are correct or not if yes then in plan write a 100% correct"
+
+### Recheck Audit & Verification Results
+1. **Total Leads (20)**:
+   - **Status**: ✅ **100% CORRECT**.
+   - **Verification**: Database contains exactly 20 registered inquiries across history (10 won orders, 6 canceled records, 1 archived, 3 active in pipeline). The card count of 20 accurately reflects the entire inquiry volume of the CRM.
+2. **Current Leads (3)**:
+   - **Status**: ✅ **100% CORRECT**.
+   - **Verification**: Database has exactly 3 active pipeline leads being worked on ('nnif', 'bhxunun', 'nndbu'). The card count of 3 accurately reflects active pipeline leads.
+3. **Site Visits (0 TODAY | All cleared)**:
+   - **Verification**: There are 9 meetings in the database: 7 are marked COMPLETED, and 2 belong to inactive/past leads (from May and July).
+   - Because today is Sept 15 and 0 meetings are scheduled for today, the card shows '0 TODAY'.
+   - Root cause of user confusion: The `/meetings` page only queries scheduled meetings, hiding the 7 completed site visits because there are no 'Completed' or 'All Visits' tabs.
+
+
+---
+
+## Session: 2026-09-15 — Strict Rules Added to Implementation Plan
+
+### User Request
+"in this plan add the rules that don't change any other thing which not menstion in plan also add a rule that add only a specific code which are nessary to implement this plan also add this rule to like don't tuch any other thing out side the plan"
+
+### Rules Added to implementation_plan.md
+1. **Strict Scope Boundary**: Do NOT touch, modify, or change any file, route, API, database schema, or setting outside the scope of this plan.
+2. **Minimal & Specific Code Only**: Add and edit ONLY the exact, specific lines of code strictly required to implement the features described in this plan.
+3. **Zero Regressions**: Keep all existing working business logic 100% intact across all other modules.
+4. **Rigorous Build Verification**: Verify with `npx tsc --noEmit` (0 errors) and `npm run build` across all 52 routes.
+5. **Memory Rule**: Continue automatically storing all queries and answers in `gemini.md`.
+
+
+---
+
+## Session: 2026-09-15 — Root Cause Identified: Notification Bell Showing Archived Leads
+
+### User Request
+"ohh i see that sit visit card is working properly like only when i send the manav to archive then in notification is not updated like when anything goes to arcived then like cancel in notification any thing releted to follow up or site visit don't show me like follow up and sit visit page okey so this is the thing so understand this part and add this part into plan"
+
+### Root Cause & Clarification
+1. **Site Visits Dashboard Card**: Confirmed working properly.
+2. **Notification Bell Issue**:
+   - In `src/app/api/notifications/route.ts`, queries for `pendingFollowUps`, `pendingMeetings`, `highPriorityLeads`, and `pendingMilestones` filtered by `isCancelled: false`, but omitted `isArchived: false`.
+   - Because 'manav' had a scheduled site visit from July 10, when 'manav' was archived, the notification bell continued to show "Overdue Site Visit: Visit manav".
+   - The Follow-up and Site Visit pages already filter `isArchived: false` correctly, so the only place missing this filter was the notification API.
+
+### Strict Scope Implementation Plan
+1. **`src/app/api/notifications/route.ts`**:
+   - Add `isArchived: false` to all 4 Prisma queries (Follow-ups, Meetings, High Priority Leads, Milestones).
+   - Once archived, any lead's notifications immediately vanish from the notification bell, exactly like cancelled leads.
+2. **`src/app/(dashboard)/leads/page.tsx`**:
+   - Update `filters.status === "ACTIVE"` so all 3 active pipeline leads show when clicking the "Current Leads (3)" dashboard card.
+3. **Strict Boundaries**:
+   - Zero changes to any other files or modules.
+   - Minimal necessary code only.
+   - Full production verification with TypeScript and `npm run build`.
+
+
+---
+
+## Session: 2026-09-15 — Consultation: Notification Rules for Archived, Cancelled & Won Orders
+
+### User Request
+"can you explin this plan like if i put lead into archived or won order or cancel the lead then i don't want you to show notification about their follow up and sit visit in any way if i reactive this then only then show me all the parts of on reactive parts like you can't convert customer to lead again this is the most understanding part like like other archived and cacled should be reactive but you can't convert customer to lead again okey so is this what plan changes in notification or not give me ans only"
+
+### Detailed Answer
+1. **Won Orders (Customers)**:
+   - Already blocked permanently: `status: { not: "WON_ORDER" }`.
+   - Once a lead is won, it becomes an active customer project and can never be converted back into a lead. Follow-up and site visit notifications will NEVER appear for Won Orders.
+2. **Cancelled Leads**:
+   - Already blocked when cancelled: `isCancelled: false`.
+   - If restored/reactivated from Cancelled archive, notifications resume.
+3. **Archived Leads (The Core Fix in the Plan)**:
+   - Previously missing `isArchived: false` in `/api/notifications`.
+   - The plan adds `isArchived: false` to follow-ups, site visits, high-priority alerts, and milestones.
+   - As soon as a lead is moved to Archive (e.g. 'manav'), all its notifications immediately disappear.
+   - If reactivated from the Archive, its notifications automatically resume.
+
+
+---
+
+## Session: 2026-09-15 — Execution Complete: Notification Archive Filter Fix & Pipeline Alignment
+
+### User Request
+"ok then proceed on plan"
+
+### Exact Code Changes Made
+1. `src/app/api/notifications/route.ts`:
+   - Added `isArchived: false` to all 4 Prisma notification queries (Follow-ups, Meetings, High Priority Leads, Milestones).
+   - Ensured that archived leads (like 'manav') have their site visits and follow-up notifications immediately suppressed.
+   - Preserved permanent suppression for Won Orders (`status: { not: "WON_ORDER" }`) and Cancelled leads (`isCancelled: false`).
+   - When an archived or cancelled lead is reactivated, notifications resume seamlessly.
+2. `src/app/(dashboard)/leads/page.tsx`:
+   - Updated `filters.status === "ACTIVE"` to check `!lead.isArchived && (lead.status === "NEW_INQUIRY" || lead.status === "FOLLOW_UP" || lead.status === "MEETING_SCHEDULED")`.
+   - Guaranteed that clicking the "Current Leads (3)" dashboard card displays all 3 active pipeline leads.
+
+### Verification Results
+- **TypeScript**: `npx tsc --noEmit` passed with **0 errors**.
+- **Production Build**: `npm run build` compiled successfully in **11.0s** across all **52 routes**.
+- **Live Server**: Running on port 3000 (`HTTP/1.1 200 OK`).
+- **Notification Verification**: Tested `/api/notifications` — archived lead 'manav' is 100% excluded.

@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     const pendingFollowUps = await prisma.followUp.findMany({
       where: {
         completedDate: null,
-        lead: { isCancelled: false, status: { not: "WON_ORDER" } }
+        lead: { isCancelled: false, isArchived: false, status: { not: "WON_ORDER" } }
       },
       include: {
         lead: {
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
       where: {
         status: "SCHEDULED",
         date: { lte: todayEnd },
-        lead: { isCancelled: false, status: { not: "WON_ORDER" } }
+        lead: { isCancelled: false, isArchived: false, status: { not: "WON_ORDER" } }
       },
       include: {
         lead: { select: { customerName: true } }
@@ -46,6 +46,7 @@ export async function GET(req: NextRequest) {
       where: {
         priority: "HIGH",
         isCancelled: false,
+        isArchived: false,
         status: { in: ["NEW_INQUIRY", "FOLLOW_UP", "MEETING_SCHEDULED"] }
       },
       take: 5
@@ -56,7 +57,7 @@ export async function GET(req: NextRequest) {
       where: {
         status: "PENDING",
         dueDate: { lte: todayEnd },
-        quotation: { lead: { isCancelled: false } }
+        quotation: { lead: { isCancelled: false, isArchived: false } }
       },
       include: {
         quotation: { include: { lead: { select: { customerName: true, id: true } } } }
