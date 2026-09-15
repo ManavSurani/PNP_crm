@@ -7,7 +7,7 @@ import {
   Key, Globe, Clock, Monitor, RefreshCcw, AlertCircle,
   Zap, Check, Settings as SettingsIcon, Database, Lock,
   Trash2, MoreHorizontal, ExternalLink, AlertTriangle, Search, Filter, RotateCcw, Activity, MapPin, ChevronRight, Phone,
-  Cloud, CloudDownload, Timer, CalendarClock, Palette, Sun, Moon, Laptop, Keyboard, Sparkles, Pencil
+  Cloud, CloudDownload, CloudUpload, Timer, CalendarClock, Palette, Sun, Moon, Laptop, Keyboard, Sparkles, Pencil
 } from "lucide-react";
 import PinModal from "@/components/analytics/PinModal";
 import ConfirmModal from "@/components/ui/ConfirmModal";
@@ -52,6 +52,8 @@ export default function SettingsPage() {
   const [scheduleMessage, setScheduleMessage] = useState({ type: "", text: "" });
   const [showCloudRestoreModal, setShowCloudRestoreModal] = useState(false);
   const [isCollectingFromCloud, setIsCollectingFromCloud] = useState(false);
+  const [isCloudBackingUp, setIsCloudBackingUp] = useState(false);
+  const [cloudBackupSuccess, setCloudBackupSuccess] = useState(false);
   const [cloudMessage, setCloudMessage] = useState({ type: "", text: "" });
 
   // Analytics PIN States
@@ -390,6 +392,33 @@ export default function SettingsPage() {
       setMessage({ type: "error", text: err.message ?? "Failed to create backup" });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCloudOnlyBackup = async () => {
+    setIsCloudBackingUp(true);
+    setCloudBackupSuccess(false);
+    setMessage({ type: "", text: "" });
+    try {
+      const response = await fetch("/api/settings/backup?cloudOnly=true");
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error ?? "Cloud backup failed");
+      }
+
+      if (data.timestamp) {
+        setAutoBackupLastRun(data.timestamp);
+      } else {
+        setAutoBackupLastRun(new Date().toISOString());
+      }
+
+      setCloudBackupSuccess(true);
+      setMessage({ type: "success", text: "Backup successfully stored in cloud ☁️" });
+      setTimeout(() => setCloudBackupSuccess(false), 3000);
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message ?? "Failed to upload backup to cloud" });
+    } finally {
+      setIsCloudBackingUp(false);
     }
   };
 
@@ -922,10 +951,33 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   
-                  <div className="pt-4 flex justify-end">
+                  <div className="pt-4 flex items-center justify-end gap-2.5">
+                    {/* Direct Cloud Backup Button (Strictly Icon-Only, No Local PC Download) */}
+                    <button
+                      type="button"
+                      onClick={handleCloudOnlyBackup}
+                      disabled={isLoading || isCloudBackingUp}
+                      title="Store Backup Directly in Cloud (No local download)"
+                      aria-label="Store Backup Directly in Cloud"
+                      className={cn(
+                        "relative flex items-center justify-center p-3 rounded-xl border transition-all duration-200 group active:scale-95 disabled:opacity-50 disabled:pointer-events-none hover:shadow-md",
+                        cloudBackupSuccess
+                          ? "bg-emerald-50 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-700 text-emerald-600 dark:text-emerald-400"
+                          : "bg-sky-50 hover:bg-sky-100/80 text-sky-600 hover:text-sky-700 border-sky-200/80 hover:border-sky-300 dark:bg-sky-950/40 dark:hover:bg-sky-900/60 dark:text-sky-400 dark:hover:text-sky-300 dark:border-sky-800/60 dark:hover:border-sky-700 dark:hover:shadow-sky-900/20"
+                      )}
+                    >
+                      {isCloudBackingUp ? (
+                        <Loader2 className="h-4 w-4 animate-spin text-sky-600 dark:text-sky-400" />
+                      ) : cloudBackupSuccess ? (
+                        <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400 animate-in zoom-in-50 duration-200" />
+                      ) : (
+                        <CloudUpload className="h-4 w-4 transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:scale-110" />
+                      )}
+                    </button>
+
                     <button
                       onClick={handleCreateBackup}
-                      disabled={isLoading}
+                      disabled={isLoading || isCloudBackingUp}
                       className="flex items-center gap-2 px-6 py-3 bg-primary dark:bg-indigo-600 hover:bg-indigo-700 dark:hover:bg-indigo-500 text-white rounded-xl text-sm font-bold hover:shadow-lg hover:shadow-primary/20 active:scale-95 transition-all disabled:opacity-50 min-w-[160px] justify-center"
                     >
                       {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}

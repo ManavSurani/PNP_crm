@@ -35,6 +35,7 @@ export async function GET(req: Request) {
   // ── Auth: allow admin session OR internal scheduled script secret ──────────
   const { searchParams } = new URL(req.url);
   const internalSecret = searchParams.get("secret");
+  const cloudOnly = searchParams.get("cloudOnly") === "true" || searchParams.get("mode") === "cloud";
   const INTERNAL_SECRET = process.env.INTERNAL_BACKUP_SECRET;
 
   let isAuthorized = false;
@@ -111,10 +112,17 @@ export async function GET(req: Request) {
 
     const finalBackup = Buffer.concat([iv, encryptedData]);
 
-    // ── Upload to Cloudflare R2 (if configured) ───────────────────────────────
+    // ── Upload to Cloudflare R2 (if configured or requested) ─────────────────
     let cloudUploaded = false;
     const r2 = getR2Client();
     const r2Bucket = process.env.R2_BUCKET_NAME ?? "pnp-crm-backup";
+
+    if (cloudOnly && !r2) {
+      return NextResponse.json(
+        { error: "Cloud backup storage is not configured. Please add your Cloudflare R2 credentials (R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY) to .env." },
+        { status: 503 }
+      );
+    }
 
     if (r2) {
       try {
@@ -133,8 +141,22 @@ export async function GET(req: Request) {
         cloudUploaded = true;
         console.log("[Backup] Uploaded to Cloudflare R2 successfully.");
       } catch (r2Err: any) {
-        console.error("[Backup] R2 upload failed (backup file still returned):", r2Err.message);
+        console.error("[Backup] R2 upload failed:", r2Err.message);
+        if (cloudOnly) {
+          return NextResponse.json(
+            { error: `Cloud upload failed: ${r2Err.message || "Unknown R2 error"}` },
+            { status: 500 }
+          );
+        }
       }
+    }
+
+    if (cloudOnly) {
+      return NextResponse.json({
+        success: true,
+        message: "Backup successfully stored in cloud.",
+        timestamp: new Date().toISOString(),
+      });
     }
 
     // ── Return encrypted backup file ──────────────────────────────────────────
