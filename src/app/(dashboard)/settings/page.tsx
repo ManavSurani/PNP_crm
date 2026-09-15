@@ -10,6 +10,7 @@ import {
   Cloud, CloudDownload, Timer, CalendarClock, Palette, Sun, Moon, Laptop, Keyboard, Sparkles, Pencil
 } from "lucide-react";
 import PinModal from "@/components/analytics/PinModal";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 import { cn } from "@/lib/utils";
 import { ClockTimePicker } from "@/components/ui/ClockTimePicker";
 import { format } from "date-fns";
@@ -210,12 +211,19 @@ export default function SettingsPage() {
     } catch (err) { console.error(err); }
   };
 
-  const terminateAllOthers = async () => {
-    if (!confirm("Are you sure you want to log out all other devices?")) return;
+  const [showTerminateAllModal, setShowTerminateAllModal] = useState(false);
+  const [isTerminatingAll, setIsTerminatingAll] = useState(false);
+
+  const handleConfirmTerminateAll = async () => {
+    setIsTerminatingAll(true);
     try {
       const res = await fetch(`/api/settings/sessions?all=true`, { method: "DELETE" });
       if (res.ok) fetchSessions();
     } catch (err) { console.error(err); }
+    finally {
+      setIsTerminatingAll(false);
+      setShowTerminateAllModal(false);
+    }
   };
 
   const handleTogglePinProtection = async (enabled: boolean) => {
@@ -769,8 +777,8 @@ export default function SettingsPage() {
                     <Monitor className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /> Logged Devices
                   </h2>
                   <button 
-                    onClick={terminateAllOthers}
-                    className="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-widest hover:bg-rose-50 dark:hover:bg-rose-950/40 px-3 py-1.5 rounded-lg transition-colors border border-transparent hover:border-rose-100 dark:hover:border-rose-900/40"
+                    onClick={() => setShowTerminateAllModal(true)}
+                    className="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-widest hover:bg-rose-50 dark:hover:bg-rose-950/40 px-3 py-1.5 rounded-lg transition-colors border border-transparent hover:border-rose-100 dark:hover:border-rose-900/40 cursor-pointer"
                   >
                     Logout All Others
                   </button>
@@ -1106,7 +1114,7 @@ export default function SettingsPage() {
                     <input 
                       type="text" 
                       placeholder="Search customers..."
-                      className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-[#161f32] border border-slate-100 dark:border-slate-800 rounded-lg text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-[#111827] focus:border-rose-300 dark:focus:border-rose-500/50 outline-none transition-all"
+                      className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-[#161f32] border border-slate-100 dark:border-slate-800 rounded-lg text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-[#111827] focus:border-rose-300 dark:focus:border-rose-500/50 focus:outline-none focus-visible:outline-none focus:ring-2 focus:ring-rose-500/20 outline-none transition-all"
                       value={customerSearchTerm}
                       onChange={e => setCustomerSearchTerm(e.target.value)}
                     />
@@ -1340,6 +1348,17 @@ export default function SettingsPage() {
           error={pinError}
         />
       )}
+
+      <ConfirmModal
+        isOpen={showTerminateAllModal}
+        title="Logout All Other Devices"
+        description="Are you sure you want to log out all other devices? Any other active sessions will be invalidated immediately."
+        confirmText="Logout All Devices"
+        variant="danger"
+        isLoading={isTerminatingAll}
+        onConfirm={handleConfirmTerminateAll}
+        onCancel={() => setShowTerminateAllModal(false)}
+      />
 
       {/* Customer Permanent Delete Modal */}
       {permanentDeleteId && (

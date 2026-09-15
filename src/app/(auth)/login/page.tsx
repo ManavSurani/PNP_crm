@@ -45,14 +45,14 @@ export default function LoginForm() {
           const minutes = res.error.split(":")[1] || "15";
           setError(`Account temporarily locked for security. Try again in ${minutes} minute${minutes === "1" ? "" : "s"}.`);
         } else {
-          setError("Invalid credentials. Please verify your identity.");
+          setError("Invalid email or password.");
         }
       } else {
         router.push("/");
         router.refresh();
       }
     } catch (err) {
-      setError("Synchronisation failure. Please retry authentication.");
+      setError("Failed to connect. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -113,7 +113,9 @@ export default function LoginForm() {
   if (isResetMode) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#090d16] p-6 font-sans relative overflow-hidden transition-colors duration-150">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-[100px] -mr-32 -mt-32" />
+        {/* Ambient Aurora Mesh Lighting */}
+        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[550px] h-[550px] bg-gradient-to-tr from-indigo-600/15 via-purple-500/15 to-transparent rounded-full blur-[120px] pointer-events-none animate-aurora" />
+        <div className="absolute -bottom-40 right-1/4 w-[400px] h-[400px] bg-gradient-to-br from-indigo-500/10 via-teal-500/10 to-transparent rounded-full blur-[100px] pointer-events-none animate-aurora" />
         <div className="w-full max-w-sm space-y-8 relative z-10">
           <div className="flex flex-col items-center">
             <BrandLogo className="h-16 w-16 mb-4 hover:scale-105" />
@@ -121,7 +123,7 @@ export default function LoginForm() {
             <p className="text-slate-400 dark:text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em] mt-1">Identity Verification Flow</p>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-[0_20px_50px_rgba(0,0,0,0.6)] border border-slate-100 dark:border-white/10 p-8">
+          <div className="backdrop-blur-xl bg-white/80 dark:bg-slate-900/60 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-[0_20px_50px_rgba(0,0,0,0.6)] border border-slate-200/80 dark:border-white/10 p-8">
             {resetStep === 1 && (
               <form onSubmit={handleVerifyPhone} className="space-y-6">
                 <div className="space-y-4">
@@ -218,8 +220,8 @@ export default function LoginForm() {
                   <CheckCircle2 className="h-8 w-8" />
                 </div>
                 <div className="space-y-2">
-                  <p className="text-sm font-bold text-slate-900 dark:text-white">Protocol Updated</p>
-                  <p className="text-xs text-slate-400 font-medium">Your credentials have been successfully reset. You can now authenticate with your new password.</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">Password Updated</p>
+                  <p className="text-xs text-slate-400 font-medium">Your password has been successfully reset. You can now sign in with your new password.</p>
                 </div>
                 <button
                   onClick={() => {
@@ -240,9 +242,12 @@ export default function LoginForm() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#090d16] p-6 font-sans relative overflow-hidden transition-colors duration-150">
+      {/* Ambient Aurora Mesh Lighting */}
+      <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[550px] h-[550px] bg-gradient-to-tr from-indigo-600/15 via-purple-500/15 to-transparent rounded-full blur-[120px] pointer-events-none animate-aurora" />
+      <div className="absolute -bottom-40 right-1/4 w-[400px] h-[400px] bg-gradient-to-br from-indigo-500/10 via-teal-500/10 to-transparent rounded-full blur-[100px] pointer-events-none animate-aurora" />
+
       <div className="w-full max-w-sm space-y-8 relative z-10">
         {/* Brand/Identity */}
-        <div className="absolute top-0 left-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl -ml-16 -mt-16" />
         <div className="relative z-10 flex flex-col items-center">
           <BrandLogo className="h-16 w-16 mb-4 hover:scale-105" />
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">PNP CRM</h1>
@@ -250,7 +255,7 @@ export default function LoginForm() {
         </div>
 
         {/* Auth Card */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-[0_20px_50px_rgba(0,0,0,0.6)] border border-slate-200 dark:border-white/10 p-8">
+        <div className="backdrop-blur-xl bg-white/80 dark:bg-slate-900/60 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-[0_20px_50px_rgba(0,0,0,0.6)] border border-slate-200/80 dark:border-white/10 p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
               <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-100 dark:border-rose-800/40 rounded-lg text-rose-600 dark:text-rose-300 text-[11px] font-bold uppercase tracking-wider text-center animate-in fade-in slide-in-from-top-1">

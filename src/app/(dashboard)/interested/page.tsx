@@ -30,24 +30,39 @@ type Lead = {
 };
 
 export default function InterestedLeadsPage() {
-  const [activeTab, setActiveTab] = useState<"INTERESTED" | "ARCHIVED">("INTERESTED");
+  const [activeTab, setActiveTab] = useState<"INTERESTED" | "ARCHIVED">(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("tab") === "archived") return "ARCHIVED";
+    }
+    return "INTERESTED";
+  });
   const [leads, setLeads] = useState<Lead[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isReactivatingId, setIsReactivatingId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [filterService, setFilterService] = useState("ALL");
+  const [refreshIndex, setRefreshIndex] = useState(0);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("tab") === "archived") {
-        setActiveTab("ARCHIVED");
+    const handlePopState = () => {
+      if (typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("tab") === "archived") {
+          setActiveTab("ARCHIVED");
+        } else if (params.get("tab") === "interested") {
+          setActiveTab("INTERESTED");
+        }
       }
-    }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
-  const loadData = () => {
+  useEffect(() => {
+    let isCurrent = true;
     setIsLoading(true);
+
     const endpoint = activeTab === "INTERESTED" 
       ? "/api/leads?status=FOLLOW_UP" 
       : "/api/leads?archived=true";
@@ -55,6 +70,7 @@ export default function InterestedLeadsPage() {
     fetch(endpoint)
       .then(r => r.json())
       .then(data => {
+        if (!isCurrent) return;
         const list = Array.isArray(data) ? data : [];
         if (activeTab === "INTERESTED") {
           // Sort by nextCallDate
@@ -69,13 +85,20 @@ export default function InterestedLeadsPage() {
           setLeads(list);
         }
       })
-      .catch(console.error)
-      .finally(() => setIsLoading(false));
-  };
+      .catch(err => {
+        if (isCurrent) {
+          console.error(err);
+          setLeads([]);
+        }
+      })
+      .finally(() => {
+        if (isCurrent) setIsLoading(false);
+      });
 
-  useEffect(() => {
-    loadData();
-  }, [activeTab]);
+    return () => {
+      isCurrent = false;
+    };
+  }, [activeTab, refreshIndex]);
 
   const handleReactivate = async (id: string) => {
     setIsReactivatingId(id);
@@ -87,7 +110,7 @@ export default function InterestedLeadsPage() {
       });
       if (res.ok) {
         window.dispatchEvent(new CustomEvent("refresh-notifications"));
-        loadData();
+        setRefreshIndex(prev => prev + 1);
       } else {
         const err = await res.json();
         alert(`Failed to reactivate: ${err.error || "Unknown Error"}`);
@@ -146,7 +169,7 @@ export default function InterestedLeadsPage() {
               className={cn(
                 "px-3.5 py-1.5 rounded-lg text-xs font-bold tracking-wide flex items-center gap-2 transition-all cursor-pointer",
                 activeTab === "INTERESTED"
-                  ? "bg-amber-400 text-white shadow-sm shadow-amber-200"
+                  ? "bg-indigo-600 text-white shadow-sm ring-1 ring-indigo-500/30"
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               )}
             >
@@ -158,7 +181,7 @@ export default function InterestedLeadsPage() {
               className={cn(
                 "px-3.5 py-1.5 rounded-lg text-xs font-bold tracking-wide flex items-center gap-2 transition-all cursor-pointer",
                 activeTab === "ARCHIVED"
-                  ? "bg-slate-900 dark:bg-indigo-600 text-white shadow-sm"
+                  ? "bg-indigo-600 text-white shadow-sm ring-1 ring-indigo-500/30"
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               )}
             >
@@ -195,7 +218,7 @@ export default function InterestedLeadsPage() {
               <span className="text-amber-700 dark:text-amber-300 font-bold text-sm">{leads.length} Total Interested</span>
             </div>
           ) : (
-            <div className="bg-slate-900 dark:bg-slate-800 text-white px-4 py-2 rounded-lg shadow-sm border border-slate-800 dark:border-slate-700">
+            <div className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700">
               <span className="font-bold text-sm">{leads.length} Total Archived</span>
             </div>
           )}
@@ -234,7 +257,7 @@ export default function InterestedLeadsPage() {
         <div className="flex flex-col items-center justify-center h-64 text-slate-400">
            <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
            <p className="text-xs font-medium tracking-wide">
-             {activeTab === "INTERESTED" ? "Analysing engagement data..." : "Retrieving passive archives..."}
+             {activeTab === "INTERESTED" ? "Loading interested leads..." : "Loading archived leads..."}
            </p>
         </div>
       ) : (
@@ -248,7 +271,7 @@ export default function InterestedLeadsPage() {
                         {lead.customerName ? lead.customerName.charAt(0).toUpperCase() : "?"}
                      </div>
                      {lead.isHotLead && (
-                       <span className="absolute -bottom-1 -right-1 bg-amber-400 rounded-full p-0.5 border border-white dark:border-slate-900 shadow-sm">
+                       <span className="absolute -bottom-1 -right-1 bg-amber-500 rounded-full p-0.5 border border-white dark:border-slate-900 shadow-sm">
                          <Star className="h-2.5 w-2.5 text-white fill-white" />
                        </span>
                      )}
@@ -387,16 +410,16 @@ export default function InterestedLeadsPage() {
                <div className="h-12 w-12 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-300 dark:text-slate-600">
                   {activeTab === "INTERESTED" ? <Star className="h-6 w-6" /> : <Archive className="h-6 w-6" />}
                </div>
-               <div>
-                  <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
-                    {activeTab === "INTERESTED" ? "Zero Interested Leads" : "Zero Archived Leads"}
-                  </h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
-                    {activeTab === "INTERESTED" 
-                      ? "No active interested profiles match your current criteria."
-                      : "No leads are currently in the passive archive."}
-                  </p>
-               </div>
+                <div>
+                   <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
+                     {activeTab === "INTERESTED" ? "No Interested Leads Found" : "No Archived Leads Found"}
+                   </h4>
+                   <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
+                     {activeTab === "INTERESTED" 
+                       ? "No interested leads match your current criteria."
+                       : "No leads are currently archived."}
+                   </p>
+                </div>
             </div>
           )}
         </div>

@@ -176,20 +176,20 @@ export default function FollowUpsPage() {
                 : "bg-amber-50/50 dark:bg-amber-950/30 border-amber-100 dark:border-amber-500/20"
             )}
           >
-             <span className={cn("text-xl font-black leading-none", filterDistance === "UPCOMING" ? "text-white" : "text-amber-600 dark:text-amber-400")}>{upcomingCount}</span>
-             <span className={cn("text-[9px] font-bold uppercase tracking-widest mt-1.5", filterDistance === "UPCOMING" ? "text-amber-100" : "text-amber-400 dark:text-amber-300")}>UPCOMING</span>
+             <span className={cn("text-xl font-bold leading-none", filterDistance === "UPCOMING" ? "text-white" : "text-amber-600 dark:text-amber-400")}>{upcomingCount}</span>
+             <span className={cn("text-[10px] font-semibold uppercase tracking-wider mt-1.5", filterDistance === "UPCOMING" ? "text-amber-100" : "text-amber-600 dark:text-amber-400")}>UPCOMING</span>
           </div>
         </div>
       </div>
 
       {/* Search & Actions */}
       <div className="flex flex-col md:flex-row gap-4 items-center shrink-0">
-        <div className="relative flex-1 group w-full">
+        <div className="relative flex-1 group w-full pl-0.5">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
           <input 
             type="text" 
             placeholder="Search leads or engagement notes..." 
-            className="w-full pl-12 pr-4 py-3 bg-white dark:bg-[#161f32] rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm focus:ring-4 focus:ring-indigo-600/10 focus:border-indigo-600 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all font-medium text-sm outline-none"
+            className="w-full pl-12 pr-4 py-3 bg-white dark:bg-[#161f32] rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm focus:outline-none focus-visible:outline-none focus:ring-4 focus:ring-indigo-600/10 focus:border-indigo-600 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all font-medium text-sm outline-none"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />

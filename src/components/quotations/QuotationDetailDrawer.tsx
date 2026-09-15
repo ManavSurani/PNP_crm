@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { X, Trash2, Plus, Loader2, Calendar, CreditCard, Clock, CheckCircle2, Pencil, Check, StickyNote } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 
 interface Payment {
   id: string;
@@ -82,18 +83,25 @@ export default function QuotationDetailDrawer({ isOpen, onClose, quotation, onUp
     }
   };
 
-  const handleDeletePayment = async (paymentId: string) => {
-    if (!confirm("Are you sure you want to delete this payment record?")) return;
+  const [paymentToDelete, setPaymentToDelete] = useState<string | null>(null);
+  const [isDeletingPayment, setIsDeletingPayment] = useState(false);
+
+  const confirmDeletePayment = async () => {
+    if (!paymentToDelete) return;
+    setIsDeletingPayment(true);
     try {
-      const res = await fetch(`/api/project-payments/${paymentId}`, {
+      const res = await fetch(`/api/project-payments/${paymentToDelete}`, {
         method: "DELETE",
       });
       if (res.ok) {
-        setPayments(payments.filter(p => p.id !== paymentId));
+        setPayments(payments.filter(p => p.id !== paymentToDelete));
         onUpdate();
       }
     } catch (error) {
       console.error("Error deleting payment:", error);
+    } finally {
+      setIsDeletingPayment(false);
+      setPaymentToDelete(null);
     }
   };
 
@@ -413,7 +421,7 @@ export default function QuotationDetailDrawer({ isOpen, onClose, quotation, onUp
                         </div>
                       </div>
                       <button 
-                        onClick={() => handleDeletePayment(payment.id)}
+                        onClick={() => setPaymentToDelete(payment.id)}
                         className="h-8 w-8 rounded-lg bg-rose-50 dark:bg-rose-500/10 text-rose-400 flex items-center justify-center hover:bg-rose-100 dark:hover:bg-rose-500/20 hover:text-rose-600 dark:hover:text-rose-300 transition-all opacity-0 group-hover:opacity-100 shadow-sm cursor-pointer"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -437,6 +445,17 @@ export default function QuotationDetailDrawer({ isOpen, onClose, quotation, onUp
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={!!paymentToDelete}
+        title="Delete Payment"
+        description="Are you sure you want to delete this payment record? The quotation balance will be recalculated."
+        confirmText="Delete Payment"
+        variant="danger"
+        isLoading={isDeletingPayment}
+        onConfirm={confirmDeletePayment}
+        onCancel={() => setPaymentToDelete(null)}
+      />
     </>
   );
 }

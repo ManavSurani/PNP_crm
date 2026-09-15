@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Plus, Loader2, Check, X, Phone, Search, Pencil, Trash2, Wrench, RotateCcw } from "lucide-react";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 
 export default function SuppliersPage() {
   const [vendors, setVendors] = useState<any[]>([]);
@@ -16,6 +17,8 @@ export default function SuppliersPage() {
   const [vendorForm, setVendorForm] = useState({ fieldId: "", name: "", phone: "" });
   const [newContactsList, setNewContactsList] = useState<{name: string, phone: string}[]>([]);
   const [isVendorSaving, setIsVendorSaving] = useState(false);
+  const [vendorToDelete, setVendorToDelete] = useState<any | null>(null);
+  const [isDeletingVendor, setIsDeletingVendor] = useState(false);
 
   useEffect(() => { fetchVendors(); fetchFields(); }, []);
 
@@ -77,12 +80,17 @@ export default function SuppliersPage() {
     } catch (error) { console.error(error); }
   };
 
-  const handleDeleteVendor = async (vendor: any) => {
-    if (!confirm(`Delete vendor "${vendor.name}"? This cannot be undone.`)) return;
+  const confirmDeleteVendor = async () => {
+    if (!vendorToDelete) return;
+    setIsDeletingVendor(true);
     try {
-      const res = await fetch(`/api/vendors/${vendor.id}`, { method: "DELETE" });
-      if (res.ok) setVendors(vendors.filter((v) => v.id !== vendor.id));
+      const res = await fetch(`/api/vendors/${vendorToDelete.id}`, { method: "DELETE" });
+      if (res.ok) setVendors(vendors.filter((v) => v.id !== vendorToDelete.id));
     } catch (error) { console.error(error); }
+    finally {
+      setIsDeletingVendor(false);
+      setVendorToDelete(null);
+    }
   };
 
   const filteredVendors = vendors.filter((v) => {
@@ -239,7 +247,7 @@ export default function SuppliersPage() {
                         <button onClick={() => { setEditingVendorId(vendor.id); setEditingVendor({ name: vendor.name, phone: vendor.phone }); }} className="p-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg transition-all">
                           <Pencil className="h-4 w-4" />
                         </button>
-                        <button onClick={() => handleDeleteVendor(vendor)} className="p-2 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition-all">
+                        <button onClick={() => setVendorToDelete(vendor)} className="p-2 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition-all">
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
@@ -391,6 +399,18 @@ export default function SuppliersPage() {
           </div>
         </div>
       )}
+
+      {/* Confirm Delete Vendor Modal */}
+      <ConfirmModal
+        isOpen={!!vendorToDelete}
+        title="Delete Vendor"
+        description={`Are you sure you want to delete vendor "${vendorToDelete?.name}"? This cannot be undone.`}
+        confirmText="Delete Vendor"
+        variant="danger"
+        isLoading={isDeletingVendor}
+        onConfirm={confirmDeleteVendor}
+        onCancel={() => setVendorToDelete(null)}
+      />
     </div>
   );
 }

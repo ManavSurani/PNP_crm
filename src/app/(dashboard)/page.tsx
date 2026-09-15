@@ -15,10 +15,19 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 
 import { useTheme } from "@/components/providers/ThemeProvider";
+import { useCountUp } from "@/hooks/useCountUp";
+import { useSessionEntrance } from "@/hooks/useSessionEntrance";
+
+function AnimatedNumber({ value, shouldAnimate }: { value: number | null; shouldAnimate: boolean }) {
+  if (value === null || value === undefined) return null;
+  const count = useCountUp(value, 750, shouldAnimate);
+  return <>{count}</>;
+}
 
 export default function Dashboard() {
   const { theme } = useTheme();
   const isDark = theme === "dark";
+  const { shouldAnimate } = useSessionEntrance("dashboard_kpis");
   const [stats, setStats] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [timeframe, setTimeframe] = useState<"days" | "months" | "years">("days");
@@ -112,8 +121,8 @@ export default function Dashboard() {
     { title: "Total Leads", value: metrics.totalLeads, icon: Users, color: "text-indigo-600 dark:text-indigo-400", bg: "bg-indigo-50 dark:bg-indigo-950/50", link: "/leads" },
     { title: "Hot Leads", value: metrics.hotLeads ?? 0, icon: Sparkles, color: "text-amber-500 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-950/50", link: "/leads?status=HOT_LEAD" },
     { title: "New Inquiries", value: metrics.newLeads, icon: MessageSquare, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-950/50", link: "/leads?status=NEW_INQUIRY" },
-    { title: "Follow-ups", value: null, icon: PhoneCall, color: "text-sky-600 dark:text-sky-400", bg: "bg-sky-50 dark:bg-sky-950/50", link: "/follow-ups" },
-    { title: "Site Visits", value: metrics.totalMeetings, icon: MapPin, color: "text-slate-600 dark:text-slate-400", bg: "bg-slate-100 dark:bg-slate-800", link: "/meetings" },
+    { title: "Follow-ups", value: metrics.todayFollowUps, icon: PhoneCall, color: "text-sky-600 dark:text-sky-400", bg: "bg-sky-50 dark:bg-sky-950/50", link: "/follow-ups" },
+    { title: "Site Visits", value: metrics.todayMeetings, icon: MapPin, color: "text-slate-600 dark:text-slate-400", bg: "bg-slate-100 dark:bg-slate-800", link: "/meetings" },
     { title: "Current Leads", value: metrics.currentLeads, icon: TrendingUp, color: "text-violet-600 dark:text-violet-400", bg: "bg-violet-50 dark:bg-violet-950/50", link: "/leads?status=ACTIVE" },
     { title: "Won Orders", value: metrics.wonOrders ?? 0, icon: Target, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-950/50", link: "/customers" },
     // Row 2 (3 Cards — Delivery & Historical Records)
@@ -151,24 +160,65 @@ export default function Dashboard() {
             </div>
             
             {kpi.title === "Follow-ups" ? (
-              <div className="grid grid-cols-3 mt-auto pt-3 border-t border-slate-100/50 dark:border-slate-800 -mx-2">
-                <div className="flex flex-col items-center border-r border-slate-100 dark:border-slate-800 last:border-0 px-1 group-hover:border-primary/10 transition-colors">
-                  <span className="text-[11px] font-black text-indigo-600 dark:text-indigo-400 leading-none">{metrics.todayFollowUps}</span>
-                  <span className="text-[7px] font-bold text-indigo-400 dark:text-indigo-400/80 uppercase tracking-tighter mt-1">Today</span>
-                </div>
-                <div className="flex flex-col items-center border-r border-slate-100 dark:border-slate-800 last:border-0 px-1 group-hover:border-primary/10 transition-colors">
-                  <span className={cn("text-[11px] font-black leading-none", metrics.overdueFollowUps > 0 ? "text-rose-600 dark:text-rose-400" : "text-slate-400 dark:text-slate-500")}>
-                    {metrics.overdueFollowUps}
+              <div className="mt-1 flex flex-col justify-between flex-1">
+                <div className="flex items-baseline justify-between gap-1">
+                  <p className="text-xl font-bold text-slate-900 dark:text-white">
+                    <AnimatedNumber value={metrics.todayFollowUps} shouldAnimate={shouldAnimate} />
+                  </p>
+                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight">
+                    Today
                   </span>
-                  <span className="text-[7px] font-bold text-rose-400 uppercase tracking-tighter mt-1">Overdue</span>
                 </div>
-                <div className="flex flex-col items-center px-1">
-                  <span className="text-[11px] font-black text-amber-600 dark:text-amber-400 leading-none">{metrics.upcomingFollowUps}</span>
-                  <span className="text-[7px] font-bold text-amber-400 uppercase tracking-widest sm:tracking-tighter mt-1 scale-90 sm:scale-100 origin-center">Upcoming</span>
+                <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-1.5 min-h-[26px]">
+                  {metrics.overdueFollowUps > 0 ? (
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-200/60 dark:border-rose-800/60 leading-tight">
+                      <AnimatedNumber value={metrics.overdueFollowUps} shouldAnimate={shouldAnimate} /> Overdue
+                    </span>
+                  ) : null}
+                  {metrics.upcomingFollowUps > 0 ? (
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/60 leading-tight">
+                      <AnimatedNumber value={metrics.upcomingFollowUps} shouldAnimate={shouldAnimate} /> Upcoming
+                    </span>
+                  ) : null}
+                  {metrics.overdueFollowUps === 0 && metrics.upcomingFollowUps === 0 && (
+                    <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                      All cleared
+                    </span>
+                  )}
+                </div>
+              </div>
+            ) : kpi.title === "Site Visits" ? (
+              <div className="mt-1 flex flex-col justify-between flex-1">
+                <div className="flex items-baseline justify-between gap-1">
+                  <p className="text-xl font-bold text-slate-900 dark:text-white">
+                    <AnimatedNumber value={metrics.todayMeetings} shouldAnimate={shouldAnimate} />
+                  </p>
+                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight">
+                    Today
+                  </span>
+                </div>
+                <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-1.5 min-h-[26px]">
+                  {metrics.overdueMeetings > 0 ? (
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-200/60 dark:border-rose-800/60 leading-tight">
+                      <AnimatedNumber value={metrics.overdueMeetings} shouldAnimate={shouldAnimate} /> Overdue
+                    </span>
+                  ) : null}
+                  {metrics.upcomingMeetings > 0 ? (
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/60 leading-tight">
+                      <AnimatedNumber value={metrics.upcomingMeetings} shouldAnimate={shouldAnimate} /> Upcoming
+                    </span>
+                  ) : null}
+                  {metrics.overdueMeetings === 0 && metrics.upcomingMeetings === 0 && (
+                    <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                      All cleared
+                    </span>
+                  )}
                 </div>
               </div>
             ) : (
-              <p className="text-xl font-bold text-slate-900 dark:text-white mt-1">{kpi.value}</p>
+              <p className="text-xl font-bold text-slate-900 dark:text-white mt-1">
+                <AnimatedNumber value={kpi.value} shouldAnimate={shouldAnimate} />
+              </p>
             )}
           </Link>
         ))}
@@ -245,6 +295,8 @@ export default function Dashboard() {
                     fill="url(#leadBarGrad)"
                     radius={[6, 6, 0, 0]}
                     maxBarSize={32}
+                    isAnimationActive={shouldAnimate}
+                    animationDuration={800}
                   />
                 </BarChart>
               ) : timeframe === "months" ? (
@@ -271,6 +323,8 @@ export default function Dashboard() {
                     strokeWidth={2.5}
                     fillOpacity={1}
                     fill="url(#colorLeads)"
+                    isAnimationActive={shouldAnimate}
+                    animationDuration={800}
                   />
                 </AreaChart>
               ) : (
@@ -296,6 +350,8 @@ export default function Dashboard() {
                     strokeWidth={3}
                     dot={{ r: 4, strokeWidth: 2, fill: isDark ? "#0f172a" : "#ffffff", stroke: "#a855f7" }}
                     activeDot={{ r: 6, strokeWidth: 3, fill: "#a855f7", stroke: "#ffffff" }}
+                    isAnimationActive={shouldAnimate}
+                    animationDuration={800}
                   />
                 </LineChart>
               )}

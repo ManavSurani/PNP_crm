@@ -7,6 +7,7 @@ import { Search, User as UserIcon, LogOut, Loader2, MapPin, Phone, ArrowRight, S
 import NotificationBell from "./NotificationBell";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { cn } from "@/lib/utils";
+import Badge from "@/components/ui/Badge";
 
 export default function Topbar() {
   const { data: session, status } = useSession();
@@ -19,22 +20,25 @@ export default function Topbar() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const trimmed = query.trim();
+    if (trimmed.length < 2) {
+      setResults([]);
+      setIsOpen(false);
+      setIsSearching(false);
+      return;
+    }
+
     const timer = setTimeout(async () => {
-      if (query.length >= 2) {
-        setIsSearching(true);
-        try {
-          const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-          const data = await res.json();
-          setResults(data);
-          setIsOpen(true);
-        } catch (error) {
-          console.error("Search error:", error);
-        } finally {
-          setIsSearching(false);
-        }
-      } else {
-        setResults([]);
-        setIsOpen(false);
+      setIsSearching(true);
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(trimmed)}`);
+        const data = await res.json();
+        setResults(data);
+        setIsOpen(true);
+      } catch (error) {
+        console.error("Search error:", error);
+      } finally {
+        setIsSearching(false);
       }
     }, 300);
 
@@ -77,17 +81,24 @@ export default function Topbar() {
           </div>
           <input
             id="search-field"
-            className="block h-full w-full border-0 py-0 pl-10 pr-0 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 bg-transparent focus:ring-0 sm:text-sm outline-none"
+            className="block h-full w-full border-0 py-0 pl-10 pr-0 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 bg-transparent border-none outline-none focus:outline-none focus-visible:outline-none focus:ring-0 focus:border-0 sm:text-sm"
             placeholder="Search leads, orders, or customers..."
             type="search"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value;
+              setQuery(val);
+              if (val.trim().length < 2) {
+                setResults([]);
+                setIsOpen(false);
+              }
+            }}
             autoComplete="off"
           />
 
           {/* Search Results Dropdown */}
           {isOpen && (
-            <div className="absolute top-full left-0 w-full max-w-2xl mt-2 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="absolute top-full left-0 w-full max-w-2xl mt-2 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-white/10 shadow-xl shadow-slate-900/10 dark:shadow-[0_20px_50px_rgba(0,0,0,0.6)] overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="max-h-[70vh] overflow-y-auto p-2 space-y-1">
                 {results.length > 0 ? (
                   results.map((res) => (
@@ -103,9 +114,9 @@ export default function Topbar() {
                         <div>
                           <div className="flex items-center gap-2">
                             <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{res.title}</h4>
-                            <span className="text-[10px] font-black bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-300 px-1.5 py-0.5 rounded uppercase tracking-tighter">
+                            <Badge variant="neutral" size="sm">
                               {res.type}
-                            </span>
+                            </Badge>
                           </div>
                           <div className="flex items-center gap-4 mt-1.5">
                             <div className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">
@@ -118,7 +129,7 @@ export default function Topbar() {
                             </div>
                           </div>
                           <div className="mt-2.5 inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-indigo-50/50 dark:bg-indigo-950/40 border border-indigo-100/50 dark:border-indigo-800/40">
-                             <span className="text-[9px] font-black text-indigo-400 uppercase tracking-[0.1em]">Currently In:</span>
+                             <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-[0.05em]">Currently In:</span>
                              <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide">{res.location}</span>
                           </div>
                         </div>
@@ -165,17 +176,16 @@ export default function Topbar() {
             </button>
             <div 
               suppressHydrationWarning
-              className="hidden group-hover:block absolute right-0 top-full mt-2 w-56 origin-top-right rounded-xl bg-white dark:bg-slate-900 py-1 shadow-2xl border border-slate-100 dark:border-slate-800 ring-1 ring-black/5 dark:ring-white/10 focus:outline-none z-[60]"
+              className="hidden group-hover:block absolute right-0 top-full mt-2 w-56 origin-top-right rounded-xl bg-white dark:bg-slate-900 py-1 shadow-xl shadow-slate-900/10 dark:shadow-[0_20px_50px_rgba(0,0,0,0.6)] border border-slate-100 dark:border-slate-800 ring-1 ring-black/5 dark:ring-white/10 focus:outline-none z-[60]"
             >
               <div className="px-4 py-2.5 border-b border-slate-100 dark:border-slate-800 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 transition-colors rounded-t-xl">
                 <p className="text-sm font-semibold text-slate-900 dark:text-white">
                   {status === "loading" ? "..." : (session?.user?.name || "User")}
                 </p>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <p className="text-[11px] font-medium text-indigo-600 dark:text-indigo-400 capitalize">
-                    {status === "loading" ? "..." : (session?.user?.role?.toLowerCase() || "Role")}
-                  </p>
+                <div className="mt-1">
+                  <Badge variant="info" size="sm" dot dotColor="emerald">
+                    {status === "loading" ? "..." : (session?.user?.role || "Role")}
+                  </Badge>
                 </div>
               </div>
 

@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import SessionProvider from "@/components/providers/SessionProvider";
 import { ThemeProvider, type ThemeConfig, DEFAULT_THEME_CONFIG } from "@/components/providers/ThemeProvider";
+import { ToastProvider } from "@/components/ui/Toast";
 import prisma from "@/lib/prisma";
 import { cookies } from "next/headers";
 
@@ -144,7 +145,9 @@ export default async function RootLayout({
       >
         <ThemeProvider initialConfig={initialConfig}>
           <SessionProvider>
-            {children}
+            <ToastProvider>
+              {children}
+            </ToastProvider>
           </SessionProvider>
         </ThemeProvider>
       </body>

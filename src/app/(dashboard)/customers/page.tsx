@@ -8,6 +8,7 @@ import {
   ChevronRight, Activity, Zap, ExternalLink, Filter, ArrowUpDown, X, RotateCcw
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import EmptyState from "@/components/ui/EmptyState";
 
 type Customer = {
   id: string;
@@ -245,12 +246,14 @@ export default function CustomersPage() {
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 bg-white dark:bg-slate-900">
                 {filteredCustomers.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-20 text-center">
-                      <div className="h-12 w-12 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-3 border border-slate-200 dark:border-slate-700 text-slate-300 dark:text-slate-500">
-                        <User className="h-6 w-6" />
-                      </div>
-                      <h3 className="text-sm font-semibold text-slate-900 dark:text-white">No customers found</h3>
-                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Convert a lead from the Lead Pipeline to see them here.</p>
+                    <td colSpan={5} className="p-8">
+                      <EmptyState
+                        type="customers"
+                        title="No customers found"
+                        description="Convert an interested lead from the Lead Pipeline to create an active project customer."
+                        actionLabel="View Lead Pipeline"
+                        onAction={() => router.push("/leads")}
+                      />
                     </td>
                   </tr>
                 ) : (

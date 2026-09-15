@@ -9,6 +9,7 @@ import {
   CheckCircle2, RotateCw, IndianRupee, Briefcase, Zap, MapPin
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 
 type Customer = {
   id: string;
@@ -56,9 +57,11 @@ export default function CompletedProjectsPage() {
     fetchCustomers();
   }, []);
 
-  const handleReactivate = async (id: string) => {
-    if (!confirm("Are you sure you want to reactivate this project? It will be moved back to active customers and financial/design locks will be removed.")) return;
-    
+  const [reactivateTarget, setReactivateTarget] = useState<Customer | null>(null);
+
+  const confirmReactivate = async () => {
+    if (!reactivateTarget) return;
+    const id = reactivateTarget.id;
     setIsReactivating(id);
     try {
       const res = await fetch(`/api/leads/${id}/reactivate-project`, {
@@ -76,6 +79,7 @@ export default function CompletedProjectsPage() {
       console.error(error);
     } finally {
       setIsReactivating(null);
+      setReactivateTarget(null);
     }
   };
 
@@ -339,10 +343,10 @@ export default function CompletedProjectsPage() {
                              <button 
                                onClick={(e) => {
                                  e.stopPropagation();
-                                 handleReactivate(customer.id);
+                                 setReactivateTarget(customer);
                                }}
                                disabled={isReactivating === customer.id}
-                               className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-[#161f32] hover:bg-slate-50 dark:hover:bg-slate-800 px-3 py-2 rounded-lg text-xs font-bold transition-all border border-slate-200 dark:border-slate-700 flex items-center gap-2 shadow-sm"
+                               className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-[#161f32] hover:bg-slate-50 dark:hover:bg-slate-800 px-3 py-2 rounded-lg text-xs font-bold transition-all border border-slate-200 dark:border-slate-700 flex items-center gap-2 shadow-sm cursor-pointer"
                              >
                                {isReactivating === customer.id ? (
                                  <Loader2 className="h-3 w-3 animate-spin" />
@@ -361,6 +365,17 @@ export default function CompletedProjectsPage() {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={!!reactivateTarget}
+        title="Reactivate Project"
+        description={`Are you sure you want to reactivate "${reactivateTarget?.project?.name || reactivateTarget?.customerName}"? It will be moved back to active customers and financial/design locks will be removed.`}
+        confirmText="Reactivate Project"
+        variant="warning"
+        isLoading={!!isReactivating}
+        onConfirm={confirmReactivate}
+        onCancel={() => setReactivateTarget(null)}
+      />
     </div>
   );
 }

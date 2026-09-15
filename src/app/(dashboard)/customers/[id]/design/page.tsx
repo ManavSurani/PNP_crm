@@ -9,6 +9,7 @@ import {
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 
 type Transaction = {
   id: string;
@@ -92,16 +93,23 @@ export default function DesignExpensesPage({ params }: { params: Promise<{ id: s
 
   const designProfit = (initialDeal || 0) - totalDesignCost;
 
-  const handleDeleteTransaction = async (transId: string) => {
-    if (!confirm("Are you sure you want to delete this design expense?")) return;
+  const [expenseToDelete, setExpenseToDelete] = useState<string | null>(null);
+  const [isDeletingExpense, setIsDeletingExpense] = useState(false);
+
+  const confirmDeleteExpense = async () => {
+    if (!expenseToDelete) return;
+    setIsDeletingExpense(true);
     try {
-      const res = await fetch(`/api/transactions?id=${transId}`, { method: "DELETE" });
+      const res = await fetch(`/api/transactions?id=${expenseToDelete}`, { method: "DELETE" });
       if (res.ok) {
         fetchData();
         fetchLogs();
       }
     } catch (e) {
       console.error(e);
+    } finally {
+      setIsDeletingExpense(false);
+      setExpenseToDelete(null);
     }
   };
 
@@ -247,9 +255,9 @@ export default function DesignExpensesPage({ params }: { params: Promise<{ id: s
                                   <button onClick={() => { setEditingTransaction(t); setShowTransModal(true); }} className="p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all">
                                      <Pencil className="h-3.5 w-3.5" />
                                   </button>
-                                  <button onClick={() => handleDeleteTransaction(t.id)} className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-all">
-                                     <Trash2 className="h-3.5 w-3.5" />
-                                  </button>
+                                   <button onClick={() => setExpenseToDelete(t.id)} className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-all cursor-pointer">
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                   </button>
                                </div>
                             </td>
                           </tr>
@@ -340,6 +348,18 @@ export default function DesignExpensesPage({ params }: { params: Promise<{ id: s
           onSuccess={() => { fetchData(); fetchLogs(); }}
         />
       )}
+
+      {/* Delete Expense Confirm Modal */}
+      <ConfirmModal
+        isOpen={!!expenseToDelete}
+        title="Delete Design Expense"
+        description="Are you sure you want to delete this design expense? This transaction will be permanently removed."
+        confirmText="Delete Expense"
+        variant="danger"
+        isLoading={isDeletingExpense}
+        onConfirm={confirmDeleteExpense}
+        onCancel={() => setExpenseToDelete(null)}
+      />
     </div>
   );
 }

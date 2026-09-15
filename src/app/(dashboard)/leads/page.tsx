@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import EmptyState from "@/components/ui/EmptyState";
+import { useToast } from "@/components/ui/Toast";
 
 type Lead = {
   id: string;
@@ -32,6 +34,7 @@ type Lead = {
 
 export default function LeadsPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -127,9 +130,10 @@ export default function LeadsPage() {
 
   const handleArchive = async (reason?: string, tentativeDate?: string | null) => {
     if (!archiveId) return;
+    const leadIdToArchive = archiveId;
     setIsArchiving(true);
     try {
-      const res = await fetch(`/api/leads/${archiveId}/archive`, {
+      const res = await fetch(`/api/leads/${leadIdToArchive}/archive`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -141,6 +145,26 @@ export default function LeadsPage() {
         fetchLeads();
         setArchiveId(null);
         window.dispatchEvent(new CustomEvent("refresh-notifications"));
+        toast({
+          title: "Lead Archived",
+          message: "Lead moved to archive. Click Undo within 5s to restore.",
+          type: "info",
+          duration: 5000,
+          undoLabel: "Undo",
+          onUndo: async () => {
+            try {
+              await fetch(`/api/leads/${leadIdToArchive}/reactivate`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ reactivationNote: "Archive undone by user" })
+              });
+              fetchLeads();
+              window.dispatchEvent(new CustomEvent("refresh-notifications"));
+            } catch (err) {
+              console.error("Failed to restore lead:", err);
+            }
+          }
+        });
       }
     } catch (e) {
       console.error(e);
@@ -213,13 +237,13 @@ export default function LeadsPage() {
 
       {/* Search and Filters Bar */}
       <div className="flex flex-col md:flex-row items-center gap-4 shrink-0">
-        <div className="relative flex-grow w-full md:max-w-xl group">
+        <div className="relative flex-grow w-full md:max-w-xl group pl-0.5">
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
             <Search className="h-4 w-4 text-slate-400" />
           </div>
           <input
             type="text"
-            className="block w-full rounded-lg border border-slate-200 dark:border-slate-800 py-2.5 pl-11 pr-4 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm bg-white dark:bg-[#161f32] transition-all outline-none"
+            className="block w-full rounded-lg border border-slate-200 dark:border-slate-800 py-2.5 pl-11 pr-4 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus-visible:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm bg-white dark:bg-[#161f32] transition-all outline-none"
             placeholder="Search leads..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -355,12 +379,14 @@ export default function LeadsPage() {
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 bg-white dark:bg-slate-900">
                 {filteredLeads.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-20 text-center">
-                      <div className="h-12 w-12 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-3 border border-slate-200 dark:border-slate-700 text-slate-300 dark:text-slate-500">
-                        <Activity className="h-6 w-6" />
-                      </div>
-                      <h3 className="text-sm font-semibold text-slate-900 dark:text-white">No leads found</h3>
-                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Try adjusting your search criteria.</p>
+                    <td colSpan={5} className="p-8">
+                      <EmptyState
+                        type="leads"
+                        title="No leads found"
+                        description="No leads match your current filter criteria. Create a new lead to start building your sales pipeline."
+                        actionLabel="Add New Lead"
+                        onAction={() => setIsModalOpen(true)}
+                      />
                     </td>
                   </tr>
                 ) : (
@@ -382,7 +408,7 @@ export default function LeadsPage() {
                                 {lead.customerName ? lead.customerName.charAt(0) : "?"}
                               </div>
                               {lead.isHotLead && (
-                                <span className="absolute -bottom-1 -right-1 bg-amber-400 rounded-full p-0.5 border border-white dark:border-slate-900 shadow-sm">
+                                <span className="absolute -bottom-1 -right-1 bg-amber-500 rounded-full p-0.5 border border-white dark:border-slate-900 shadow-sm">
                                   <Star className="h-2.5 w-2.5 text-white fill-white" />
                                 </span>
                               )}

@@ -107,8 +107,8 @@ export default function MeetingsPage() {
                 : "bg-amber-50/50 dark:bg-amber-950/30 border-amber-100 dark:border-amber-500/20"
             )}
           >
-             <span className={cn("text-xl font-black leading-none", filterPriority === "UPCOMING" ? "text-white" : "text-amber-600 dark:text-amber-400")}>{upcomingCount}</span>
-             <span className={cn("text-[9px] font-bold uppercase tracking-widest mt-1.5", filterPriority === "UPCOMING" ? "text-amber-100" : "text-amber-400 dark:text-amber-300")}>UPCOMING</span>
+             <span className={cn("text-xl font-bold leading-none", filterPriority === "UPCOMING" ? "text-white" : "text-amber-600 dark:text-amber-400")}>{upcomingCount}</span>
+             <span className={cn("text-[10px] font-semibold uppercase tracking-wider mt-1.5", filterPriority === "UPCOMING" ? "text-amber-100" : "text-amber-600 dark:text-amber-400")}>UPCOMING</span>
           </div>
         </div>
       </div>

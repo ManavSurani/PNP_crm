@@ -11,6 +11,7 @@ import AddQuotationModal from "@/components/quotations/AddQuotationModal";
 import EditQuotationModal from "@/components/quotations/EditQuotationModal";
 import QuotationTable from "@/components/quotations/QuotationTable";
 import QuotationDetailDrawer from "@/components/quotations/QuotationDetailDrawer";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 
 export default function CustomerQuotationsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: customerId } = use(params);
@@ -98,19 +99,29 @@ export default function CustomerQuotationsPage({ params }: { params: Promise<{ i
     }
   };
 
-  const handleDelete = async (id: string) => {
-    const quotation = quotations.find(q => q.id === id);
-    if (!confirm(`Delete '${quotation?.field.name}' quotation? This will also remove all payment records.`)) return;
+  const [quotationToDelete, setQuotationToDelete] = useState<any | null>(null);
+  const [isDeletingQuotation, setIsDeletingQuotation] = useState(false);
 
+  const handleDelete = (id: string) => {
+    const quotation = quotations.find(q => q.id === id);
+    if (quotation) setQuotationToDelete(quotation);
+  };
+
+  const confirmDeleteQuotation = async () => {
+    if (!quotationToDelete) return;
+    setIsDeletingQuotation(true);
     try {
-      const res = await fetch(`/api/project-quotations/${id}`, {
+      const res = await fetch(`/api/project-quotations/${quotationToDelete.id}`, {
         method: "DELETE"
       });
       if (res.ok) {
-        setQuotations(quotations.filter(q => q.id !== id));
+        setQuotations(quotations.filter(q => q.id !== quotationToDelete.id));
       }
     } catch (error) {
       console.error("Error deleting quotation:", error);
+    } finally {
+      setIsDeletingQuotation(false);
+      setQuotationToDelete(null);
     }
   };
 
@@ -377,6 +388,17 @@ PNP Interior`;
         onClose={() => setIsEditModalOpen(false)}
         quotation={selectedQuotation}
         onSuccess={fetchData}
+      />
+
+      <ConfirmModal
+        isOpen={!!quotationToDelete}
+        title="Delete Quotation"
+        description={`Are you sure you want to delete '${quotationToDelete?.field?.name}' quotation? This will also remove all payment records.`}
+        confirmText="Delete Quotation"
+        variant="danger"
+        isLoading={isDeletingQuotation}
+        onConfirm={confirmDeleteQuotation}
+        onCancel={() => setQuotationToDelete(null)}
       />
     </div>
   );

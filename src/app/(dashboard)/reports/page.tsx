@@ -221,7 +221,7 @@ export default function ReportsPage() {
     return (
       <div className="flex h-[70vh] items-center justify-center flex-col gap-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-slate-400 dark:text-slate-500 font-medium tracking-wide text-xs">Generating Analytics Report...</p>
+        <p className="text-slate-400 dark:text-slate-500 font-medium tracking-wide text-xs">Loading reports...</p>
       </div>
     );
   }
@@ -236,14 +236,13 @@ export default function ReportsPage() {
 
       {/* Header */}
       <div className="bg-white dark:bg-slate-900 p-8 rounded-xl border border-slate-200 dark:border-white/8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-48 h-48 bg-primary rounded-full blur-[100px] opacity-5 -mr-24 -mt-24" />
         <div className="relative z-10">
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-white tracking-tight">Reports & Analytics</h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Cross-module business intelligence and conversion tracking.</p>
         </div>
         <div className="flex items-center gap-3 px-4 py-2 bg-slate-50 dark:bg-[#161f32] rounded-lg border border-slate-200 dark:border-slate-800 relative z-10">
           <Calendar className="h-4 w-4 text-slate-400" />
-          <span className="text-xs font-medium text-slate-600 dark:text-slate-300">{format(new Date(), "MMMM yyyy")} Session</span>
+          <span className="text-xs font-medium text-slate-600 dark:text-slate-300">{format(new Date(), "MMMM yyyy")}</span>
         </div>
       </div>
 

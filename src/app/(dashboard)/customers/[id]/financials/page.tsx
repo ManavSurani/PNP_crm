@@ -29,6 +29,7 @@ import {
   FileDown
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 
 type Transaction = {
   id: string;
@@ -129,16 +130,23 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
     ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) || []
     , [customer, searchQuery]);
 
-  const handleDeleteTransaction = async (transId: string) => {
-    if (!confirm("Are you sure you want to delete this transaction?")) return;
+  const [transToDelete, setTransToDelete] = useState<string | null>(null);
+  const [isDeletingTrans, setIsDeletingTrans] = useState(false);
+
+  const confirmDeleteTrans = async () => {
+    if (!transToDelete) return;
+    setIsDeletingTrans(true);
     try {
-      const res = await fetch(`/api/transactions?id=${transId}`, { method: "DELETE" });
+      const res = await fetch(`/api/transactions?id=${transToDelete}`, { method: "DELETE" });
       if (res.ok) {
         fetchData();
         fetchLogs();
       }
     } catch (e) {
       console.error(e);
+    } finally {
+      setIsDeletingTrans(false);
+      setTransToDelete(null);
     }
   };
 
@@ -604,7 +612,7 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
                               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button onClick={() => { setEditingTransaction(t); setModalType("RECEIVED"); setShowTransModal(true); }} className="p-1 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer"><Pencil className="h-3 w-3" /></button>
                                 {t.category !== "Final Payment" && (
-                                  <button onClick={() => handleDeleteTransaction(t.id)} className="p-1 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer"><Trash2 className="h-3 w-3" /></button>
+                                  <button onClick={() => setTransToDelete(t.id)} className="p-1 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer"><Trash2 className="h-3 w-3" /></button>
                                 )}
                               </div>
                             </td>
@@ -652,7 +660,7 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
                               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button onClick={() => { setEditingTransaction(t); setModalType("EXPENSE"); setShowTransModal(true); }} className="p-1 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer"><Pencil className="h-3 w-3" /></button>
                                 {t.category !== "Final Payment" && (
-                                  <button onClick={() => handleDeleteTransaction(t.id)} className="p-1 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer"><Trash2 className="h-3 w-3" /></button>
+                                  <button onClick={() => setTransToDelete(t.id)} className="p-1 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer"><Trash2 className="h-3 w-3" /></button>
                                 )}
                               </div>
                             </td>
@@ -745,6 +753,17 @@ export default function FinancialsPage({ params }: { params: Promise<{ id: strin
         />
       )}
 
+      {/* Confirm Delete Transaction Modal */}
+      <ConfirmModal
+        isOpen={!!transToDelete}
+        title="Delete Transaction"
+        description="Are you sure you want to delete this transaction? This action will permanently remove it from financial records."
+        confirmText="Delete Transaction"
+        variant="danger"
+        isLoading={isDeletingTrans}
+        onConfirm={confirmDeleteTrans}
+        onCancel={() => setTransToDelete(null)}
+      />
     </div>
   );
 }
@@ -936,8 +955,9 @@ function DealAmountModal({ leadId, currentAmount, currentNotes, onClose, onSucce
     }
   };
 
-  const handleDelete = async () => {
-    if (!confirm("Resetting the deal amount will keep transactions but clear the base project value. Continue?")) return;
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+  const confirmDeleteDeal = async () => {
     setIsSaving(true);
     try {
       const res = await fetch(`/api/leads/${leadId}`, {
@@ -956,6 +976,7 @@ function DealAmountModal({ leadId, currentAmount, currentNotes, onClose, onSucce
       console.error(e);
     } finally {
       setIsSaving(false);
+      setShowResetConfirm(false);
     }
   };
 
@@ -990,7 +1011,8 @@ function DealAmountModal({ leadId, currentAmount, currentNotes, onClose, onSucce
           <div className="flex gap-2">
             {(currentAmount !== null && currentAmount !== undefined) && (
               <button
-                onClick={handleDelete}
+                type="button"
+                onClick={() => setShowResetConfirm(true)}
                 className="p-3 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-xl transition-all border border-rose-100 dark:border-rose-500/20 cursor-pointer"
               >
                 <Trash2 className="h-5 w-5" />
@@ -1005,6 +1027,17 @@ function DealAmountModal({ leadId, currentAmount, currentNotes, onClose, onSucce
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={showResetConfirm}
+        title="Reset Deal Amount"
+        description="Resetting the deal amount will keep transactions but clear the base project value. Continue?"
+        confirmText="Reset Deal Amount"
+        variant="danger"
+        isLoading={isSaving}
+        onConfirm={confirmDeleteDeal}
+        onCancel={() => setShowResetConfirm(false)}
+      />
     </div>
   );
 }

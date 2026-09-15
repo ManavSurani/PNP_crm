@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Layers, Plus, Loader2, Pencil, Trash2, Check, X, Search, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 
 interface Field {
   id: string;
@@ -22,6 +23,8 @@ export default function FieldsPage() {
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
+  const [fieldToDelete, setFieldToDelete] = useState<Field | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchFields();
@@ -80,15 +83,19 @@ export default function FieldsPage() {
     }
   };
 
-  const handleDelete = async (field: Field) => {
-    if (!confirm(`Delete field "${field.name}"? This will also delete all vendors linked to this field.`)) return;
+  const confirmDelete = async () => {
+    if (!fieldToDelete) return;
+    setIsDeleting(true);
     try {
-      const res = await fetch(`/api/fields/${field.id}`, { method: "DELETE" });
+      const res = await fetch(`/api/fields/${fieldToDelete.id}`, { method: "DELETE" });
       if (res.ok) {
-        setFields(fields.filter((f) => f.id !== field.id));
+        setFields(fields.filter((f) => f.id !== fieldToDelete.id));
       }
     } catch (error) {
       console.error(error);
+    } finally {
+      setIsDeleting(false);
+      setFieldToDelete(null);
     }
   };
 
@@ -100,7 +107,7 @@ export default function FieldsPage() {
     <div className="max-w-5xl mx-auto space-y-6 pb-10">
       {/* Header */}
       <div className="bg-white dark:bg-slate-900 p-8 rounded-xl border border-slate-200 dark:border-white/8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-violet-500 rounded-full blur-[100px] opacity-5 -mr-32 -mt-32" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500 rounded-full blur-[100px] opacity-5 -mr-32 -mt-32" />
         <div className="relative z-10 space-y-1">
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-white tracking-tight">Work Fields</h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm">Manage reusable work categories (e.g. Electrical, Plumbing, Civil).</p>
@@ -108,7 +115,7 @@ export default function FieldsPage() {
         <div className="relative z-10">
           <button
             onClick={() => { setIsAdding(true); setNewFieldName(""); }}
-            className="bg-violet-600 hover:bg-violet-700 px-5 py-2.5 rounded-lg text-white font-semibold flex items-center gap-2 text-sm transition-all active:scale-95 shadow-md"
+            className="bg-indigo-600 hover:bg-indigo-700 px-5 py-2.5 rounded-lg text-white font-semibold flex items-center gap-2 text-sm transition-all active:scale-95 shadow-md"
           >
             <Plus className="h-4 w-4" /> Add New Field
           </button>
@@ -117,12 +124,12 @@ export default function FieldsPage() {
 
       {/* Add Field inline */}
       {isAdding && (
-        <div className="bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-800/60 rounded-xl p-5 flex items-center gap-3 animate-in slide-in-from-top-2 duration-200">
-          <Wrench className="h-5 w-5 text-violet-500 shrink-0" />
+        <div className="bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800/60 rounded-xl p-5 flex items-center gap-3 animate-in slide-in-from-top-2 duration-200">
+          <Wrench className="h-5 w-5 text-indigo-500 shrink-0" />
           <input
             autoFocus
             placeholder="Field name (e.g. Electrical Work)"
-            className="flex-1 bg-white dark:bg-[#161f32] border border-violet-200 dark:border-violet-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg px-4 py-2.5 text-sm font-medium focus:border-violet-500 outline-none transition-all"
+            className="flex-1 bg-white dark:bg-[#161f32] border border-indigo-200 dark:border-indigo-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg px-4 py-2.5 text-sm font-medium focus:border-indigo-500 outline-none transition-all"
             value={newFieldName}
             onChange={(e) => setNewFieldName(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); if (e.key === "Escape") setIsAdding(false); }}
@@ -130,12 +137,12 @@ export default function FieldsPage() {
           <button
             onClick={handleAdd}
             disabled={isSaving || !newFieldName.trim()}
-            className="px-5 py-2.5 bg-violet-600 text-white rounded-lg text-sm font-bold hover:bg-violet-700 disabled:opacity-50 flex items-center gap-2"
+            className="px-5 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2"
           >
             {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Save
           </button>
-          <button onClick={() => setIsAdding(false)} className="p-2 hover:bg-violet-100 dark:hover:bg-violet-900/50 rounded-lg transition-colors">
-            <X className="h-4 w-4 text-violet-400" />
+          <button onClick={() => setIsAdding(false)} className="p-2 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 rounded-lg transition-colors">
+            <X className="h-4 w-4 text-indigo-400" />
           </button>
         </div>
       )}
@@ -145,7 +152,7 @@ export default function FieldsPage() {
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
         <input
           type="text"
-          className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161f32] py-3 pl-12 pr-4 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-violet-400 outline-none transition-all"
+          className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161f32] py-3 pl-12 pr-4 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-indigo-400 outline-none transition-all"
           placeholder="Search fields..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -158,16 +165,16 @@ export default function FieldsPage() {
           <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Total Fields</p>
           <p className="text-3xl font-black text-slate-900 dark:text-white mt-1">{fields.length}</p>
         </div>
-        <div className="bg-white dark:bg-slate-900 border border-violet-100 dark:border-violet-900/40 rounded-xl p-5 shadow-sm">
-          <p className="text-[10px] font-black text-violet-400/60 dark:text-violet-400/80 uppercase tracking-widest">Showing</p>
-          <p className="text-3xl font-black text-violet-600 dark:text-violet-400 mt-1">{filtered.length}</p>
+        <div className="bg-white dark:bg-slate-900 border border-indigo-100 dark:border-indigo-900/40 rounded-xl p-5 shadow-sm">
+          <p className="text-[10px] font-black text-indigo-400/60 dark:text-indigo-400/80 uppercase tracking-widest">Showing</p>
+          <p className="text-3xl font-black text-indigo-600 dark:text-indigo-400 mt-1">{filtered.length}</p>
         </div>
       </div>
 
       {/* Fields List */}
       {isLoading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
+          <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
         </div>
       ) : filtered.length === 0 ? (
         <div className="py-24 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
@@ -192,7 +199,7 @@ export default function FieldsPage() {
                     {editingId === field.id ? (
                       <input
                         autoFocus
-                        className="border border-violet-300 dark:border-violet-700 bg-white dark:bg-[#161f32] text-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm font-bold focus:border-violet-500 outline-none w-64"
+                        className="border border-indigo-300 dark:border-indigo-700 bg-white dark:bg-[#161f32] text-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm font-bold focus:border-indigo-500 outline-none w-64"
                         value={editingName}
                         onChange={(e) => setEditingName(e.target.value)}
                         onKeyDown={(e) => {
@@ -202,8 +209,8 @@ export default function FieldsPage() {
                       />
                     ) : (
                       <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-lg bg-violet-50 dark:bg-violet-950/50 border border-violet-100 dark:border-violet-800/50 flex items-center justify-center">
-                          <Wrench className="h-4 w-4 text-violet-500" />
+                        <div className="h-8 w-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-100 dark:border-indigo-800/50 flex items-center justify-center">
+                          <Wrench className="h-4 w-4 text-indigo-500" />
                         </div>
                         <span className="text-sm font-bold text-slate-900 dark:text-white">{field.name}</span>
                       </div>
@@ -219,7 +226,7 @@ export default function FieldsPage() {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleEdit(field.id)}
-                          className="p-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-all"
+                          className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all"
                         >
                           <Check className="h-4 w-4" />
                         </button>
@@ -234,12 +241,12 @@ export default function FieldsPage() {
                       <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => { setEditingId(field.id); setEditingName(field.name); }}
-                          className="p-2 hover:bg-violet-50 dark:hover:bg-violet-950/40 text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 rounded-lg transition-all"
+                          className="p-2 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg transition-all"
                         >
                           <Pencil className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => handleDelete(field)}
+                          onClick={() => setFieldToDelete(field)}
                           className="p-2 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition-all"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -253,6 +260,17 @@ export default function FieldsPage() {
           </table>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={!!fieldToDelete}
+        title="Delete Field"
+        description={`Are you sure you want to delete field "${fieldToDelete?.name}"? This will also delete all vendors linked to this field.`}
+        confirmText="Delete Field"
+        variant="danger"
+        isLoading={isDeleting}
+        onConfirm={confirmDelete}
+        onCancel={() => setFieldToDelete(null)}
+      />
     </div>
   );
 }

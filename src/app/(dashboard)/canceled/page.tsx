@@ -134,14 +134,14 @@ export default function CanceledArchivePage() {
             <input 
               type="text" 
               placeholder={`Search ${activeTab}...`} 
-              className="w-full pl-11 pr-4 py-2.5 bg-white dark:bg-[#161f32] border border-slate-200 dark:border-slate-800 rounded-lg text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all outline-none"
+              className="w-full pl-11 pr-4 py-2.5 bg-white dark:bg-[#161f32] border border-slate-200 dark:border-slate-800 rounded-lg text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus-visible:outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 transition-all outline-none"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
           <div className="w-full sm:w-64">
             <select 
-              className="block w-full rounded-lg border border-slate-200 dark:border-slate-800 py-2.5 px-4 text-slate-900 dark:text-white bg-white dark:bg-[#161f32] focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 text-sm outline-none cursor-pointer"
+              className="block w-full rounded-lg border border-slate-200 dark:border-slate-800 py-2.5 px-4 text-slate-900 dark:text-white bg-white dark:bg-[#161f32] focus:outline-none focus-visible:outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 text-sm outline-none cursor-pointer"
               value={filterCancelReason}
               onChange={e => setFilterCancelReason(e.target.value)}
             >
@@ -171,15 +171,15 @@ export default function CanceledArchivePage() {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center flex-1 text-slate-400 min-h-[400px]">
             <Loader2 className="h-8 w-8 animate-spin text-rose-500 mb-3" />
-            <p className="text-sm font-medium">Indexing Archive...</p>
+            <p className="text-sm font-medium">Loading canceled leads...</p>
           </div>
         ) : (
           <div className="overflow-auto flex-1 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800" style={{ maxHeight: 'calc(100vh - 320px)' }}>
              <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800 table-fixed" style={{ minWidth: '800px' }}>
                <thead className="bg-slate-50/50 dark:bg-[#161f32]/95 sticky top-0 z-20 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800">
                  <tr>
-                    <th scope="col" className="w-[40%] py-4 pl-8 pr-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Identity</th>
-                    <th scope="col" className="w-[30%] px-3 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Cancellation Intel</th>
+                    <th scope="col" className="w-[40%] py-4 pl-8 pr-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Lead / Customer</th>
+                    <th scope="col" className="w-[30%] px-3 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Cancellation Reason</th>
                     <th scope="col" className="w-[15%] px-3 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Date Logged</th>
                     <th scope="col" className="w-[10%] py-4 pr-4 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Restore</th>
                     <th scope="col" className="w-[5%] relative py-4 pl-3 pr-8"><span className="sr-only">Actions</span></th>
@@ -192,7 +192,7 @@ export default function CanceledArchivePage() {
                         <div className="h-12 w-12 bg-slate-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-200 dark:border-slate-700 text-slate-300 dark:text-slate-600">
                            <AlertCircle className="h-6 w-6" />
                         </div>
-                        <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase">Archive Empty</h3>
+                        <h3 className="text-sm font-bold text-slate-900 dark:text-white">No Canceled Records Found</h3>
                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">No canceled records found matching your current filter.</p>
                      </td>
                    </tr>

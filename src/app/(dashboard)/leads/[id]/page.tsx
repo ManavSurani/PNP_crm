@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { ClockTimePicker } from "@/components/ui/ClockTimePicker";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 
 type FollowUp = { 
   id: string; 
@@ -87,6 +88,14 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
   const [reactivationNote, setReactivationNote] = useState("");
   const [meetingForm, setMeetingForm] = useState({ address: "", date: "", time: "", notes: "" });
   const [editForm, setEditForm] = useState<Partial<LeadDetails>>({});
+  const [confirmModalConfig, setConfirmModalConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    confirmText?: string;
+    variant?: "danger" | "warning" | "info";
+    action: () => Promise<void> | void;
+  } | null>(null);
   const [editingItem, setEditingItem] = useState<{ id: string; type: "FOLLOW_UP" | "MEETING" | "NOTE" | "TRANSACTION"; noteGiven?: string | null; notes?: string | null; address?: string; date?: string; time?: string; content?: string } | null>(null);
   const [editNoteText, setEditNoteText] = useState("");
   const [editMeetingDate, setEditMeetingDate] = useState("");
@@ -182,31 +191,40 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
     finally { setIsSubmitting(false); }
   };
 
-  const handleDeleteActivity = async (targetId: string, itemType: "FOLLOW_UP" | "MEETING" | "NOTE" | "TRANSACTION") => {
-    if (!window.confirm("Are you sure you want to delete this activity?")) return;
-    setIsSubmitting(true);
-    try {
-      let apiUrl = "";
-      switch (itemType) {
-        case "FOLLOW_UP": apiUrl = `/api/follow-ups/${targetId}`; break;
-        case "MEETING": apiUrl = `/api/meetings/${targetId}`; break;
-        case "NOTE": apiUrl = `/api/notes/${targetId}`; break;
-        case "TRANSACTION": apiUrl = `/api/transactions/${targetId}`; break;
+  const handleDeleteActivity = (targetId: string, itemType: "FOLLOW_UP" | "MEETING" | "NOTE" | "TRANSACTION") => {
+    setConfirmModalConfig({
+      isOpen: true,
+      title: "Delete Activity",
+      description: "Are you sure you want to delete this activity? This cannot be undone.",
+      confirmText: "Delete Activity",
+      variant: "danger",
+      action: async () => {
+        setIsSubmitting(true);
+        try {
+          let apiUrl = "";
+          switch (itemType) {
+            case "FOLLOW_UP": apiUrl = `/api/follow-ups/${targetId}`; break;
+            case "MEETING": apiUrl = `/api/meetings/${targetId}`; break;
+            case "NOTE": apiUrl = `/api/notes/${targetId}`; break;
+            case "TRANSACTION": apiUrl = `/api/transactions/${targetId}`; break;
+          }
+          
+          const res = await fetch(apiUrl, { method: "DELETE" });
+          if (res.ok) {
+            fetchLead();
+            window.dispatchEvent(new CustomEvent("refresh-notifications"));
+          } else {
+            const err = await res.json();
+            alert(`API Error: ${err.error || "Unknown"}`);
+          }
+        } catch (e) {
+          alert(`Network Error: ${String(e)}`);
+        } finally {
+          setIsSubmitting(false);
+          setConfirmModalConfig(null);
+        }
       }
-      
-      const res = await fetch(apiUrl, { method: "DELETE" });
-      if (res.ok) {
-        fetchLead();
-        window.dispatchEvent(new CustomEvent("refresh-notifications"));
-      } else {
-        const err = await res.json();
-        alert(`API Error: ${err.error || "Unknown"}`);
-      }
-    } catch (e) {
-      alert(`Network Error: ${String(e)}`);
-    } finally {
-      setIsSubmitting(false);
-    }
+    });
   };
 
   const handleCompleteMeeting = async (meetingId: string) => {
@@ -231,15 +249,76 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
     }
   };
 
-  const handleMeetingOutcome = async () => {
+  const executeMeetingCompletion = async () => {
     setIsSubmitting(true);
     try {
-      // Fetch the old meeting's data to preserve notes
-      const oldMeeting = timeline.find((t: any) => t.type === "MEETING" && t.id === completingMeetingId);
-      const address = (oldMeeting as any)?.address || lead?.fullAddress || "TBD";
-      const existingNotes = (oldMeeting as any)?.notes || "";
-      
-      if (meetingOutcome === "RESCHEDULE") {
+      // Consolidated Meeting Completion & Follow-up Logging
+      const completeRes = await fetch(`/api/meetings/${completingMeetingId}/complete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          meetingOutcome,
+          noteContent,
+          cancelReason,
+          followUpDate,
+          followUpTime,
+        }),
+      });
+
+      if (!completeRes.ok) {
+        const err = await completeRes.json();
+        alert(`Error: ${err.error || "Unknown error"}`);
+        setIsSubmitting(false);
+        return;
+      }
+
+      const data = await completeRes.json();
+
+      if (meetingOutcome === "CONVERT") {
+        const payload = (isUnnamed && conversionName.trim()) 
+          ? { customerName: conversionName.trim() } 
+          : undefined;
+
+        const res = await fetch(`/api/leads/${id}/convert`, { 
+          method: "POST",
+          headers: payload ? { "Content-Type": "application/json" } : undefined,
+          body: payload ? JSON.stringify(payload) : undefined,
+        });
+        if (res.ok) {
+          closeModal();
+          router.push(`/customers/${id}`);
+          return;
+        } else {
+          const err = await res.json();
+          alert(`Error: ${err.error || "Unknown error"}`);
+          setIsSubmitting(false);
+          return;
+        }
+      } else if (data.isCancelled) {
+        closeModal();
+        router.push("/canceled");
+        return; // Exit early if redirected
+      }
+      closeModal();
+      fetchLead();
+      window.dispatchEvent(new CustomEvent("refresh-notifications"));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsSubmitting(false);
+      setConfirmModalConfig(null);
+    }
+  };
+
+  const handleMeetingOutcome = async () => {
+    // Fetch the old meeting's data to preserve notes
+    const oldMeeting = timeline.find((t: any) => t.type === "MEETING" && t.id === completingMeetingId);
+    const address = (oldMeeting as any)?.address || lead?.fullAddress || "TBD";
+    const existingNotes = (oldMeeting as any)?.notes || "";
+    
+    if (meetingOutcome === "RESCHEDULE") {
+      setIsSubmitting(true);
+      try {
         // Complete the old meeting first
         await fetch(`/api/meetings/${completingMeetingId}`, {
           method: "PATCH",
@@ -253,84 +332,46 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ leadId: id, address, date: followUpDate, time: followUpTime, notes: noteContent }),
         });
-      } else {
-        if (meetingOutcome === "CONVERT") {
-          if (isUnnamed) {
-            const trimmed = conversionName.trim();
-            if (!trimmed || trimmed.toLowerCase() === "unnamed lead" || trimmed.toLowerCase() === "unnamed") {
-              setConversionError("Please enter a valid customer or lead name.");
-              alert("Please enter a valid customer or lead name before converting to a customer.");
-              setIsSubmitting(false);
-              return;
-            }
-          } else {
-            if (!window.confirm("Are you sure you want to convert this lead to a customer?")) {
-              setIsSubmitting(false);
-              return;
-            }
-          }
-        } else if (meetingOutcome === "NOT_INTERESTED") {
-          if (!window.confirm("Are you sure this person is not interested? This will cancel the lead.")) {
-            setIsSubmitting(false);
-            return;
-          }
-        }
-
-        // Consolidated Meeting Completion & Follow-up Logging
-        const completeRes = await fetch(`/api/meetings/${completingMeetingId}/complete`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            meetingOutcome,
-            noteContent,
-            cancelReason,
-            followUpDate,
-            followUpTime,
-          }),
-        });
-
-        if (!completeRes.ok) {
-          const err = await completeRes.json();
-          alert(`Error: ${err.error || "Unknown error"}`);
-          setIsSubmitting(false);
-          return;
-        }
-
-        const data = await completeRes.json();
-
-        if (meetingOutcome === "CONVERT") {
-          const payload = (isUnnamed && conversionName.trim()) 
-            ? { customerName: conversionName.trim() } 
-            : undefined;
-
-          const res = await fetch(`/api/leads/${id}/convert`, { 
-            method: "POST",
-            headers: payload ? { "Content-Type": "application/json" } : undefined,
-            body: payload ? JSON.stringify(payload) : undefined,
-          });
-          if (res.ok) {
-            closeModal();
-            router.push(`/customers/${id}`);
-            return;
-          } else {
-            const err = await res.json();
-            alert(`Error: ${err.error || "Unknown error"}`);
-            setIsSubmitting(false);
-            return;
-          }
-        } else if (data.isCancelled) {
-          closeModal();
-          router.push("/canceled");
-          return; // Exit early if redirected
-        }
+        closeModal();
+        fetchLead();
+        window.dispatchEvent(new CustomEvent("refresh-notifications"));
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setIsSubmitting(false);
       }
-      closeModal();
-      fetchLead();
-      window.dispatchEvent(new CustomEvent("refresh-notifications"));
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsSubmitting(false);
+    } else {
+      if (meetingOutcome === "CONVERT") {
+        if (isUnnamed) {
+          const trimmed = conversionName.trim();
+          if (!trimmed || trimmed.toLowerCase() === "unnamed lead" || trimmed.toLowerCase() === "unnamed") {
+            setConversionError("Please enter a valid customer or lead name.");
+            alert("Please enter a valid customer or lead name before converting to a customer.");
+            return;
+          }
+        }
+        setConfirmModalConfig({
+          isOpen: true,
+          title: "Convert to Customer",
+          description: "Are you sure you want to convert this lead to a customer? This will transition the lead into an active customer account.",
+          confirmText: "Convert to Customer",
+          variant: "info",
+          action: executeMeetingCompletion,
+        });
+        return;
+      } else if (meetingOutcome === "NOT_INTERESTED") {
+        setConfirmModalConfig({
+          isOpen: true,
+          title: "Cancel Lead",
+          description: "Are you sure this person is not interested? This will cancel the lead and archive the workflow.",
+          confirmText: "Mark Not Interested",
+          variant: "danger",
+          action: executeMeetingCompletion,
+        });
+        return;
+      }
+
+      await executeMeetingCompletion();
     }
   };
 
@@ -553,7 +594,7 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
               <span className="text-2xl font-bold text-slate-800 dark:text-white uppercase">{lead.customerName ? lead.customerName.charAt(0) : "?"}</span>
             </div>
             {lead.isHotLead && (
-              <span className="absolute -bottom-1.5 -right-1.5 bg-amber-400 rounded-full p-1 shadow-sm border-2 border-white dark:border-slate-900">
+              <span className="absolute -bottom-1.5 -right-1.5 bg-amber-500 rounded-full p-1 shadow-sm border-2 border-white dark:border-slate-900">
                 <Star className="h-3 w-3 text-white fill-white" />
               </span>
             )}
@@ -657,13 +698,13 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
               onClick={handleToggleHotLead}
               title={lead.isHotLead ? "Remove Hot Lead" : "Mark as Hot Lead"}
               className={cn(
-                "h-9 w-9 rounded-xl flex items-center justify-center transition-all active:scale-90 border",
+                "h-9 w-9 rounded-xl flex items-center justify-center transition-all active:scale-90 border cursor-pointer",
                 lead.isHotLead
-                  ? "bg-amber-400 text-white border-amber-300 shadow-md shadow-amber-100 dark:shadow-amber-950/40"
-                  : "bg-white dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700 hover:border-amber-300 hover:text-amber-400"
+                  ? "bg-amber-500 text-white border-amber-400 shadow-md shadow-amber-500/20"
+                  : "bg-white dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700 hover:border-amber-300 hover:text-amber-500"
               )}
             >
-              <Star className={cn("h-5 w-5", lead.isHotLead ? "fill-white" : "")} />
+              <Star className={cn("h-5 w-5", lead.isHotLead ? "fill-white text-white" : "")} />
             </button>
 
             {lead.isArchived && (
@@ -1804,6 +1845,22 @@ export default function LeadDetailsPage({ params }: { params: Promise<{ id: stri
           </div>
         </Modal>
       )}
+
+      {/* Reusable Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!confirmModalConfig?.isOpen}
+        title={confirmModalConfig?.title || "Confirmation"}
+        description={confirmModalConfig?.description || ""}
+        confirmText={confirmModalConfig?.confirmText}
+        variant={confirmModalConfig?.variant || "danger"}
+        isLoading={isSubmitting}
+        onConfirm={async () => {
+          if (confirmModalConfig?.action) {
+            await confirmModalConfig.action();
+          }
+        }}
+        onCancel={() => setConfirmModalConfig(null)}
+      />
     </div>
   );
 }

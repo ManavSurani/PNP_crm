@@ -75,6 +75,7 @@ export async function POST(req: Request) {
   // Generate the VBScript to run the node script silently (0 flag hides terminal)
   const vbsContent = `
 Set WshShell = CreateObject("WScript.Shell")
+WshShell.CurrentDirectory = "${process.cwd().replace(/\\/g, "\\\\")}"
 WshShell.Run """${nodePath}"" ""${scriptPath}""", 0, False
   `.trim();
   
@@ -97,6 +98,15 @@ WshShell.Run """${nodePath}"" ""${scriptPath}""", 0, False
 
   try {
     await execAsync(cmd);
+
+    // Configure Task Scheduler settings: allow on battery, don't stop on battery, start when available upon wake
+    try {
+      const psCommand = `powershell -NoProfile -Command "try { $s = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable; Set-ScheduledTask -TaskName '${taskName}' -Settings $s -ErrorAction SilentlyContinue } catch {}"`;
+      await execAsync(psCommand);
+    } catch (psErr) {
+      console.warn("[Schedule] Could not apply advanced task settings:", psErr);
+    }
+
     return NextResponse.json({
       success: true,
       message: `Auto-backup scheduled daily at ${time}`,

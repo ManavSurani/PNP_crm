@@ -44,7 +44,7 @@ function AnalyticsContent() {
     return (
       <div className="flex h-[70vh] items-center justify-center flex-col gap-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-slate-400 font-medium tracking-wide text-xs uppercase tracking-[0.2em]">Aggregating Fiscal Intelligence...</p>
+        <p className="text-slate-400 font-medium tracking-wide text-xs">Loading analytics...</p>
       </div>
     );
   }
@@ -65,12 +65,12 @@ function AnalyticsContent() {
   });
 
   const stats = [
-    { label: "Total Business Value", val: summary.totalBusinessValue, icon: Briefcase, color: "text-indigo-600", bg: "bg-indigo-50", sub: "Sum of all Deal Amounts" },
-    { label: "Total Received Amount", val: summary.totalReceived, icon: IndianRupee, color: "text-emerald-600", bg: "bg-emerald-50", sub: "Total Client Payments" },
-    { label: "Total Pending Amount", val: summary.totalPending, icon: Wallet, color: "text-amber-600", bg: "bg-amber-50", sub: "Verified Outstanding Dues" },
-    { label: "Total Business Loss", val: summary.totalLoss, icon: TrendingDown, color: "text-rose-600", bg: "bg-rose-50", sub: "Unpaid Dues & Adjustments" },
-    { label: "Total Design Expenses", val: summary.totalDesignExpenses, icon: Calculator, color: "text-rose-600", bg: "bg-rose-50", sub: "Sum of all Design Module costs" },
-    { label: "Business Net Profit", val: summary.globalProfit, icon: TrendingUp, color: summary.globalProfit >= 0 ? "text-emerald-600" : "text-rose-600", bg: summary.globalProfit >= 0 ? "bg-emerald-50" : "bg-rose-50", sub: "Sum of all Customer Profit margins" },
+    { label: "Total Business Value", val: summary.totalBusinessValue, icon: Briefcase, color: "text-indigo-600 dark:text-indigo-400", bg: "bg-indigo-50 dark:bg-indigo-950/50", sub: "Sum of all Deal Amounts" },
+    { label: "Total Received Amount", val: summary.totalReceived, icon: IndianRupee, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-950/50", sub: "Total Client Payments" },
+    { label: "Total Pending Amount", val: summary.totalPending, icon: Wallet, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-950/50", sub: "Verified Outstanding Dues" },
+    { label: "Total Business Loss", val: summary.totalLoss, icon: TrendingDown, color: "text-rose-600 dark:text-rose-400", bg: "bg-rose-50 dark:bg-rose-950/50", sub: "Unpaid Dues & Adjustments" },
+    { label: "Total Design Expenses", val: summary.totalDesignExpenses, icon: Calculator, color: "text-rose-600 dark:text-rose-400", bg: "bg-rose-50 dark:bg-rose-950/50", sub: "Sum of all Design Module costs" },
+    { label: "Business Net Profit", val: summary.globalProfit, icon: TrendingUp, color: summary.globalProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400", bg: summary.globalProfit >= 0 ? "bg-emerald-50 dark:bg-emerald-950/50" : "bg-rose-50 dark:bg-rose-950/50", sub: "Sum of all Customer Profit margins" },
   ];
 
   return (
@@ -94,8 +94,8 @@ function AnalyticsContent() {
               <s.icon className="h-4 w-4" />
             </div>
             <p className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">₹{s.val.toLocaleString()}</p>
-            <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-0.5">{s.label}</p>
-            <p className="text-[8px] text-slate-400 dark:text-slate-500 italic mt-1">{s.sub}</p>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-0.5">{s.label}</p>
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 italic mt-1">{s.sub}</p>
           </div>
         ))}
       </div>

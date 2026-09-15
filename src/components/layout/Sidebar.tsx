@@ -23,6 +23,8 @@ import {
 } from "lucide-react";
 import BrandLogo from "./BrandLogo";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 const groups = [
   {
@@ -62,6 +64,7 @@ const groups = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const prefersReducedMotion = useReducedMotion();
   const [expandedGroups, setExpandedGroups] = useState<string[]>(["LEADS", "CUSTOMERS", "ANALYTICS", "SYSTEM"]);
   const [tunnelStatus, setTunnelStatus] = useState<{ online: boolean; url: string | null; loading: boolean }>({
     online: false,
@@ -168,12 +171,23 @@ export default function Sidebar() {
                           href={item.href}
                           className={cn(
                             isActive
-                              ? "bg-white/10 text-white shadow-sm ring-1 ring-white/10"
-                              : "text-slate-400 hover:bg-white/5 hover:text-slate-200",
-                            "group/item flex items-center justify-between rounded-xl px-4 py-2.5 text-[13px] font-semibold transition-all duration-200"
+                              ? "text-white"
+                              : "text-slate-400 hover:text-slate-200",
+                            "group/item relative flex items-center justify-between rounded-xl px-4 py-2.5 text-[13px] font-semibold transition-colors duration-150"
                           )}
                         >
-                          <div className="flex items-center">
+                          {isActive && (
+                            prefersReducedMotion ? (
+                              <div className="absolute inset-0 rounded-xl bg-white/10 ring-1 ring-white/10 shadow-sm" />
+                            ) : (
+                              <motion.div
+                                layoutId="sidebar-active-pill"
+                                className="absolute inset-0 rounded-xl bg-white/10 ring-1 ring-white/10 shadow-sm"
+                                transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                              />
+                            )
+                          )}
+                          <div className="relative z-10 flex items-center">
                             <item.icon
                               className={cn(
                                 isActive ? "text-indigo-400" : "text-slate-500 group-hover/item:text-slate-400",
@@ -183,7 +197,9 @@ export default function Sidebar() {
                             />
                             {item.name}
                           </div>
-                          {isActive && <div className="h-1.5 w-1.5 rounded-full bg-indigo-400 shadow-[0_0_8px_rgba(129,140,248,0.6)]" />}
+                          {isActive && (
+                            <div className="relative z-10 h-1.5 w-1.5 rounded-full bg-indigo-400 shadow-[0_0_8px_rgba(129,140,248,0.6)]" />
+                          )}
                         </Link>
                       );
                     })}

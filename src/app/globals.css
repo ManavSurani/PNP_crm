@@ -148,6 +148,38 @@ body {
   .animate-pulse-soft {
     animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
+
+  @keyframes aurora-flow {
+    0% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(30px, -25px) scale(1.08); }
+    66% { transform: translate(-20px, 20px) scale(0.95); }
+    100% { transform: translate(0, 0) scale(1); }
+  }
+  .animate-aurora {
+    animation: aurora-flow 25s ease-in-out infinite;
+  }
+}
+
+/* Focus-visible accessibility ring (buttons & links only, never form controls) */
+:focus-visible:not(input):not(select):not(textarea) {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+}
+
+/* OS-level reduced motion overrides (WCAG 2.3.3) */
+@media (prefers-reduced-motion: reduce) {
+  .animate-aurora,
+  .animate-pulse-soft,
+  .animate-shake {
+    animation: none !important;
+    transition: none !important;
+  }
 }
 
 /* ─── Print Isolation: Guarantee crisp white-paper outputs ─── */

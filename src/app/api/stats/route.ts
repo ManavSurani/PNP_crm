@@ -26,19 +26,19 @@ export async function GET() {
             lte: todayEnd,
           },
           completedDate: null,
-          lead: { isCancelled: false, status: { not: "WON_ORDER" } }
+          lead: { isCancelled: false, isArchived: false, status: { not: "WON_ORDER" } }
         },
       }),
-      prisma.lead.count({ where: { status: "NEW_INQUIRY", isCancelled: false } }),
-      prisma.lead.count({ where: { status: "FOLLOW_UP", isCancelled: false } }),
-      prisma.lead.count({ where: { status: "MEETING_SCHEDULED", isCancelled: false } }),
+      prisma.lead.count({ where: { status: "NEW_INQUIRY", isCancelled: false, isArchived: false } }),
+      prisma.lead.count({ where: { status: "FOLLOW_UP", isCancelled: false, isArchived: false } }),
+      prisma.lead.count({ where: { status: "MEETING_SCHEDULED", isCancelled: false, isArchived: false } }),
       prisma.lead.count({ where: { isCancelled: true } }),
       prisma.order.aggregate({ _sum: { totalAmount: true } }),
       prisma.followUp.count({
         where: {
           nextCallDate: { lt: todayStart },
           completedDate: null,
-          lead: { isCancelled: false, status: { not: "WON_ORDER" } }
+          lead: { isCancelled: false, isArchived: false, status: { not: "WON_ORDER" } }
         },
       }),
       prisma.meeting.count({
@@ -48,13 +48,14 @@ export async function GET() {
             lte: todayEnd,
           },
           status: "SCHEDULED",
-          lead: { isCancelled: false }
+          lead: { isCancelled: false, isArchived: false, status: { not: "WON_ORDER" } }
         },
       }),
       prisma.lead.count({ 
         where: { 
           status: { in: ["FOLLOW_UP", "MEETING_SCHEDULED"] },
-          isCancelled: false
+          isCancelled: false,
+          isArchived: false
         } 
       }),
       // Most Profitable Projects - Unified via Lead Transactions
@@ -78,7 +79,7 @@ export async function GET() {
       prisma.meeting.findMany({
         where: {
           status: "SCHEDULED",
-          lead: { isCancelled: false, status: { not: "WON_ORDER" } }
+          lead: { isCancelled: false, isArchived: false, status: { not: "WON_ORDER" } }
         },
         distinct: ['leadId'],
         select: { id: true }
@@ -87,7 +88,7 @@ export async function GET() {
         where: {
           nextCallDate: { gt: todayEnd },
           completedDate: null,
-          lead: { isCancelled: false, status: { not: "WON_ORDER" } }
+          lead: { isCancelled: false, isArchived: false, status: { not: "WON_ORDER" } }
         },
       }),
       prisma.order.count({ where: { status: "CANCELLED" } }),
@@ -103,6 +104,22 @@ export async function GET() {
       prisma.lead.count({ where: { isArchived: true, isCancelled: false } }),
       // [23] NEW: Active Hot Leads Count
       prisma.lead.count({ where: { isHotLead: true, isCancelled: false, isArchived: false, status: { not: "WON_ORDER" } } }),
+      // [24] Overdue Meetings
+      prisma.meeting.count({
+        where: {
+          date: { lt: todayStart },
+          status: "SCHEDULED",
+          lead: { isCancelled: false, isArchived: false, status: { not: "WON_ORDER" } }
+        },
+      }),
+      // [25] Upcoming Meetings
+      prisma.meeting.count({
+        where: {
+          date: { gt: todayEnd },
+          status: "SCHEDULED",
+          lead: { isCancelled: false, isArchived: false, status: { not: "WON_ORDER" } }
+        },
+      }),
     ]);
 
     const topProjects = (stats[13] as any[] || []).map((o: any) => {
@@ -194,6 +211,8 @@ export async function GET() {
         overdueFollowUps: stats[10],
         upcomingFollowUps: stats[16],
         todayMeetings: stats[11],
+        overdueMeetings: stats[24],
+        upcomingMeetings: stats[25],
         interestedLeads: stats[12],
         newLeads: stats[5],
         followUpLeads: stats[6],
