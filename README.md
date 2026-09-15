@@ -12,8 +12,10 @@ The repository contains two related applications:
 ## Contents
 
 - [Current status and scope](#current-status-and-scope)
+- [How the CRM works](#how-the-crm-works)
+- [Design and presentation](#design-and-presentation)
 - [Feature overview](#feature-overview)
-- [Screenshots](#screenshots)
+- [Screenshots and page guide](#screenshots-and-page-guide)
 - [Architecture](#architecture)
 - [Technology stack](#technology-stack)
 - [Prerequisites](#prerequisites)
@@ -56,6 +58,50 @@ The repository contains two related applications:
 
 The repository includes distribution and mobile build assets, but a release should not be described as production-ready for every machine until the Inno Setup compiler, bundled `node.exe` payload, Task Scheduler registration, live R2 upload/restore, and a clean Windows installation have each been tested in the target environment.
 
+## How the CRM works
+
+PNP CRM follows a simple business flow:
+
+1. A new inquiry is captured and checked for duplicates.
+2. The team works the inquiry through the Lead Pipeline.
+3. Follow-ups and site visits keep the next action visible.
+4. A successful consultation can convert the lead into a Customer Hub project.
+5. The project receives quotations, design expenses, financial entries, and execution milestones.
+6. Final payment and completion move the project into the completed-project view.
+7. Dashboard, reports, notifications, and backups help the team operate safely.
+
+```mermaid
+flowchart LR
+    Inquiry["New inquiry"] --> Pipeline["Lead Pipeline"]
+    Pipeline --> FollowUp["Follow-ups"]
+    Pipeline --> Visit["Site visit"]
+    FollowUp --> Visit
+    Visit -->|successful conversion| Customer["Customer Hub"]
+    Customer --> Quote["Quotation"]
+    Customer --> Finance["Financial ledger"]
+    Customer --> Progress["Project progress"]
+    Quote --> Finance
+    Finance --> Complete["Completed project"]
+    Pipeline -. passive .-> Archive["Interested / Archived"]
+    Pipeline -. closed .-> Canceled["Canceled Records"]
+```
+
+This is a workflow explanation, not a promise that every transition is automatic. The exact outcome depends on the action selected by the user and the route/business rules in the repository.
+
+## Design and presentation
+
+The interface is organized as a desktop-first operations workspace:
+
+- **Navigation:** Sidebar modules and a topbar provide consistent movement between sales, customers, operations, reports, and settings.
+- **Information hierarchy:** Dashboard KPI cards summarize work first; tables and detail panels provide the records behind each number.
+- **Operational states:** Overdue, today, upcoming, archived, canceled, completed, and financial states use distinct badges and labels so the next action is visible quickly.
+- **Customer context:** The Customer Hub keeps quotations, design, financials, progress, and details under one project-centered destination.
+- **Protected areas:** Analytics and cleanup workflows use their existing PIN and authentication gates rather than exposing sensitive data in normal navigation.
+- **Theme support:** The app includes light, dark, system, and scheduled theme settings. Screenshots in this README are repository assets and should be regenerated when the UI changes.
+- **Responsive behavior:** Forms, filters, tables, cards, modals, and customer modules are implemented as responsive React/Tailwind surfaces; exact layout behavior should still be checked at the target desktop size.
+
+The design descriptions below explain what each existing screen is for. They do not add features beyond the current repository.
+
 ## Feature overview
 
 ### Lead and sales operations
@@ -94,29 +140,135 @@ The repository includes distribution and mobile build assets, but a release shou
 - Local launcher, hidden production start, stop support, desktop shortcut assets, and optional tunnel integration.
 - Windows Program Files/ProgramData separation for immutable application files and mutable data.
 
-## Screenshots
+## Screenshots and page guide
 
-The repository includes screenshot references for the main application surfaces:
+The following gallery uses the 17 screenshots already stored in `screenshots/`. Each entry explains the screen's purpose and where it fits in the workflow.
 
-| Area | Preview |
-| --- | --- |
-| Login | [01_login_page.png](screenshots/01_login_page.png) |
-| Dashboard | [02_dashboard.png](screenshots/02_dashboard.png) |
-| Lead Pipeline | [03_lead_pipeline.png](screenshots/03_lead_pipeline.png) |
-| Lead Details | [04_lead_detail.png](screenshots/04_lead_detail.png) |
-| Follow-Up Queue | [05_follow_up_queue.png](screenshots/05_follow_up_queue.png) |
-| Interested Leads | [06_interested_leads.png](screenshots/06_interested_leads.png) |
-| Site Visits | [07_site_visits.png](screenshots/07_site_visits.png) |
-| Customer Directory | [08_customer_directory.png](screenshots/08_customer_directory.png) |
-| Customer Hub | [09_customer_workspace_hub.png](screenshots/09_customer_workspace_hub.png) |
-| Completed Projects | [10_complete_projects.png](screenshots/10_complete_projects.png) |
-| Vendors | [11_vendor_directory.png](screenshots/11_vendor_directory.png) |
-| Work Fields | [12_work_fields.png](screenshots/12_work_fields.png) |
-| Analytics PIN | [13_analytics_pin_entry.png](screenshots/13_analytics_pin_entry.png) |
-| Reports | [14_reports_analytics.png](screenshots/14_reports_analytics.png) |
-| Canceled Records | [15_cancelled_archive.png](screenshots/15_cancelled_archive.png) |
-| Settings | [16_general_settings.png](screenshots/16_general_settings.png) |
-| Notifications | [17_notifications_page.png](screenshots/17_notifications_page.png) |
+<details open>
+<summary><strong>Authentication and daily overview</strong></summary>
+
+### Login
+
+![PNP CRM login page](screenshots/01_login_page.png)
+
+The login page is the protected entry point. Auth.js credentials sessions control access to the dashboard, while password recovery follows the existing authentication routes.
+
+### Dashboard
+
+![PNP CRM dashboard](screenshots/02_dashboard.png)
+
+The dashboard is the daily starting point. KPI cards summarize pipeline, follow-ups, site visits, customers, archived records, completed projects, and canceled records, while charts provide operational context. Selecting a metric takes the user to the related module.
+
+</details>
+
+<details>
+<summary><strong>Lead and sales operations</strong></summary>
+
+### Lead Pipeline
+
+![PNP CRM lead pipeline](screenshots/03_lead_pipeline.png)
+
+The Lead Pipeline is the working list for active inquiries. Search, filters, sorting, hot-lead indicators, and row actions help staff decide what to contact next.
+
+### Lead Details
+
+![PNP CRM lead details](screenshots/04_lead_detail.png)
+
+Lead Details keeps profile information, requirements, activity, follow-ups, meetings, notes, and conversion actions together. It is the record-level workspace behind the pipeline row.
+
+### Follow-Up Queue
+
+![PNP CRM follow-up queue](screenshots/05_follow_up_queue.png)
+
+The Follow-Up Queue turns planned contact into a daily task list. Overdue, today, and upcoming work can be reviewed with scheduled dates, times, outcomes, and notes.
+
+### Interested Leads
+
+![PNP CRM interested leads](screenshots/06_interested_leads.png)
+
+Interested Leads separates warm opportunities from the main active queue. Its archived view is for passive leads that should not create normal active follow-up noise until reactivated.
+
+### Site Visits
+
+![PNP CRM site visits](screenshots/07_site_visits.png)
+
+Site Visits/Meetings tracks consultation dates, times, addresses, notes, and completion outcomes. An address can be used for navigation where the environment supports it.
+
+</details>
+
+<details>
+<summary><strong>Customers and project execution</strong></summary>
+
+### Customer Directory
+
+![PNP CRM customer directory](screenshots/08_customer_directory.png)
+
+The Customer Directory lists converted customer projects and provides the entry point into project-specific work.
+
+### Customer Workspace Hub
+
+![PNP CRM customer workspace hub](screenshots/09_customer_workspace_hub.png)
+
+The Customer Hub is the project-centered navigation layer. It connects customer details, quotations, design expenses, financials, and progress without losing the customer/project context.
+
+### Completed Projects
+
+![PNP CRM completed projects](screenshots/10_complete_projects.png)
+
+Completed Projects provides the historical view for delivered work. It is separate from the active customer workspace and supports the repository's completed-project lifecycle.
+
+### Vendor Directory
+
+![PNP CRM vendor directory](screenshots/11_vendor_directory.png)
+
+The Vendor Directory stores supplier/vendor records used by the operational side of an interior project.
+
+### Work Fields
+
+![PNP CRM work fields](screenshots/12_work_fields.png)
+
+Work Fields is the reusable catalog for service and work categories used by the CRM's forms and project operations.
+
+</details>
+
+<details>
+<summary><strong>Analytics, administration, and alerts</strong></summary>
+
+### Analytics PIN Entry
+
+![PNP CRM analytics PIN entry](screenshots/13_analytics_pin_entry.png)
+
+The analytics PIN screen is a deliberate security boundary before sensitive business analytics are shown. It is not a replacement for the authenticated session.
+
+### Reports Analytics
+
+![PNP CRM reports analytics](screenshots/14_reports_analytics.png)
+
+Reports presents the available chart and reporting views for pipeline, service demand, system activity, and business analysis.
+
+### Canceled Records
+
+![PNP CRM canceled records](screenshots/15_cancelled_archive.png)
+
+Canceled Records preserves closed inquiries separately from active work. Existing reactivation and deletion actions remain governed by the current route behavior.
+
+### General Settings
+
+![PNP CRM general settings](screenshots/16_general_settings.png)
+
+Settings groups identity, sessions, theme appearance, scheduled theme behavior, security, backups, restore, system configuration, and cleanup controls.
+
+### Notifications
+
+![PNP CRM notifications](screenshots/17_notifications_page.png)
+
+Notifications surfaces active operational reminders such as follow-ups, site visits, milestones, and overdue work. Archived, canceled, or converted records are excluded where the current notification rules require it.
+
+</details>
+
+### Screenshot maintenance
+
+Screenshots are documentation assets, not generated during installation. When a page changes, recapture the affected image, keep the existing filename when the page meaning is unchanged, and update the caption if its purpose changes. Do not place real customer credentials or sensitive records in new screenshots.
 
 ## Architecture
 
@@ -275,7 +427,7 @@ The distribution path is intentionally separate from the developer path:
 
 The installer does not replace a developer `.env`. When no packaged `app-config.json` exists, the existing environment-based behavior remains available. The final installer must still be validated on a clean Windows machine, especially the runtime payload and scheduled task.
 
-## First-run `/setup` wizard
+## First-run setup wizard
 
 The route [`/setup`](src/app/setup/page.tsx) is the distribution configuration screen. It reads [`/api/setup/status`](src/app/api/setup/status/route.ts) and saves through [`POST /api/setup`](src/app/api/setup/route.ts).
 
