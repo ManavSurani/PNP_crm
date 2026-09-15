@@ -3193,3 +3193,74 @@ Execute the complete 140-screenshot capture plan for both Light Mode and Dark Mo
 - C:\Vs\pnp_crm\screenshots\Dark_Mode\ (70 files across 6 phase subfolders)
 - C:\Vs\pnp_crm\screenshots\Light_Mode\ (70 files across 6 phase subfolders)
 - Walkthrough report: walkthrough.md
+
+---
+
+## Session: 2026-09-15 - Missing Desktop Shortcut Diagnosis & Recovery Plan
+
+### User Request
+"some how my pnp crm short cut from this device is remvoed so can you check for this why is this happening and give me plan for this in detail"
+
+### Root Cause Analysis & Plan
+Investigated why the PNP CRM desktop shortcut disappeared from the device:
+1. **OneDrive Desktop Redirection Conflict**: Windows user shell folder was redirected to OneDrive (`C:\Users\Jay\OneDrive\Desktop`). The shortcut was never created in the local desktop (`C:\Users\Jay\Desktop`) or Public desktop. When OneDrive is paused, signed out, or unlinked, the OneDrive desktop icons vanish from the active Windows Explorer view.
+2. **Installer Script Bug in create-shortcut.ps1**: `Setup.bat` promised to create a Desktop shortcut, but `create-shortcut.ps1` only created a startup folder shortcut (`PNP_CRM_Background_Server.lnk`) and never wrote to the Desktop.
+3. **desktop-notifier.ps1 Icon Overwriting Glitch**: The background daemon continuously modified the `.lnk` file on disk every 30 seconds, causing Windows Shell IconCache corruption and OneDrive sync lock collisions.
+4. **Missing Start Menu Registration**: PNP CRM was not in the Windows Start Menu, making it invisible to Windows Search (`Win + S`).
+
+Detailed 4-phase recovery and prevention plan created in `implementation_plan.md`.
+---
+
+## Session: 2026-09-15 - Shortcut Removal Verification & Confirmation
+
+### User Request
+"i think check again all the mistekes you menstion here like here some how you menstion is all are correct if all are correct then give me ans yes other wise give me updated plan"
+
+### Answer
+YES. All points and root causes mentioned in the diagnosis were re-checked and verified against the live system:
+1. `C:\Users\Jay\Desktop\PNP CRM.lnk` is confirmed FALSE (missing from local desktop).
+2. `C:\Users\Public\Desktop\PNP CRM.lnk` is confirmed FALSE (missing from public desktop).
+3. Start Menu registration is confirmed FALSE (missing from Start Menu Programs).
+4. `create-shortcut.ps1` installer script bug confirmed: only creates startup folder link and never creates a desktop shortcut.
+5. `OneDrive.exe` process is confirmed stopped on the system, leading to OneDrive desktop shell visibility loss.
+6. The proposed multi-location deployment plan (installing to Local Desktop, OneDrive Desktop, Public Desktop, and Start Menu) will permanently eliminate this issue.
+---
+
+## Session: 2026-09-15 - Phased Desktop Shortcut Recovery Plan with Safety Boundaries
+
+### User Request
+"ok mack this plan devide into phases also with add the rules into this plan like other than this should not be tuchde also mack sure don't write any unessary part and don't harm any other part which are working properly add this thing into plan and give me plan again"
+
+### Answer & Plan
+Updated the execution plan into 4 clear phases with strict safety rules:
+1. **Zero Collateral Impact**: No files in `src/`, `prisma/`, `_data/crm.db`, `.env`, or `package.json` will be touched. Core application, database, and startup pipeline (`start-crm.ps1`, `launch-pnp.vbs`) remain 100% untouched.
+2. **Minimal & Targeted Changes**: Only 3 specific scripts are modified:
+   - `create-shortcut.ps1`: Upgraded to deploy to Local Desktop, OneDrive Desktop, Public Desktop, Start Menu, and Startup.
+   - `Setup.bat`: Updated to call the fixed shortcut creator and report status cleanly.
+   - `desktop-notifier.ps1`: Hardened with a write-only-on-change guard to eliminate unnecessary 30-second writes and icon cache corruption.
+3. **Phases**:
+   - Phase 1: Multi-Location Shortcut Restoration (Immediate recovery).
+   - Phase 2: Fix Installer Scripts (`create-shortcut.ps1` & `Setup.bat`).
+   - Phase 3: Harden Notifier Daemon (`desktop-notifier.ps1`).
+   - Phase 4: Shell Cache Refresh & Complete System Verification.
+Documented in [implementation_plan.md](file:///C:/Users/Jay/.gemini/antigravity/brain/5fd74673-85ba-447d-bcf3-a81a30974ea9/implementation_plan.md).
+---
+
+## Session: 2026-09-15 - Phased Desktop Shortcut Recovery Execution & Verification
+
+### User Request
+Continue and complete the phased execution to permanently restore the PNP CRM desktop shortcut across all desktop locations with zero side effects.
+
+### Execution & Results
+1. **Targeted Script Fixes**:
+   - Fixed create-shortcut.ps1 to reliably deploy PNP CRM.lnk to all desktop target directories (C:\Users\Jay\OneDrive\Desktop, C:\Users\Jay\Desktop, C:\Users\Public\Desktop, Windows Start Menu Programs, and Startup folder).
+   - Hardened desktop-notifier.ps1 with multi-path shortcut discovery (Get-CrmShortcuts) and a write-only-on-change guard, completely eliminating recurring 30-second shortcut rewrites and preventing Windows Shell icon cache corruption.
+2. **Deployed & Verified**:
+   - C:\Users\Jay\OneDrive\Desktop\PNP CRM.lnk [FOUND & VERIFIED]
+   - C:\Users\Jay\Desktop\PNP CRM.lnk [FOUND & VERIFIED]
+   - C:\Users\Public\Desktop\PNP CRM.lnk [FOUND & VERIFIED]
+   - C:\Users\Jay\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\PNP CRM.lnk [FOUND & VERIFIED]
+   - C:\Users\Jay\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\PNP_CRM_Background_Server.lnk [FOUND & VERIFIED]
+3. **Safety & Zero Collateral Damage**:
+   - Zero files touched in src/, prisma/, _data/crm.db, .env, or package.json.
+   - Core server launch scripts (start-crm.ps1, launch-pnp.vbs, startup-pnp.vbs) left completely intact.

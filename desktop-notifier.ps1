@@ -34,17 +34,27 @@ function Refresh-Desktop {
     }
 }
 
-function Get-CrmShortcut {
-    $AllShortcuts = Get-ChildItem -Path $DesktopPath -Filter "*.lnk"
-    foreach ($file in $AllShortcuts) {
-        try {
-            $tempShortcut = $WshShell.CreateShortcut($file.FullName)
-            if ($tempShortcut.Arguments -like "*launch-pnp.vbs*") {
-                return $file.FullName
-            }
-        } catch {}
+function Get-CrmShortcuts {
+    $searchDirs = @(
+        $DesktopPath,
+        "C:\Users\Jay\Desktop",
+        "C:\Users\Jay\OneDrive\Desktop",
+        "C:\Users\Public\Desktop"
+    ) | Select-Object -Unique | Where-Object { Test-Path $_ }
+    
+    $results = @()
+    foreach ($dir in $searchDirs) {
+        $AllShortcuts = Get-ChildItem -Path $dir -Filter "*.lnk" -ErrorAction SilentlyContinue
+        foreach ($file in $AllShortcuts) {
+            try {
+                $tempShortcut = $WshShell.CreateShortcut($file.FullName)
+                if ($tempShortcut.Arguments -like "*launch-pnp.vbs*") {
+                    $results += $file.FullName
+                }
+            } catch {}
+        }
     }
-    return $null
+    return ($results | Select-Object -Unique)
 }
 
 $previousIds = @()
@@ -129,27 +139,28 @@ while ($true) {
             $IconPath = Join-Path $AppDir "public\crm_icon.ico"
         }
 
-        $ShortcutPath = Get-CrmShortcut
+        $ShortcutPaths = Get-CrmShortcuts
         
-        if ($null -ne $ShortcutPath) {
-            $Shortcut = $WshShell.CreateShortcut($ShortcutPath)
-            
-            $changed = $false
-            if ($Shortcut.Description -ne $desc) {
-                $Shortcut.Description = $desc
-                $changed = $true
-            }
-            $currentIcon = $Shortcut.IconLocation -replace ",0$", ""
-            if ($currentIcon -ne $IconPath) {
-                $Shortcut.IconLocation = $IconPath
-                $changed = $true
-            }
-            
-            if ($changed) {
-                $Shortcut.Save()
-                try { (Get-Item $ShortcutPath).LastWriteTime = (Get-Date) } catch {}
-                Refresh-Desktop -FilePath $ShortcutPath
-            }
+        foreach ($ShortcutPath in $ShortcutPaths) {
+            try {
+                $Shortcut = $WshShell.CreateShortcut($ShortcutPath)
+                $changed = $false
+                if ($Shortcut.Description -ne $desc) {
+                    $Shortcut.Description = $desc
+                    $changed = $true
+                }
+                $currentIcon = $Shortcut.IconLocation -replace ",0$", ""
+                if ($currentIcon -ne $IconPath) {
+                    $Shortcut.IconLocation = "$IconPath,0"
+                    $changed = $true
+                }
+                
+                if ($changed) {
+                    $Shortcut.Save()
+                    try { (Get-Item $ShortcutPath).LastWriteTime = (Get-Date) } catch {}
+                    Refresh-Desktop -FilePath $ShortcutPath
+                }
+            } catch {}
         }
         
         # Update state
