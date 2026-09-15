@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 import { format } from "date-fns";
 import {
   Star, Loader2, Search, Archive, RotateCcw, ArrowRight, Bell, Clock, MapPin, Phone
@@ -29,14 +30,12 @@ type Lead = {
   followUps?: { nextCallDate: string | null; nextCallTime: string | null }[];
 };
 
-export default function InterestedLeadsPage() {
-  const [activeTab, setActiveTab] = useState<"INTERESTED" | "ARCHIVED">(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("tab") === "archived") return "ARCHIVED";
-    }
-    return "INTERESTED";
-  });
+function InterestedLeadsContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const tabParam = searchParams.get("tab");
+  const activeTab: "INTERESTED" | "ARCHIVED" = tabParam === "archived" ? "ARCHIVED" : "INTERESTED";
+
   const [leads, setLeads] = useState<Lead[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isReactivatingId, setIsReactivatingId] = useState<string | null>(null);
@@ -44,20 +43,13 @@ export default function InterestedLeadsPage() {
   const [filterService, setFilterService] = useState("ALL");
   const [refreshIndex, setRefreshIndex] = useState(0);
 
-  useEffect(() => {
-    const handlePopState = () => {
-      if (typeof window !== "undefined") {
-        const params = new URLSearchParams(window.location.search);
-        if (params.get("tab") === "archived") {
-          setActiveTab("ARCHIVED");
-        } else if (params.get("tab") === "interested") {
-          setActiveTab("INTERESTED");
-        }
-      }
-    };
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, []);
+  const handleTabSwitch = (tab: "INTERESTED" | "ARCHIVED") => {
+    if (tab === "ARCHIVED") {
+      router.replace("/interested?tab=archived", { scroll: false });
+    } else {
+      router.replace("/interested", { scroll: false });
+    }
+  };
 
   useEffect(() => {
     let isCurrent = true;
@@ -165,7 +157,7 @@ export default function InterestedLeadsPage() {
           {/* In-Page View Switcher in Left Corner */}
           <div className="inline-flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700 shadow-inner">
             <button
-              onClick={() => setActiveTab("INTERESTED")}
+              onClick={() => handleTabSwitch("INTERESTED")}
               className={cn(
                 "px-3.5 py-1.5 rounded-lg text-xs font-bold tracking-wide flex items-center gap-2 transition-all cursor-pointer",
                 activeTab === "INTERESTED"
@@ -177,7 +169,7 @@ export default function InterestedLeadsPage() {
               Interested Leads
             </button>
             <button
-              onClick={() => setActiveTab("ARCHIVED")}
+              onClick={() => handleTabSwitch("ARCHIVED")}
               className={cn(
                 "px-3.5 py-1.5 rounded-lg text-xs font-bold tracking-wide flex items-center gap-2 transition-all cursor-pointer",
                 activeTab === "ARCHIVED"
@@ -416,14 +408,26 @@ export default function InterestedLeadsPage() {
                    </h4>
                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
                      {activeTab === "INTERESTED" 
-                       ? "No interested leads match your current criteria."
-                       : "No leads are currently archived."}
-                   </p>
+                      ? "No interested leads match your current criteria."
+                      : "No leads are currently archived."}
+                  </p>
                 </div>
             </div>
           )}
         </div>
       )}
     </div>
+  );
+}
+
+export default function InterestedLeadsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-96 w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+      </div>
+    }>
+      <InterestedLeadsContent />
+    </Suspense>
   );
 }

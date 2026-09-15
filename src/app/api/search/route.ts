@@ -10,11 +10,11 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("q");
 
-    if (!query || query.length < 2) {
+    if (!query || query.trim().length < 1) {
       return NextResponse.json([]);
     }
 
-    const searchTerm = query.toLowerCase();
+    const searchTerm = query.trim().toLowerCase();
 
     // 1. Search Leads (includes Customers, Canceled, Completed)
     const leads = await prisma.lead.findMany({
@@ -85,44 +85,90 @@ export async function GET(request: Request) {
         href = `/leads/${lead.id}`;
       }
 
+      const title = lead.project?.name || lead.customerName;
+      const subtitle = (lead.serviceType || "").replace(/_/g, " ");
+      const phone = lead.contactNumber || "";
+
+      // Priority scoring: 1 = title prefix, 2 = subtitle prefix, 3 = phone prefix, 4 = substring
+      let score = 4;
+      if (title.toLowerCase().startsWith(searchTerm)) {
+        score = 1;
+      } else if (subtitle.toLowerCase().startsWith(searchTerm)) {
+        score = 2;
+      } else if (phone.startsWith(searchTerm)) {
+        score = 3;
+      }
+
       results.push({
         id: lead.id,
         type: type,
-        title: lead.project?.name || lead.customerName,
-        subtitle: lead.serviceType.replace(/_/g, " "),
-        phone: lead.contactNumber,
+        title: title,
+        subtitle: subtitle,
+        phone: phone,
         location: location,
-        href: href
+        href: href,
+        score: score
       });
     });
 
     // Format Suppliers
     suppliers.forEach(s => {
+      const title = s.name;
+      const phone = s.phone || "";
+      let score = 4;
+      if (title.toLowerCase().startsWith(searchTerm)) {
+        score = 1;
+      } else if (phone.startsWith(searchTerm)) {
+        score = 3;
+      }
+
       results.push({
         id: s.id,
         type: "SUPPLIER",
-        title: s.name,
+        title: title,
         subtitle: "Global Supplier",
-        phone: s.phone,
+        phone: phone,
         location: "Vendor Directory",
-        href: "/suppliers"
+        href: "/suppliers",
+        score: score
       });
     });
 
     // Format Project Vendors
     projectVendors.forEach(v => {
+      const title = v.name;
+      const phone = v.phone || "";
+      let score = 4;
+      if (title.toLowerCase().startsWith(searchTerm)) {
+        score = 1;
+      } else if (phone.startsWith(searchTerm)) {
+        score = 3;
+      }
+
       results.push({
         id: v.id,
         type: "VENDOR",
-        title: v.name,
+        title: title,
         subtitle: "Project Vendor",
-        phone: v.phone,
+        phone: phone,
         location: "Vendor Directory",
-        href: "/fields"
+        href: "/fields",
+        score: score
       });
     });
 
-    return NextResponse.json(results);
+    // Sort by prefix priority score, then alphabetically
+    results.sort((a, b) => {
+      if (a.score !== b.score) {
+        return a.score - b.score;
+      }
+      return a.title.localeCompare(b.title);
+    });
+
+    // Cleanly cap to top 10 results and remove internal score before responding
+    const capped = results.slice(0, 10).map(({ score, ...item }) => item);
+
+    return NextResponse.json(capped);
   } catch (error) {
     console.error("[GLOBAL_SEARCH_ERROR]", error);
     return NextResponse.json({ error: "Internal Error" }, { status: 500 });

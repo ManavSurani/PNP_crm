@@ -21,7 +21,7 @@ export default function Topbar() {
 
   useEffect(() => {
     const trimmed = query.trim();
-    if (trimmed.length < 2) {
+    if (trimmed.length < 1) {
       setResults([]);
       setIsOpen(false);
       setIsSearching(false);
@@ -88,7 +88,7 @@ export default function Topbar() {
             onChange={(e) => {
               const val = e.target.value;
               setQuery(val);
-              if (val.trim().length < 2) {
+              if (val.trim().length < 1) {
                 setResults([]);
                 setIsOpen(false);
               }

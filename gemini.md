@@ -2599,3 +2599,148 @@ The user asked three specific questions and explicitly requested explanations an
   - It is 100% possible to show results from a single character ('m').
   - Lower the check from `< 2` to `< 1` (or `!trimmed`) in both `Topbar.tsx` and `src/app/api/search/route.ts`.
   - **Optimization Suggestion**: Implement prefix-based sorting so items beginning with 'M' (e.g., 'Manav', 'Modular Kitchen') rank higher than items merely containing 'm' in the middle of text or email addresses. Maintain the 300ms debounce to prevent database overload.
+
+
+---
+
+## Session: 2026-09-15 — Detailed Explanation: Capping Search Results & Direct URL-Driven Archived Navigation
+
+### User Request
+Explain two concepts in detail in simple, easy-to-understand words:
+1. **Cap Results (Top 8-10)**: What does 'capping' mean, why is it necessary for broad single-character searches like 'm', and what problems does it prevent?
+2. **Direct Archived Navigation & Zero-Flicker Guarantee**: Explain how Next.js `useSearchParams` enables directly landing on the Archived tab without ever flashing Interested data first, and why both before and after refreshing (F5) it will show the 100% correct Archived data.
+
+### Detailed Explanations Provided
+
+#### 1. Detailed Breakdown of "Capping Results (Top 8-10)"
+- **What "Cap" Means**:
+  - Setting a strict upper limit or ceiling on how many items are returned and shown. Even if 500 items match, only the top 8 to 10 best matches are displayed.
+- **Why it is critical for single characters like 'm'**:
+  - In a CRM, almost every record contains the letter 'm' (e.g., customer names like "Mohit" or "Sharma", services like "Modular Kitchen", emails with ".com" or "@gmail.com", and street addresses).
+  - Without a cap, typing 'm' would query and dump hundreds of records all at once.
+- **Problems Prevented by Capping**:
+  - **No UI Overflow**: Avoids creating a gigantic dropdown menu that stretches off the bottom of the screen or covers the whole page.
+  - **Lightning Speed**: The database query finishes in 5ms, and the browser only needs to render 8-10 lightweight rows instead of hundreds of DOM nodes.
+  - **Clean User Experience**: Users get immediate, clean feedback. With prefix-matching, items starting with 'M' (e.g. Manav, Modular) show first, and typing the next character immediately refines the list.
+
+#### 2. Detailed Breakdown of Direct Archived Navigation (Zero Wrong Data / Zero Flicker)
+- **Why the Old Code Showed Interested Data First & Broke on Refresh**:
+  - The old code used isolated React local state (`useState`), which defaulted to `"INTERESTED"`.
+  - Next.js client-side navigation (`<Link>`) does not fire native `popstate` events, so the component never knew it was supposed to show Archived leads.
+  - The fetch immediately requested `/api/leads?status=FOLLOW_UP`, showing Interested leads or a blank table.
+  - Clicking tabs inside the page never updated the URL bar. So pressing Refresh (F5) always reset back to the default Interested tab.
+- **How the Solution Solves This Completely (Easy Words)**:
+  - **Single Source of Truth**: The URL itself (`?tab=archived`) dictates what tab is active, read synchronously via Next.js `useSearchParams()`.
+  - **Direct Landing**: From the very first millisecond, the component reads `tab === 'archived'`. It **never** fetches or renders Interested data; it immediately fetches `/api/leads?archived=true`.
+  - **Guaranteed Consistency on Refresh (F5)**: Because the URL is `/interested?tab=archived`, refreshing the page re-evaluates the query param immediately. It loads Archived leads before, during, and after refresh with zero wrong data and zero screen flicker.
+  - **Two-Way Synchronization**: When clicking between tabs on the page, the URL is updated smoothly (e.g., `router.replace('/interested?tab=archived')`), keeping the browser history, bookmarks, and UI in 100% harmony.
+
+
+---
+
+## Session: 2026-09-15 — Easy Language Explanation: Day/Night Theme Schedule Button
+
+### User Request
+Explain the 'Day/Night Schedule Button in Settings' in simple, everyday language.
+
+### Detailed Easy Explanation Provided
+- **The Concept in Simple Words**:
+  - Like an automatic smart home light that switches on at sunset and off at sunrise, the CRM has a feature to automatically show Light Mode during the daytime (e.g., 6:00 AM) and Dark Mode during the evening (e.g., 6:00 PM) so your eyes don't get tired.
+- **What the Button Does**:
+  - It is the Master Power Switch for this automatic timer.
+  - 'Active' means the CRM clock is actively watching the time to switch themes.
+  - 'Paused' means the timer is stopped.
+- **Why Clicking it Seemed to Do Nothing**:
+  - The Settings page has two separate places:
+    1. The Mode selection at the top (Light, Dark, System, Scheduled).
+    2. The Schedule switch at the bottom.
+  - Turning the switch at the bottom ON only enabled the timer, but left the top mode manually locked to 'Light' or 'Dark'. Because manual mode took priority, the theme never actually switched, making it look like the button did nothing.
+- **How It Should Work**:
+  - Flipping the switch to ON should automatically select 'Scheduled Mode' at the top, check the current time right away, and instantly apply the right theme (Day or Night) with a clear message showing what mode is active and when the next switch will occur.
+
+
+---
+
+## Session: 2026-09-15 — Dynamic vs Constant Schedule Times Explanation
+
+### User Request
+Is the schedule time constant (e.g., hardcoded to 6:00 PM), or does the text and automatic transition dynamically adapt if the user selects different times for day and night? What happens after night begins?
+
+### Detailed Explanation Provided
+- **100% Dynamic (Not Constant)**:
+  - 6:00 PM (or 7:00 AM) was simply an example / default. The times are **never hardcoded or constant**.
+  - In Settings, the user can select whatever times they want using the time pickers for **Daytime Start** and **Nighttime Start** (e.g., 08:30 AM and 09:30 PM).
+- **Two-Way Dynamic Status**:
+  - **During the Day**: The system recognizes it is daytime, sets Light Mode, and calculates when Night starts based on the user's custom night time (e.g., *"Currently in Daytime Mode. Will automatically switch to Dark Mode at 09:30 PM"*).
+  - **During the Night**: Once night arrives, the system flips to Dark Mode and updates the status to look ahead to morning based on the user's custom day time (e.g., *"Currently in Night Mode. Will automatically switch to Light Mode at 08:30 AM"*).
+- **Immediate Reaction to Edits**:
+  - The moment the user changes the time inputs and saves, the schedule recalculates instantly to match the new custom hours.
+
+
+---
+
+## Session: 2026-09-15 — Master 3-Phase Implementation Plan Created
+
+### User Request
+Create a detailed, phased implementation plan incorporating:
+1. Direct Archived Leads Navigation & URL Synchronization with zero flash of interested data and refresh persistence.
+2. Automated Day/Night Theme Schedule with instant activation and dynamic custom time status.
+3. Global Search 1-Character Query with prefix priority ranking, capping (top 8-10), and debounce.
+Include all strict rules & constraints.
+
+### Plan Summary
+- **Phase 1: Archived Leads Navigation & URL Synchronization** (`src/app/(dashboard)/interested/page.tsx`):
+  - Driven by `useSearchParams` wrapped in `<Suspense>`.
+  - Directly sets `activeTab = "ARCHIVED"` when `?tab=archived`.
+  - Replaces URL smoothly on tab change.
+  - Zero wrong data before, during, or after page refresh.
+- **Phase 2: Automated Day/Night Theme Schedule System** (`src/app/(dashboard)/settings/page.tsx`):
+  - Master toggle activates `mode: "scheduled"` automatically.
+  - Instant theme application based on current local time.
+  - Dynamic 12-hour AM/PM status message adapting to user's custom hours.
+- **Phase 3: Global Search 1-Character Query with Prefix Ranking & Capping** (`Topbar.tsx` & `/api/search`):
+  - Lowers threshold from `< 2` to `< 1`.
+  - Prefix priority scoring (items starting with search character rank highest).
+  - Clean capping (top 8-10) and 300ms debounce.
+  - Maintains borderless input styling.
+- **Strict Rules & Constraints**:
+  - Strict scope limitation (no untouched files modified).
+  - Zero business logic regressions.
+  - Full production build verification with 0 errors across all 52 routes.
+
+
+---
+
+## Session: 2026-09-15 — Execution Complete: 3-Phase CRM Enhancements
+
+### User Request
+Execute the approved Master Implementation Plan across all 3 phases:
+1. Archived Leads Direct Navigation & URL Synchronization.
+2. Automated Day/Night Theme Schedule with dynamic live status and auto-mode activation.
+3. Global Search 1-Character Query with prefix priority ranking and capping.
+
+### Files Modified & Exact Implementation
+1. `src/app/(dashboard)/interested/page.tsx`:
+   - Active tab derived directly from `useSearchParams().get("tab") === "archived"`.
+   - `handleTabSwitch` synchronizes state with browser URL via `router.replace(..., { scroll: false })`.
+   - Wrapped component in `<Suspense>` boundary for Next.js App Router compliance.
+   - **Result**: Directly loads Archived Leads from Dashboard; zero flash of Interested data; persists across browser refresh (F5).
+2. `src/app/(dashboard)/settings/page.tsx`:
+   - Updated Master Toggle switch `onChange` to automatically switch `mode = "scheduled"` when enabled.
+   - Added `formatTimeTo12Hour()` and `isCurrentlyDaytime()` helpers.
+   - Active Theme Status card now renders custom schedule hours in 12-hour AM/PM format.
+   - Added Dynamic Live Status Banner displaying whether Daytime or Night Mode is active and the exact next transition time matching the user's custom settings.
+3. `src/components/layout/Topbar.tsx`:
+   - Lowered minimum search length check from `< 2` to `< 1` in `useEffect` and input `onChange`.
+   - Preserved seamless, zero-border input design and 300ms debounce.
+4. `src/app/api/search/route.ts`:
+   - Lowered threshold to `query.trim().length < 1`.
+   - Implemented prefix-priority ranking: Score 1 (title starts with search character), Score 2 (subtitle starts with search character), Score 3 (phone prefix), Score 4 (substring).
+   - Cleanly capped results to top 10 items.
+
+### Verification Results
+- **TypeScript**: `npx tsc --noEmit` passed with **0 errors**.
+- **Production Build**: `npm run build` compiled successfully in 21.8s across all **52 routes**.
+- **Production Server Daemon**: Running on port 3000 (`HTTP/1.1 200 OK`).
+- **Archived Route**: `http://localhost:3000/interested?tab=archived` returned `HTTP/1.1 200 OK`.
+- **Search Prefix Ranking Verification**: Verified with query `'m'` — items starting with M (`manav`, `manishbhai`) received Score 1 and ranked at the top.

@@ -1396,6 +1396,34 @@ export default function SettingsPage() {
   );
 }
 
+function formatTimeTo12Hour(timeStr: string) {
+  if (!timeStr) return "";
+  const parts = timeStr.split(":");
+  if (parts.length < 2) return timeStr;
+  let hours = parseInt(parts[0], 10);
+  const minutes = parts[1];
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  const hoursStr = hours < 10 ? `0${hours}` : `${hours}`;
+  return `${hoursStr}:${minutes} ${ampm}`;
+}
+
+function isCurrentlyDaytime(dayTimeStr: string, nightTimeStr: string) {
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const [dh, dm] = (dayTimeStr || "07:00").split(":").map(Number);
+  const [nh, nm] = (nightTimeStr || "19:00").split(":").map(Number);
+  const dayMinutes = (dh || 0) * 60 + (dm || 0);
+  const nightMinutes = (nh || 0) * 60 + (nm || 0);
+
+  if (dayMinutes < nightMinutes) {
+    return currentMinutes >= dayMinutes && currentMinutes < nightMinutes;
+  } else {
+    return currentMinutes >= dayMinutes || currentMinutes < nightMinutes;
+  }
+}
+
 function AppearanceTabSection() {
   const { theme, mode, config, setMode, updateConfig, toggleTheme } = useTheme();
   const [dayTime, setDayTime] = useState(config.schedule.dayTime || "07:00");
@@ -1403,6 +1431,8 @@ function AppearanceTabSection() {
   const [isSaved, setIsSaved] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [conflictError, setConflictError] = useState<string | null>(null);
+
+  const isDaytime = isCurrentlyDaytime(dayTime, nightTime);
 
   // Global keydown capture while recording custom shortcut
   useEffect(() => {
@@ -1528,7 +1558,7 @@ function AppearanceTabSection() {
               {mode === "light" && "System is locked to Light Mode."}
               {mode === "dark" && "System is locked to Dark Mode."}
               {mode === "system" && "Synchronizing dynamically with your Windows OS appearance."}
-              {mode === "scheduled" && `Automated: Light Mode at ${config.schedule.dayTime} • Dark Mode at ${config.schedule.nightTime}`}
+              {mode === "scheduled" && `Automated: Light Mode at ${formatTimeTo12Hour(config.schedule.dayTime)} • Dark Mode at ${formatTimeTo12Hour(config.schedule.nightTime)}`}
             </p>
           </div>
         </div>
@@ -1756,10 +1786,14 @@ function AppearanceTabSection() {
             <input
               type="checkbox"
               checked={Boolean(config.schedule?.enabled)}
-              onChange={(e) => updateConfig(prev => ({
-                ...prev,
-                schedule: { ...prev.schedule, enabled: e.target.checked }
-              }))}
+              onChange={(e) => {
+                const isEnabled = e.target.checked;
+                updateConfig(prev => ({
+                  ...prev,
+                  mode: isEnabled ? "scheduled" : (prev.mode === "scheduled" ? theme : prev.mode),
+                  schedule: { ...prev.schedule, enabled: isEnabled }
+                }));
+              }}
               className="sr-only peer"
             />
             <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
@@ -1770,8 +1804,34 @@ function AppearanceTabSection() {
             When "Day/Night Schedule" mode is active, the app dynamically checks local system time every 30 seconds and transitions modes automatically without reloading.
           </p>
 
-          {/* Paused Helper Banner */}
-          {!config.schedule?.enabled && (
+          {/* Dynamic Live Status Banner */}
+          {config.schedule?.enabled ? (
+            isDaytime ? (
+              <div className="p-4 bg-amber-500/10 dark:bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-center justify-between gap-3 text-xs font-medium text-amber-900 dark:text-amber-200">
+                <div className="flex items-center gap-2.5">
+                  <Sun className="h-4 w-4 text-amber-500 shrink-0" />
+                  <span>
+                    <strong className="font-bold">Schedule Active:</strong> Currently in <strong className="font-bold">Daytime Mode (Light)</strong>. Will automatically switch to <strong className="font-bold">Dark Mode</strong> at <span className="font-mono font-bold underline decoration-amber-400">{formatTimeTo12Hour(nightTime)}</span>.
+                  </span>
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 shrink-0">
+                  Daytime Active
+                </span>
+              </div>
+            ) : (
+              <div className="p-4 bg-indigo-500/10 dark:bg-indigo-500/10 border border-indigo-500/30 rounded-xl flex items-center justify-between gap-3 text-xs font-medium text-indigo-900 dark:text-indigo-200">
+                <div className="flex items-center gap-2.5">
+                  <Moon className="h-4 w-4 text-indigo-400 shrink-0" />
+                  <span>
+                    <strong className="font-bold">Schedule Active:</strong> Currently in <strong className="font-bold">Night Mode (Dark)</strong>. Will automatically switch to <strong className="font-bold">Light Mode</strong> at <span className="font-mono font-bold underline decoration-indigo-400">{formatTimeTo12Hour(dayTime)}</span>.
+                  </span>
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-800 shrink-0">
+                  Night Mode Active
+                </span>
+              </div>
+            )
+          ) : (
             <div className="p-3 bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/50 rounded-xl flex items-center gap-2 text-xs font-medium text-amber-800 dark:text-amber-300">
               <AlertCircle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
               <span>Automatic schedule transitions are paused. Turn on the master switch above to re-enable automated time checks.</span>
