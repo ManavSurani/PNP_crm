@@ -616,7 +616,7 @@ Search across leads, customers, projects, and records from the topbar.
 
 **Canceled Records**
 
-![Canceled Records Dark](screenshots/Dark_Mode/Phase_05_Notifications_and_Navigation/57_Canceled_Records_Leads_Tab_Dark.png)
+![Canceled Records Dark](screenshots/Dark_Mode/Phase_06_System_and_Settings/57_Canceled_Records_Leads_Tab_Dark.png)
 
 Preserves closed inquiries separately from active work. Supports reactivation and deletion.
 
