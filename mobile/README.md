@@ -59,7 +59,7 @@ The APK will be at: `android/app/build/outputs/apk/debug/app-debug.apk`
 
 ## 🔑 Sync API Key
 The mobile app authenticates to your CRM using a secret key.
-- Mobile `.env`: `NEXT_PUBLIC_MOBILE_SYNC_SECRET=PNP_MOBILE_SYNC_SECRET_2026_SECURE_V1`
-- CRM `.env`: `MOBILE_SYNC_SECRET=PNP_MOBILE_SYNC_SECRET_2026_SECURE_V1`
+- Mobile `.env`: `NEXT_PUBLIC_MOBILE_SYNC_SECRET=your-mobile-sync-secret`
+- CRM `.env`: `MOBILE_SYNC_SECRET=your-mobile-sync-secret`
 
-Both must match exactly.
+Both must match exactly. Keep this value private — do not commit your actual secret to source control.
