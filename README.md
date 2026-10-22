@@ -101,18 +101,18 @@ PNP CRM follows a simple, clear business flow:
 
 ```mermaid
 flowchart LR
-    Inquiry["📋 New inquiry"] --> Pipeline["🔄 Lead Pipeline"]
-    Pipeline --> FollowUp["📞 Follow-ups"]
-    Pipeline --> Visit["🏠 Site visit"]
+    Inquiry["New inquiry"] --> Pipeline["Lead Pipeline"]
+    Pipeline --> FollowUp["Follow-ups"]
+    Pipeline --> Visit["Site visit"]
     FollowUp --> Visit
-    Visit -->|successful conversion| Customer["👤 Customer Hub"]
-    Customer --> Quote["📄 Quotation"]
-    Customer --> Finance["💰 Financial ledger"]
-    Customer --> Progress["🔨 Project progress"]
+    Visit -->|successful conversion| Customer["Customer Hub"]
+    Customer --> Quote["Quotation"]
+    Customer --> Finance["Financial ledger"]
+    Customer --> Progress["Project progress"]
     Quote --> Finance
-    Finance --> Complete["🏁 Completed project"]
-    Pipeline -. passive .--> Archive["📦 Interested / Archived"]
-    Pipeline -. closed .--> Canceled["❌ Canceled Records"]
+    Finance --> Complete["Completed project"]
+    Pipeline -. passive .-> Archive["Interested / Archived"]
+    Pipeline -. closed .-> Canceled["Canceled Records"]
 ```
 
 > This is a workflow explanation, not a promise that every transition is automatic. The exact outcome depends on the action selected by the user and the route/business rules in the repository.
@@ -721,17 +721,17 @@ Restore from a cloud-stored `.pnpcrm` backup file with confirmation flow.
 
 ```mermaid
 flowchart TD
-    Browser["🌐 Browser or packaged desktop window"]
-    Next["⚡ Next.js 16 App Router<br/>React 19 + TypeScript"]
-    Auth["🔐 Auth.js / NextAuth credentials sessions"]
-    Prisma["🗄️ Prisma Client"]
-    SQLite[("💾 SQLite database<br/>DATABASE_URL=file:...")]
-    Uploads["📁 Local uploads directory"]
-    Backups["🔒 Encrypted .pnpcrm backups"]
-    R2["☁️ Optional Cloudflare R2"]
-    Mobile["📱 Capacitor Android app"]
-    MobileDB[("📱 Mobile SQLite")]
-    Sync["🔄 POST /api/mobile/sync<br/>x-mobile-sync-key"]
+    Browser["Browser or packaged desktop window"]
+    Next["Next.js 16 App Router\nReact 19 + TypeScript"]
+    Auth["Auth.js / NextAuth credentials sessions"]
+    Prisma["Prisma Client"]
+    SQLite[("SQLite database\nDATABASE_URL=file:...")]
+    Uploads["Local uploads directory"]
+    Backups["Encrypted .pnpcrm backups"]
+    R2["Optional Cloudflare R2"]
+    Mobile["Capacitor Android app"]
+    MobileDB[("Mobile SQLite")]
+    Sync["POST /api/mobile/sync\nx-mobile-sync-key"]
 
     Browser --> Next
     Next --> Auth
