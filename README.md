@@ -1,42 +1,69 @@
+<div align="center">
+
+<img src="public/logo.png" alt="PNP CRM Logo" width="120" />
+
 # PNP CRM
 
-PNP CRM is a full-stack CRM and project-operations application for interior-design and construction teams. It connects lead capture, follow-ups, site visits, customer projects, quotations, expenses, financial records, milestones, notifications, and reporting in one local-first workspace.
+**A full-stack CRM and project-operations platform for interior-design and construction teams.**
 
-The repository contains two related applications:
+Connect lead capture, follow-ups, site visits, customer projects, quotations, expenses, financial records, milestones, notifications, and reporting — all in one local-first workspace.
 
-- **Desktop/web CRM:** Next.js App Router application with a Prisma-managed **SQLite** database.
-- **Companion Android app:** Capacitor + Vite mobile client with on-device SQLite and an authenticated sync endpoint.
+[![Next.js](https://img.shields.io/badge/Next.js-16.2.4-black?logo=next.js)](https://nextjs.org)
+[![React](https://img.shields.io/badge/React-19.2.4-61DAFB?logo=react)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript)](https://www.typescriptlang.org)
+[![Prisma](https://img.shields.io/badge/Prisma-6.19.3-2D3748?logo=prisma)](https://www.prisma.io)
+[![SQLite](https://img.shields.io/badge/SQLite-local--first-003B57?logo=sqlite)](https://sqlite.org)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.x-06B6D4?logo=tailwindcss)](https://tailwindcss.com)
+
+</div>
+
+---
 
 > **Status:** The core CRM is implemented and can be run with the existing `.env` and npm workflow. The Windows installer/distribution path is present in the repository, but its final release readiness still depends on environment-specific testing described in [Known limitations](#roadmap-and-known-limitations).
 
-## Contents
+---
 
-- [Current status and scope](#current-status-and-scope)
-- [How the CRM works](#how-the-crm-works)
-- [Design and presentation](#design-and-presentation)
-- [Feature overview](#feature-overview)
-- [Screenshots and page guide](#screenshots-and-page-guide)
+## 📑 Table of Contents
+
+- [What's Inside](#whats-inside)
+- [How the CRM Works](#how-the-crm-works)
+- [Design and Presentation](#design-and-presentation)
+- [Feature Overview](#feature-overview)
+- [📸 Screenshots and Page Guide](#-screenshots-and-page-guide)
 - [Architecture](#architecture)
-- [Technology stack](#technology-stack)
+- [Technology Stack](#technology-stack)
 - [Prerequisites](#prerequisites)
-- [Developer installation](#developer-installation)
-- [Windows installer installation](#windows-installer-installation)
-- [First-run `/setup` wizard](#first-run-setup-wizard)
-- [Daily operations](#daily-operations)
-- [Backup and restore](#backup-and-restore)
-- [Security and data protection](#security-and-data-protection)
-- [Project structure](#project-structure)
-- [API reference](#api-reference)
-- [Mobile app](#mobile-app)
+- [Developer Installation](#developer-installation)
+- [Windows Installer Installation](#windows-installer-installation)
+- [First-run /setup Wizard](#first-run-setup-wizard)
+- [Daily Operations](#daily-operations)
+- [Backup and Restore](#backup-and-restore)
+- [Security and Data Protection](#security-and-data-protection)
+- [Project Structure](#project-structure)
+- [API Reference](#api-reference)
+- [Mobile App](#mobile-app)
 - [Troubleshooting](#troubleshooting)
-- [Quality gates and release validation](#quality-gates-and-release-validation)
-- [Roadmap and known limitations](#roadmap-and-known-limitations)
-- [Contributing boundaries](#contributing-boundaries)
-- [License and confidentiality](#license-and-confidentiality)
+- [Quality Gates and Release Validation](#quality-gates-and-release-validation)
+- [Roadmap and Known Limitations](#roadmap-and-known-limitations)
+- [Contributing Boundaries](#contributing-boundaries)
+- [License and Confidentiality](#license-and-confidentiality)
 
-## Current status and scope
+---
 
-### Implemented
+## What's Inside
+
+The repository contains two related applications:
+
+| App | Technology | Description |
+|-----|-----------|-------------|
+| 🖥️ **Desktop/web CRM** | Next.js App Router + Prisma SQLite | Full CRM UI with leads, customers, projects, analytics |
+| 📱 **Companion Android App** | Capacitor + Vite + on-device SQLite | Mobile client with offline support and authenticated sync |
+
+---
+
+## Current Status and Scope
+
+### ✅ Implemented
 
 - Authenticated Next.js CRM UI with lead, customer, project, financial, quotation, reporting, notification, and settings areas.
 - SQLite persistence through `prisma/schema.prisma` and Prisma Client.
@@ -47,64 +74,70 @@ The repository contains two related applications:
 - Android companion app under `mobile/`, including local SQLite storage and `/api/mobile/sync`.
 - Windows distribution files under `installer/`, `packaging/`, and `tools/`.
 
-### Optional or conditional
+### ⚙️ Optional or Conditional
 
 - Cloudflare R2 backups require an R2 account, bucket, endpoint credentials, and environment/configuration values.
 - Mobile remote sync requires a reachable CRM URL/tunnel and matching mobile sync secrets.
-- The packaged Windows port defaults to **43100**. The existing developer launcher continues to use port **3000** unless `PORT` or another supported configuration overrides it.
+- The packaged Windows port defaults to **43100**. The existing developer launcher continues to use port **3000**.
 - The installer can register a Windows Task Scheduler backup only when the required Windows/Node environment is available.
 
-### Not claimed as universally production-ready
+### ⚠️ Not Claimed as Universally Production-Ready
 
 The repository includes distribution and mobile build assets, but a release should not be described as production-ready for every machine until the Inno Setup compiler, bundled `node.exe` payload, Task Scheduler registration, live R2 upload/restore, and a clean Windows installation have each been tested in the target environment.
 
-## How the CRM works
+---
 
-PNP CRM follows a simple business flow:
+## How the CRM Works
 
-1. A new inquiry is captured and checked for duplicates.
-2. The team works the inquiry through the Lead Pipeline.
-3. Follow-ups and site visits keep the next action visible.
-4. A successful consultation can convert the lead into a Customer Hub project.
-5. The project receives quotations, design expenses, financial entries, and execution milestones.
-6. Final payment and completion move the project into the completed-project view.
-7. Dashboard, reports, notifications, and backups help the team operate safely.
+PNP CRM follows a simple, clear business flow:
+
+1. 📋 A new inquiry is captured and checked for duplicates.
+2. 🔄 The team works the inquiry through the Lead Pipeline.
+3. 📞 Follow-ups and site visits keep the next action visible.
+4. ✅ A successful consultation converts the lead into a Customer Hub project.
+5. 💰 The project receives quotations, design expenses, financial entries, and execution milestones.
+6. 🏁 Final payment and completion move the project into the completed-project view.
+7. 📊 Dashboard, reports, notifications, and backups help the team operate safely.
 
 ```mermaid
 flowchart LR
-    Inquiry["New inquiry"] --> Pipeline["Lead Pipeline"]
-    Pipeline --> FollowUp["Follow-ups"]
-    Pipeline --> Visit["Site visit"]
+    Inquiry["📋 New inquiry"] --> Pipeline["🔄 Lead Pipeline"]
+    Pipeline --> FollowUp["📞 Follow-ups"]
+    Pipeline --> Visit["🏠 Site visit"]
     FollowUp --> Visit
-    Visit -->|successful conversion| Customer["Customer Hub"]
-    Customer --> Quote["Quotation"]
-    Customer --> Finance["Financial ledger"]
-    Customer --> Progress["Project progress"]
+    Visit -->|successful conversion| Customer["👤 Customer Hub"]
+    Customer --> Quote["📄 Quotation"]
+    Customer --> Finance["💰 Financial ledger"]
+    Customer --> Progress["🔨 Project progress"]
     Quote --> Finance
-    Finance --> Complete["Completed project"]
-    Pipeline -. passive .-> Archive["Interested / Archived"]
-    Pipeline -. closed .-> Canceled["Canceled Records"]
+    Finance --> Complete["🏁 Completed project"]
+    Pipeline -. passive .--> Archive["📦 Interested / Archived"]
+    Pipeline -. closed .--> Canceled["❌ Canceled Records"]
 ```
 
-This is a workflow explanation, not a promise that every transition is automatic. The exact outcome depends on the action selected by the user and the route/business rules in the repository.
+> This is a workflow explanation, not a promise that every transition is automatic. The exact outcome depends on the action selected by the user and the route/business rules in the repository.
 
-## Design and presentation
+---
 
-The interface is organized as a desktop-first operations workspace:
+## Design and Presentation
 
-- **Navigation:** Sidebar modules and a topbar provide consistent movement between sales, customers, operations, reports, and settings.
-- **Information hierarchy:** Dashboard KPI cards summarize work first; tables and detail panels provide the records behind each number.
-- **Operational states:** Overdue, today, upcoming, archived, canceled, completed, and financial states use distinct badges and labels so the next action is visible quickly.
-- **Customer context:** The Customer Hub keeps quotations, design, financials, progress, and details under one project-centered destination.
-- **Protected areas:** Analytics and cleanup workflows use their existing PIN and authentication gates rather than exposing sensitive data in normal navigation.
-- **Theme support:** The app includes light, dark, system, and scheduled theme settings. Screenshots in this README are repository assets and should be regenerated when the UI changes.
-- **Responsive behavior:** Forms, filters, tables, cards, modals, and customer modules are implemented as responsive React/Tailwind surfaces; exact layout behavior should still be checked at the target desktop size.
+The interface is organized as a **desktop-first operations workspace**:
 
-The design descriptions below explain what each existing screen is for. They do not add features beyond the current repository.
+| Design Principle | Description |
+|-----------------|-------------|
+| 🧭 **Navigation** | Sidebar modules and a topbar provide consistent movement between sales, customers, operations, reports, and settings |
+| 📊 **Information hierarchy** | Dashboard KPI cards summarize work first; tables and detail panels provide the records behind each number |
+| 🏷️ **Operational states** | Overdue, today, upcoming, archived, canceled, completed, and financial states use distinct badges and labels |
+| 🗂️ **Customer context** | The Customer Hub keeps quotations, design, financials, progress, and details under one project-centered destination |
+| 🔐 **Protected areas** | Analytics and cleanup workflows use PIN and authentication gates |
+| 🌙 **Theme support** | Light, dark, system, and scheduled theme settings |
+| 📱 **Responsive behavior** | Forms, filters, tables, cards, modals, and customer modules are implemented as responsive React/Tailwind surfaces |
 
-## Feature overview
+---
 
-### Lead and sales operations
+## Feature Overview
+
+### 🎯 Lead and Sales Operations
 
 - Lead capture with duplicate checking, source, service type, address, budget, priority, and assigned staff.
 - Lead Pipeline with status filters, date filters, sorting, hot-lead marking, action menus, and lead details.
@@ -114,7 +147,7 @@ The design descriptions below explain what each existing screen is for. They do 
 - Site Visits/Meetings with scheduling, completion outcomes, notes, and address-based navigation.
 - Conversion safeguards for naming and irreversible lead-to-customer conversion.
 
-### Customer and project operations
+### 👤 Customer and Project Operations
 
 - Customer Directory ordered by conversion/project context.
 - Customer Hub with project name and customer identity.
@@ -125,7 +158,7 @@ The design descriptions below explain what each existing screen is for. They do 
 - Completed Projects archive and project reactivation flows.
 - Supplier/Vendor directory and Work Fields catalog.
 
-### Quotations and reporting
+### 📊 Quotations and Reporting
 
 - Project quotation creation, editing, ordering, itemized pricing, milestones, and payments.
 - PDF quotation/report generation using jsPDF and AutoTable.
@@ -133,158 +166,572 @@ The design descriptions below explain what each existing screen is for. They do 
 - PIN-protected analytics and customer-cleanup areas.
 - Notification center for active follow-ups, site visits, milestones, and related activity.
 
-### Administration and operations
+### ⚙️ Administration and Operations
 
 - Settings for identity, security, sessions, theme appearance, schedule, backups, restore, system configuration, and customer cleanup.
 - Auth.js credentials sessions with role-aware access checks.
 - Local launcher, hidden production start, stop support, desktop shortcut assets, and optional tunnel integration.
 - Windows Program Files/ProgramData separation for immutable application files and mutable data.
 
-## Screenshots and page guide
+---
 
-The following gallery uses the 17 screenshots already stored in `screenshots/`. Each entry explains the screen's purpose and where it fits in the workflow.
+## 📸 Screenshots and Page Guide
 
-<details open>
-<summary><strong>Authentication and daily overview</strong></summary>
+> Screenshots are shown in **Dark Mode** (Light Mode versions also available in `screenshots/Light_Mode/`). Each entry explains the screen's purpose and where it fits in the workflow.
 
-### Login
+---
 
-![PNP CRM login page](screenshots/01_login_page.png)
+### 🔐 Phase 1 — Authentication and Entry
 
-The login page is the protected entry point. Auth.js credentials sessions control access to the dashboard, while password recovery follows the existing authentication routes.
+<table>
+<tr>
+<td align="center" width="50%">
 
-### Dashboard
+**Login Page**
 
-![PNP CRM dashboard](screenshots/02_dashboard.png)
+![Login Page Dark](screenshots/Dark_Mode/Phase_01_Auth_and_Entry/01_Login_Page_Dark.png)
 
-The dashboard is the daily starting point. KPI cards summarize pipeline, follow-ups, site visits, customers, archived records, completed projects, and canceled records, while charts provide operational context. Selecting a metric takes the user to the related module.
+The protected entry point. Auth.js credentials sessions control access to the dashboard.
 
-</details>
+</td>
+<td align="center" width="50%">
 
-<details>
-<summary><strong>Lead and sales operations</strong></summary>
+**Forgot Password Modal**
 
-### Lead Pipeline
+![Forgot Password Modal Dark](screenshots/Dark_Mode/Phase_01_Auth_and_Entry/02_Login_ForgotPassword_Modal_Dark.png)
 
-![PNP CRM lead pipeline](screenshots/03_lead_pipeline.png)
+Password recovery follows the existing authentication routes.
 
-The Lead Pipeline is the working list for active inquiries. Search, filters, sorting, hot-lead indicators, and row actions help staff decide what to contact next.
+</td>
+</tr>
+</table>
 
-### Lead Details
+---
 
-![PNP CRM lead details](screenshots/04_lead_detail.png)
+### 🔄 Phase 2 — Lead Pipeline
 
-Lead Details keeps profile information, requirements, activity, follow-ups, meetings, notes, and conversion actions together. It is the record-level workspace behind the pipeline row.
+<table>
+<tr>
+<td align="center" width="50%">
 
-### Follow-Up Queue
+**Kanban Board View**
 
-![PNP CRM follow-up queue](screenshots/05_follow_up_queue.png)
+![Lead Pipeline Kanban Dark](screenshots/Dark_Mode/Phase_02_Lead_Pipeline/03_Lead_Pipeline_Kanban_Board_Dark.png)
 
-The Follow-Up Queue turns planned contact into a daily task list. Overdue, today, and upcoming work can be reviewed with scheduled dates, times, outcomes, and notes.
+Visual drag-and-drop pipeline view. Hot-lead indicators and status columns give an instant overview.
 
-### Interested Leads
+</td>
+<td align="center" width="50%">
 
-![PNP CRM interested leads](screenshots/06_interested_leads.png)
+**List View**
 
-Interested Leads separates warm opportunities from the main active queue. Its archived view is for passive leads that should not create normal active follow-up noise until reactivated.
+![Lead Pipeline List Dark](screenshots/Dark_Mode/Phase_02_Lead_Pipeline/04_Lead_Pipeline_List_View_Dark.png)
 
-### Site Visits
+The working list for active inquiries — search, filters, sorting, hot-lead indicators, and row actions.
 
-![PNP CRM site visits](screenshots/07_site_visits.png)
+</td>
+</tr>
+<tr>
+<td align="center" width="50%">
 
-Site Visits/Meetings tracks consultation dates, times, addresses, notes, and completion outcomes. An address can be used for navigation where the environment supports it.
+**Advanced Filters**
 
-</details>
+![Lead Pipeline Filters Dark](screenshots/Dark_Mode/Phase_02_Lead_Pipeline/05_Lead_Pipeline_Advanced_Filters_Dark.png)
 
-<details>
-<summary><strong>Customers and project execution</strong></summary>
+Filter by date range, source, service type, priority, status, and assigned staff.
 
-### Customer Directory
+</td>
+<td align="center" width="50%">
 
-![PNP CRM customer directory](screenshots/08_customer_directory.png)
+**New Lead Modal**
 
-The Customer Directory lists converted customer projects and provides the entry point into project-specific work.
+![New Lead Modal Dark](screenshots/Dark_Mode/Phase_02_Lead_Pipeline/06_Lead_Pipeline_New_Lead_Modal_Dark.png)
 
-### Customer Workspace Hub
+Capture inquiries with duplicate checking, source, budget, and assignment.
 
-![PNP CRM customer workspace hub](screenshots/09_customer_workspace_hub.png)
+</td>
+</tr>
+</table>
 
-The Customer Hub is the project-centered navigation layer. It connects customer details, quotations, design expenses, financials, and progress without losing the customer/project context.
+<table>
+<tr>
+<td align="center" width="50%">
 
-### Completed Projects
+**Lead Details — Overview**
 
-![PNP CRM completed projects](screenshots/10_complete_projects.png)
+![Lead Details Overview Dark](screenshots/Dark_Mode/Phase_02_Lead_Pipeline/07_Lead_Details_Overview_Dark.png)
 
-Completed Projects provides the historical view for delivered work. It is separate from the active customer workspace and supports the repository's completed-project lifecycle.
+Profile information, requirements, activity, follow-ups, meetings, notes, and conversion actions in one place.
 
-### Vendor Directory
+</td>
+<td align="center" width="50%">
 
-![PNP CRM vendor directory](screenshots/11_vendor_directory.png)
+**Lead Details — Live Activity**
 
-The Vendor Directory stores supplier/vendor records used by the operational side of an interior project.
+![Lead Details Activity Dark](screenshots/Dark_Mode/Phase_02_Lead_Pipeline/14_Lead_Details_Live_Activity_Dark.png)
 
-### Work Fields
+Real-time activity history and audit trail for every lead record.
 
-![PNP CRM work fields](screenshots/12_work_fields.png)
+</td>
+</tr>
+<tr>
+<td align="center" width="50%">
 
-Work Fields is the reusable catalog for service and work categories used by the CRM's forms and project operations.
+**Requirement Analysis**
 
-</details>
+![Requirement Analysis Dark](screenshots/Dark_Mode/Phase_02_Lead_Pipeline/15_Lead_Details_Requirement_Analysis_Dark.png)
 
-<details>
-<summary><strong>Analytics, administration, and alerts</strong></summary>
+Structured requirements collection and package selection for each lead.
 
-### Analytics PIN Entry
+</td>
+<td align="center" width="50%">
 
-![PNP CRM analytics PIN entry](screenshots/13_analytics_pin_entry.png)
+**Create Quotation Modal**
 
-The analytics PIN screen is a deliberate security boundary before sensitive business analytics are shown. It is not a replacement for the authenticated session.
+![Create Quotation Modal Dark](screenshots/Dark_Mode/Phase_02_Lead_Pipeline/18_Lead_Details_Create_Quotation_Modal_Dark.png)
 
-### Reports Analytics
+Directly create quotations from within the lead detail view.
 
-![PNP CRM reports analytics](screenshots/14_reports_analytics.png)
+</td>
+</tr>
+</table>
 
-Reports presents the available chart and reporting views for pipeline, service demand, system activity, and business analysis.
+<table>
+<tr>
+<td align="center" width="50%">
 
-### Canceled Records
+**Follow-Up Queue**
 
-![PNP CRM canceled records](screenshots/15_cancelled_archive.png)
+![Follow-Up Queue Dark](screenshots/Dark_Mode/Phase_02_Lead_Pipeline/19_Follow_Up_Queue_Active_Dark.png)
 
-Canceled Records preserves closed inquiries separately from active work. Existing reactivation and deletion actions remain governed by the current route behavior.
+Turns planned contact into a daily task list — overdue, today, and upcoming views with outcomes and notes.
 
-### General Settings
+</td>
+<td align="center" width="50%">
 
-![PNP CRM general settings](screenshots/16_general_settings.png)
+**Schedule Follow-Up Modal**
 
-Settings groups identity, sessions, theme appearance, scheduled theme behavior, security, backups, restore, system configuration, and cleanup controls.
+![Follow-Up Schedule Modal Dark](screenshots/Dark_Mode/Phase_02_Lead_Pipeline/20_Follow_Up_Schedule_Modal_Dark.png)
 
-### Notifications
+Set scheduled date/time, type, notes, and outcomes for each follow-up action.
 
-![PNP CRM notifications](screenshots/17_notifications_page.png)
+</td>
+</tr>
+<tr>
+<td align="center" width="50%">
 
-Notifications surfaces active operational reminders such as follow-ups, site visits, milestones, and overdue work. Archived, canceled, or converted records are excluded where the current notification rules require it.
+**Interested Leads**
 
-</details>
+![Interested Leads Dark](screenshots/Dark_Mode/Phase_02_Lead_Pipeline/21_Interested_Leads_Active_Tab_Dark.png)
 
-### Screenshot maintenance
+Separates warm opportunities from the main active queue.
 
-Screenshots are documentation assets, not generated during installation. When a page changes, recapture the affected image, keep the existing filename when the page meaning is unchanged, and update the caption if its purpose changes. Do not place real customer credentials or sensitive records in new screenshots.
+</td>
+<td align="center" width="50%">
+
+**Archived Leads**
+
+![Archived Leads Dark](screenshots/Dark_Mode/Phase_02_Lead_Pipeline/22_Interested_Leads_Archived_Tab_Dark.png)
+
+Passive leads that should not create active follow-up noise until reactivated.
+
+</td>
+</tr>
+<tr>
+<td align="center" width="50%">
+
+**Site Visits Directory**
+
+![Site Visits Dark](screenshots/Dark_Mode/Phase_02_Lead_Pipeline/23_Site_Visits_Directory_Dark.png)
+
+Tracks consultation dates, times, addresses, notes, and completion outcomes.
+
+</td>
+<td align="center" width="50%">
+
+**Schedule Site Visit**
+
+![Site Visit Schedule Dark](screenshots/Dark_Mode/Phase_02_Lead_Pipeline/24_Site_Visits_Schedule_Modal_Dark.png)
+
+Schedule site visits/meetings with address-based navigation support.
+
+</td>
+</tr>
+</table>
+
+---
+
+### 👤 Phase 3 — Customer and Project Operations
+
+<table>
+<tr>
+<td align="center" width="50%">
+
+**Customer Directory**
+
+![Customer Directory Dark](screenshots/Dark_Mode/Phase_03_Customer_Operations/25_Customer_Directory_Dark.png)
+
+Lists converted customer projects and provides the entry point into project-specific work.
+
+</td>
+<td align="center" width="50%">
+
+**Customer Directory Filters**
+
+![Customer Directory Filters Dark](screenshots/Dark_Mode/Phase_03_Customer_Operations/26_Customer_Directory_Filters_Dark.png)
+
+Filter customers by project status, date, and assigned staff.
+
+</td>
+</tr>
+<tr>
+<td align="center" width="50%">
+
+**Customer Workspace Hub**
+
+![Customer Workspace Hub Dark](screenshots/Dark_Mode/Phase_03_Customer_Operations/27_Customer_Workspace_Hub_Dark.png)
+
+The project-centered navigation layer — connects details, quotations, design, financials, and progress without losing context.
+
+</td>
+<td align="center" width="50%">
+
+**Customer Hub Details**
+
+![Customer Hub Details Dark](screenshots/Dark_Mode/Phase_03_Customer_Operations/28_Customer_Hub_Details_Dark.png)
+
+Full customer profile, project identity, and activity history.
+
+</td>
+</tr>
+<tr>
+<td align="center" width="50%">
+
+**Design Studio / Expenses**
+
+![Design Studio Dark](screenshots/Dark_Mode/Phase_03_Customer_Operations/29_Customer_Hub_Design_Studio_Dark.png)
+
+Project-specific design cost tracking and profit calculations.
+
+</td>
+<td align="center" width="50%">
+
+**Financial Ledger**
+
+![Financials Ledger Dark](screenshots/Dark_Mode/Phase_03_Customer_Operations/30_Customer_Hub_Financials_Ledger_Dark.png)
+
+Income, expenses, installments, final-payment handling, remaining due, and financial closure state.
+
+</td>
+</tr>
+<tr>
+<td align="center" width="50%">
+
+**Add Payment Modal**
+
+![Add Payment Modal Dark](screenshots/Dark_Mode/Phase_03_Customer_Operations/31_Financials_Add_Payment_Modal_Dark.png)
+
+Record income payments with type, amount, date, and reference.
+
+</td>
+<td align="center" width="50%">
+
+**Record Expense Modal**
+
+![Record Expense Modal Dark](screenshots/Dark_Mode/Phase_03_Customer_Operations/32_Financials_Record_Expense_Modal_Dark.png)
+
+Log project expenses with category, vendor, and receipt reference.
+
+</td>
+</tr>
+<tr>
+<td align="center" width="50%">
+
+**Work Progress Tracker**
+
+![Work Progress Dark](screenshots/Dark_Mode/Phase_03_Customer_Operations/34_Customer_Hub_Work_Progress_Dark.png)
+
+Project milestones, phases, subcategories, completion checks, logs, and delay tracking.
+
+</td>
+<td align="center" width="50%">
+
+**Add New Phase Drawer**
+
+![Add Phase Drawer Dark](screenshots/Dark_Mode/Phase_03_Customer_Operations/36_Progress_Add_New_Phase_Drawer_Dark.png)
+
+Create project execution phases with sub-tasks and completion tracking.
+
+</td>
+</tr>
+<tr>
+<td align="center" width="50%">
+
+**Quotations Module**
+
+![Quotations Dark](screenshots/Dark_Mode/Phase_03_Customer_Operations/37_Customer_Hub_Quotations_Dark.png)
+
+Project quotation list with creation, ordering, itemized pricing, milestones, and payments.
+
+</td>
+<td align="center" width="50%">
+
+**Quotation Detail Drawer**
+
+![Quotations Drawer Dark](screenshots/Dark_Mode/Phase_03_Customer_Operations/38_Quotations_Detail_Drawer_Dark.png)
+
+Full quotation detail with line items, payment schedule, and PDF export.
+
+</td>
+</tr>
+<tr>
+<td align="center" width="50%">
+
+**Completed Projects Archive**
+
+![Completed Projects Dark](screenshots/Dark_Mode/Phase_03_Customer_Operations/39_Complete_Projects_Archive_Dark.png)
+
+Historical view for delivered work, separate from the active customer workspace.
+
+</td>
+<td align="center" width="50%">
+
+**Vendor Directory**
+
+![Vendor Directory Dark](screenshots/Dark_Mode/Phase_03_Customer_Operations/41_Vendor_Directory_Dark.png)
+
+Supplier/vendor records used by the operational side of interior projects.
+
+</td>
+</tr>
+<tr>
+<td align="center" width="50%">
+
+**Work Fields Management**
+
+![Work Fields Dark](screenshots/Dark_Mode/Phase_03_Customer_Operations/43_Work_Fields_Management_Dark.png)
+
+Reusable catalog for service and work categories used across CRM forms.
+
+</td>
+<td></td>
+</tr>
+</table>
+
+---
+
+### 📊 Phase 4 — Analytics, Security PIN, and Reports
+
+<table>
+<tr>
+<td align="center" width="50%">
+
+**Business Intelligence Dashboard**
+
+![BI Dashboard Days Dark](screenshots/Dark_Mode/Phase_04_Analytics_Security_PIN_and_Reports/44_Business_Intelligence_Dashboard_Days_Dark.png)
+
+KPI cards summarize pipeline, follow-ups, site visits, customers, and financials.
+
+</td>
+<td align="center" width="50%">
+
+**Dashboard — Monthly View**
+
+![BI Dashboard Months Dark](screenshots/Dark_Mode/Phase_04_Analytics_Security_PIN_and_Reports/45_Business_Intelligence_Dashboard_Months_Dark.png)
+
+Monthly trend charts for pipeline health and operational activity.
+
+</td>
+</tr>
+<tr>
+<td align="center" width="50%">
+
+**Analytics PIN Entry**
+
+![Analytics PIN Dark](screenshots/Dark_Mode/Phase_04_Analytics_Security_PIN_and_Reports/46_Analytics_PIN_Before_Input_Dark.png)
+
+A deliberate security boundary before sensitive business analytics are shown. Not a replacement for the authenticated session.
+
+</td>
+<td align="center" width="50%">
+
+**Business Analytics Unlocked**
+
+![Business Analytics Dark](screenshots/Dark_Mode/Phase_04_Analytics_Security_PIN_and_Reports/49_Business_Analytics_Unlocked_Dark.png)
+
+Full analytics dashboard — pipeline trends, service demand, revenue, and conversion metrics.
+
+</td>
+</tr>
+<tr>
+<td align="center" width="50%">
+
+**Reports and Analytics**
+
+![Reports Dark](screenshots/Dark_Mode/Phase_04_Analytics_Security_PIN_and_Reports/50_Reports_and_Analytics_Dark.png)
+
+Available chart and reporting views for pipeline, service demand, system activity, and business analysis.
+
+</td>
+<td></td>
+</tr>
+</table>
+
+---
+
+### 🔔 Phase 5 — Notifications and Navigation
+
+<table>
+<tr>
+<td align="center" width="50%">
+
+**Notification Center — All Tab**
+
+![Notification Center Dark](screenshots/Dark_Mode/Phase_05_Notifications_and_Navigation/51_Notification_Center_All_Tab_Dark.png)
+
+Active operational reminders — follow-ups, site visits, milestones, and overdue work. Archived/canceled records are excluded.
+
+</td>
+<td align="center" width="50%">
+
+**Notification Center — Overdue**
+
+![Notifications Overdue Dark](screenshots/Dark_Mode/Phase_05_Notifications_and_Navigation/54_Notification_Center_Overdue_Tab_Dark.png)
+
+Instantly surfaces all overdue actions needing immediate attention.
+
+</td>
+</tr>
+<tr>
+<td align="center" width="50%">
+
+**Global Search**
+
+![Global Search Dark](screenshots/Dark_Mode/Phase_05_Notifications_and_Navigation/55_Topbar_Global_Search_Results_Dark.png)
+
+Search across leads, customers, projects, and records from the topbar.
+
+</td>
+<td align="center" width="50%">
+
+**Canceled Records**
+
+![Canceled Records Dark](screenshots/Dark_Mode/Phase_05_Notifications_and_Navigation/57_Canceled_Records_Leads_Tab_Dark.png)
+
+Preserves closed inquiries separately from active work. Supports reactivation and deletion.
+
+</td>
+</tr>
+</table>
+
+---
+
+### ⚙️ Phase 6 — System and Settings
+
+<table>
+<tr>
+<td align="center" width="50%">
+
+**Identity and Profile Settings**
+
+![Settings Identity Dark](screenshots/Dark_Mode/Phase_06_System_and_Settings/59_Settings_Identity_Profile_Dark.png)
+
+User identity, display name, and profile management.
+
+</td>
+<td align="center" width="50%">
+
+**System Configuration**
+
+![Settings System Config Dark](screenshots/Dark_Mode/Phase_06_System_and_Settings/60_Settings_System_Config_Dark.png)
+
+Port, tunnel, system-level CRM configuration options.
+
+</td>
+</tr>
+<tr>
+<td align="center" width="50%">
+
+**Theme and Appearance**
+
+![Settings Theme Dark](screenshots/Dark_Mode/Phase_06_System_and_Settings/61_Settings_Theme_and_Appearance_Dark.png)
+
+Light, dark, system, and scheduled theme behavior with time-based switching.
+
+</td>
+<td align="center" width="50%">
+
+**Scheduled Theme Clock Picker**
+
+![Theme Clock Dark](screenshots/Dark_Mode/Phase_06_System_and_Settings/62_Settings_Theme_ClockTimePicker_Dark.png)
+
+Set exact times for automatic light/dark mode switching throughout the day.
+
+</td>
+</tr>
+<tr>
+<td align="center" width="50%">
+
+**Advanced Security**
+
+![Settings Security Dark](screenshots/Dark_Mode/Phase_06_System_and_Settings/63_Settings_Advanced_Security_Dark.png)
+
+PIN setup, session management, and security controls.
+
+</td>
+<td align="center" width="50%">
+
+**Customer Cleanup**
+
+![Settings Cleanup Dark](screenshots/Dark_Mode/Phase_06_System_and_Settings/67_Settings_Customer_Cleanup_Dark.png)
+
+PIN-protected cleanup workflows for removing stale or test customer data.
+
+</td>
+</tr>
+<tr>
+<td align="center" width="50%">
+
+**Backup and Restore**
+
+![Settings Backup Dark](screenshots/Dark_Mode/Phase_06_System_and_Settings/68_Settings_Backup_and_Restore_Dark.png)
+
+AES-256-GCM encrypted local backups and optional Cloudflare R2 cloud backups.
+
+</td>
+<td align="center" width="50%">
+
+**Cloud Restore Modal**
+
+![Cloud Restore Dark](screenshots/Dark_Mode/Phase_06_System_and_Settings/70_Settings_Cloud_Restore_Modal_Dark.png)
+
+Restore from a cloud-stored `.pnpcrm` backup file with confirmation flow.
+
+</td>
+</tr>
+</table>
+
+---
+
+> **Screenshot maintenance:** Screenshots are documentation assets, not generated during installation. When a page changes, recapture the affected image and keep the existing filename when the page meaning is unchanged. Do not place real customer credentials or sensitive records in new screenshots.
+
+---
 
 ## Architecture
 
 ```mermaid
 flowchart TD
-    Browser["Browser or packaged desktop window"]
-    Next["Next.js 16 App Router<br/>React 19 + TypeScript"]
-    Auth["Auth.js / NextAuth credentials sessions"]
-    Prisma["Prisma Client"]
-    SQLite[("SQLite database<br/>DATABASE_URL=file:...")]
-    Uploads["Local uploads directory"]
-    Backups["Encrypted .pnpcrm backups"]
-    R2["Optional Cloudflare R2"]
-    Mobile["Capacitor Android app"]
-    MobileDB[("Mobile SQLite")]
-    Sync["POST /api/mobile/sync<br/>x-mobile-sync-key"]
+    Browser["🌐 Browser or packaged desktop window"]
+    Next["⚡ Next.js 16 App Router<br/>React 19 + TypeScript"]
+    Auth["🔐 Auth.js / NextAuth credentials sessions"]
+    Prisma["🗄️ Prisma Client"]
+    SQLite[("💾 SQLite database<br/>DATABASE_URL=file:...")]
+    Uploads["📁 Local uploads directory"]
+    Backups["🔒 Encrypted .pnpcrm backups"]
+    R2["☁️ Optional Cloudflare R2"]
+    Mobile["📱 Capacitor Android app"]
+    MobileDB[("📱 Mobile SQLite")]
+    Sync["🔄 POST /api/mobile/sync<br/>x-mobile-sync-key"]
 
     Browser --> Next
     Next --> Auth
@@ -301,7 +748,7 @@ flowchart TD
 
 The source of truth for the desktop database is `prisma/schema.prisma`, whose datasource provider is `sqlite`. Prisma does not connect this project to PostgreSQL.
 
-### Data locations
+### Data Locations
 
 Developer mode normally uses the `DATABASE_URL` from `.env` (for example `file:./_data/crm.db`). Packaged mode uses the generated configuration under:
 
@@ -322,48 +769,54 @@ C:\Program Files\PNP CRM\
 
 The packaged configuration defaults to port **43100** and persists the selected port in `app-config.json`. The developer workflow is not replaced or disabled.
 
-## Technology stack
+---
 
-| Layer | Actual repository technology | Role |
-| --- | --- | --- |
-| Web framework | Next.js `16.2.4` App Router | Desktop/web application and API routes |
-| UI runtime | React `19.2.4` | Client interaction and server-rendered UI |
-| Language | TypeScript | Typed UI, route handlers, and shared utilities |
-| Styling | Tailwind CSS `4.x` + PostCSS | Responsive design and theme tokens |
-| Database | SQLite | Local relational persistence |
-| ORM | Prisma `6.19.3` | Schema, client generation, and database access |
-| Authentication | Auth.js/NextAuth `5.0.0-beta.31` | Credentials authentication and sessions |
-| Validation | Zod | Request/form validation where used |
-| Charts | Recharts | Dashboard, reports, and analytics charts |
-| Interaction | dnd-kit, Framer Motion | Drag/drop and selected UI motion |
-| Documents | jsPDF + jspdf-autotable | Quotation and report PDFs |
-| Desktop runtime | Node.js + PowerShell | Developer and Windows launchers |
-| Mobile runtime | Vite + React + Capacitor 7 | Android client |
-| Mobile storage | `@capacitor-community/sqlite` | Offline mobile records |
-| Optional object storage | AWS SDK S3 client against Cloudflare R2 | Off-device backup copy |
+## Technology Stack
+
+| Layer | Technology | Role |
+|-------|-----------|------|
+| 🌐 Web framework | Next.js `16.2.4` App Router | Desktop/web application and API routes |
+| ⚛️ UI runtime | React `19.2.4` | Client interaction and server-rendered UI |
+| 🔷 Language | TypeScript | Typed UI, route handlers, and shared utilities |
+| 🎨 Styling | Tailwind CSS `4.x` + PostCSS | Responsive design and theme tokens |
+| 💾 Database | SQLite | Local relational persistence |
+| 🗄️ ORM | Prisma `6.19.3` | Schema, client generation, and database access |
+| 🔐 Authentication | Auth.js/NextAuth `5.0.0-beta.31` | Credentials authentication and sessions |
+| ✅ Validation | Zod | Request/form validation where used |
+| 📊 Charts | Recharts | Dashboard, reports, and analytics charts |
+| 🖱️ Interaction | dnd-kit, Framer Motion | Drag/drop and selected UI motion |
+| 📄 Documents | jsPDF + jspdf-autotable | Quotation and report PDFs |
+| 🖥️ Desktop runtime | Node.js + PowerShell | Developer and Windows launchers |
+| 📱 Mobile runtime | Vite + React + Capacitor 7 | Android client |
+| 📦 Mobile storage | `@capacitor-community/sqlite` | Offline mobile records |
+| ☁️ Optional object storage | AWS SDK S3 against Cloudflare R2 | Off-device backup copy |
+
+---
 
 ## Prerequisites
 
-### Desktop developer workflow
+### 🖥️ Desktop Developer Workflow
 
 - Windows PowerShell for the supplied scripts.
 - Node.js/npm compatible with the current Next.js 16 project.
 - A writable local directory for the SQLite file.
 - Git, if cloning the repository.
 
-### Optional mobile workflow
+### 📱 Optional Mobile Workflow
 
 - Android Studio and Android SDK.
 - Java/Gradle requirements expected by the Capacitor Android project.
 - A reachable CRM URL for remote sync, or local/offline operation for development.
 
-### Optional distribution workflow
+### 📦 Optional Distribution Workflow
 
 - Inno Setup to compile `installer/PNP CRM.iss`.
 - A tested Node.js runtime or a verified bundled `node.exe` release payload.
 - Administrator rights for installation, ProgramData directories, and Task Scheduler registration.
 
-## Developer installation
+---
+
+## Developer Installation
 
 This is the existing developer path. The Windows installer is additive and does not require changing this workflow.
 
@@ -412,7 +865,9 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000). The existing `npm run build` command runs `prisma generate`, `prisma db push`, and a webpack production build; review that behavior before using it against a shared database.
 
-## Windows installer installation
+---
+
+## Windows Installer Installation
 
 The distribution path is intentionally separate from the developer path:
 
@@ -425,9 +880,11 @@ The distribution path is intentionally separate from the developer path:
 7. The installer attempts to register the daily backup task through `tools/pnp-crm-register-backup.ps1`.
 8. The launcher starts the packaged production server and opens the desktop shortcut.
 
-The installer does not replace a developer `.env`. When no packaged `app-config.json` exists, the existing environment-based behavior remains available. The final installer must still be validated on a clean Windows machine, especially the runtime payload and scheduled task.
+> The installer does not replace a developer `.env`. When no packaged `app-config.json` exists, the existing environment-based behavior remains available. The final installer must still be validated on a clean Windows machine, especially the runtime payload and scheduled task.
 
-## First-run setup wizard
+---
+
+## First-run /setup Wizard
 
 The route [`/setup`](src/app/setup/page.tsx) is the distribution configuration screen. It reads [`/api/setup/status`](src/app/api/setup/status/route.ts) and saves through [`POST /api/setup`](src/app/api/setup/route.ts).
 
@@ -442,9 +899,11 @@ Setup write access is restricted: it is allowed before any user exists, or for a
 
 After saving a new packaged port, restart the launcher so the server reads the persisted configuration.
 
-## Daily operations
+---
 
-### Start the developer app
+## Daily Operations
+
+### ▶️ Start the Developer App
 
 ```powershell
 npm run dev
@@ -452,9 +911,7 @@ npm run dev
 
 The repository also includes `start-crm.ps1`, `start-crm.bat`, and `launch-pnp.vbs` for the existing local Windows workflow. `start-crm.ps1` prepares `_data\crm.db`, uses port `3000`, and starts a production server when `.next\BUILD_ID` exists; otherwise it can start development mode.
 
-### Start the packaged app
-
-From the installed application directory:
+### 🚀 Start the Packaged App
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File "C:\Program Files\PNP CRM\tools\pnp-crm-launch.ps1"
@@ -462,7 +919,7 @@ powershell -ExecutionPolicy Bypass -File "C:\Program Files\PNP CRM\tools\pnp-crm
 
 Use `-BackgroundOnly` for a silent start. The script reads the persisted ProgramData port and configuration.
 
-### Stop the packaged app
+### ⏹️ Stop the Packaged App
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File "C:\Program Files\PNP CRM\tools\pnp-crm-launch.ps1" -Stop
@@ -470,9 +927,7 @@ powershell -ExecutionPolicy Bypass -File "C:\Program Files\PNP CRM\tools\pnp-crm
 
 This targets the configured CRM port. Do not terminate unrelated Node.js processes.
 
-### Reset an administrator
-
-The protected reset utility requires an explicit confirmation token and an email/password:
+### 🔑 Reset an Administrator
 
 ```powershell
 node "C:\Program Files\PNP CRM\tools\pnp-crm-reset-admin.mjs" `
@@ -484,9 +939,11 @@ node "C:\Program Files\PNP CRM\tools\pnp-crm-reset-admin.mjs" `
 
 The password must be at least eight characters. The command updates the user to `ADMIN` and invalidates that user's sessions. Keep the command and credentials private.
 
-## Backup and restore
+---
 
-### Local backup behavior
+## Backup and Restore
+
+### 💾 Local Backup Behavior
 
 `tools/pnp-crm-backup.mjs` is the packaged backup utility. It:
 
@@ -498,33 +955,40 @@ The password must be at least eight characters. The command updates the user to 
 
 The legacy `scripts/auto-backup.mjs` and `scripts/run-auto-backup.vbs` remain in the repository for the existing developer/automation workflow. The settings UI also exposes backup and restore routes.
 
-### Scheduled backup
+### 🕐 Scheduled Backup
 
 `tools/pnp-crm-register-backup.ps1` registers **PNP CRM Daily Backup** with Windows Task Scheduler. Its settings allow battery execution, do not stop when power changes, and enable missed-run recovery (`StartWhenAvailable`). Registration can be skipped when Node.js is unavailable; verify the task on the target machine.
 
-### Optional Cloudflare R2
+### ☁️ Optional Cloudflare R2
 
 If R2 credentials are configured in `.env` or the `/setup` wizard, the backup utility uploads `latest.pnpcrm` to the configured bucket. R2 is not required for local backups. Test credentials, permissions, region/endpoint behavior, and restore before relying on off-device recovery.
 
-### Restore
+### 🔄 Restore
 
 The application exposes restore functionality through Settings and [`POST /api/settings/restore`](src/app/api/settings/restore/route.ts). Restore is destructive to the current data set: make and verify a current backup first, stop writes if possible, and follow the confirmation flow. Do not manually replace a live SQLite database while the server is running.
 
-## Security and data protection
+---
 
-- SQLite remains local by default; no hosted database is required.
-- Auth.js credentials sessions protect dashboard routes.
-- Passwords are hashed with `bcryptjs`.
-- Admin-only areas include analytics PIN and customer-cleanup controls.
-- Mobile sync requires the `x-mobile-sync-key` value matching `MOBILE_SYNC_SECRET`.
-- Next.js response headers include clickjacking, MIME-sniffing, referrer, permissions, and HSTS policies in `next.config.ts`.
-- Packaged auth, backup, and internal secrets are generated into ProgramData configuration rather than entered manually.
-- Backups are encrypted with AES-256-GCM before local storage or optional R2 upload.
-- Keep `.env`, `app-config.json`, database files, `.pnpcrm` backups, R2 credentials, and mobile sync keys out of source control and support tickets.
+## Security and Data Protection
+
+| Control | Description |
+|---------|-------------|
+| 🗄️ **Local-first SQLite** | No hosted database required; data stays on your machine |
+| 🔐 **Auth.js sessions** | Credentials sessions protect all dashboard routes |
+| 🔒 **Password hashing** | Passwords are hashed with `bcryptjs` |
+| 📌 **Analytics PIN** | Admin-only PIN gate before sensitive analytics |
+| 📱 **Mobile sync key** | `x-mobile-sync-key` header matching `MOBILE_SYNC_SECRET` |
+| 🛡️ **Security headers** | Clickjacking, MIME-sniffing, referrer, permissions, and HSTS in `next.config.ts` |
+| 🔑 **Generated secrets** | Packaged auth, backup, and internal secrets generated into ProgramData |
+| 🔒 **AES-256-GCM encryption** | Backups are encrypted before local storage or R2 upload |
+
+> Keep `.env`, `app-config.json`, database files, `.pnpcrm` backups, R2 credentials, and mobile sync keys out of source control and support tickets.
 
 These controls do not remove the need for Windows account security, disk encryption, least-privilege access, secure tunnel configuration, and tested recovery procedures.
 
-## Project structure
+---
+
+## Project Structure
 
 ```text
 PNP_crm/
@@ -535,31 +999,42 @@ PNP_crm/
 │   │   ├── api/                     # Next.js route handlers
 │   │   └── setup/                   # Distribution setup wizard
 │   ├── components/                  # Layout, analytics, quotation, and UI components
-│   ├── hooks/                      # Theme, reduced-motion, count-up, and session hooks
-│   └── lib/                        # Auth, Prisma, configuration, RBAC, and utilities
+│   ├── hooks/                       # Theme, reduced-motion, count-up, and session hooks
+│   └── lib/                         # Auth, Prisma, configuration, RBAC, and utilities
 ├── prisma/
-│   ├── schema.prisma               # SQLite schema
-│   └── seed.js                     # Prisma seed implementation
-├── mobile/                         # Capacitor/Vite Android application
-├── installer/                      # Inno Setup definition
-├── packaging/                      # Release payload/build documentation
-├── tools/                          # Packaged launcher, backup, setup, and reset tools
-├── scripts/                        # Existing backup, icon, notifier, and setup scripts
-├── screenshots/                    # Repository screenshots used above
-├── public/                         # Logo, icon, and static assets
-├── package.json                    # Root scripts and dependencies
-├── next.config.ts                  # Security headers and Next.js configuration
-└── LICENSE                         # Proprietary license
+│   ├── schema.prisma                # SQLite schema
+│   └── seed.js                      # Prisma seed implementation
+├── mobile/                          # Capacitor/Vite Android application
+├── installer/                       # Inno Setup definition
+├── packaging/                       # Release payload/build documentation
+├── tools/                           # Packaged launcher, backup, setup, and reset tools
+├── scripts/                         # Existing backup, icon, notifier, and setup scripts
+├── screenshots/                     # Repository screenshots (Dark_Mode / Light_Mode)
+│   ├── Dark_Mode/
+│   │   ├── Phase_01_Auth_and_Entry/
+│   │   ├── Phase_02_Lead_Pipeline/
+│   │   ├── Phase_03_Customer_Operations/
+│   │   ├── Phase_04_Analytics_Security_PIN_and_Reports/
+│   │   ├── Phase_05_Notifications_and_Navigation/
+│   │   └── Phase_06_System_and_Settings/
+│   └── Light_Mode/
+│       └── (mirrored structure)
+├── public/                          # Logo, icon, and static assets
+├── package.json                     # Root scripts and dependencies
+├── next.config.ts                   # Security headers and Next.js configuration
+└── LICENSE                          # Proprietary license
 ```
 
-## API reference
+---
+
+## API Reference
 
 All paths below are relative to the CRM origin, normally `http://localhost:3000` in developer mode or `http://localhost:43100` in packaged mode. Authentication and role requirements are enforced by individual handlers.
 
-### Health, setup, auth, and discovery
+### 🔧 Health, Setup, Auth, and Discovery
 
 | Methods | Route | Purpose |
-| --- | --- | --- |
+|---------|-------|---------|
 | `GET` | `/api/health` | Health check |
 | `GET` | `/api/setup/status` | Read distribution setup status |
 | `POST` | `/api/setup` | Create/update distribution configuration |
@@ -568,10 +1043,10 @@ All paths below are relative to the CRM origin, normally `http://localhost:3000`
 | `GET` | `/api/search` | Global CRM search |
 | `GET` | `/api/stats` | Dashboard metrics |
 
-### Leads, follow-ups, meetings, and notifications
+### 🎯 Leads, Follow-ups, Meetings, and Notifications
 
 | Methods | Route | Purpose |
-| --- | --- | --- |
+|---------|-------|---------|
 | `GET`, `POST` | `/api/leads` | List and create leads |
 | `GET`, `PUT`, `DELETE` | `/api/leads/[id]` | Read, update, or remove a lead |
 | `GET` | `/api/leads/check-duplicate` | Check duplicate lead data |
@@ -588,10 +1063,10 @@ All paths below are relative to the CRM origin, normally `http://localhost:3000`
 | `GET` | `/api/canceled` | Canceled Records |
 | `DELETE` | `/api/canceled` | Permanently remove a canceled record |
 
-### Customers, projects, quotations, and finance
+### 👤 Customers, Projects, Quotations, and Finance
 
 | Methods | Route | Purpose |
-| --- | --- | --- |
+|---------|-------|---------|
 | `GET` | `/api/customers` | Customer directory |
 | `GET` | `/api/customers/completed` | Completed projects |
 | `GET` | `/api/projects` | Project data |
@@ -611,10 +1086,10 @@ All paths below are relative to the CRM origin, normally `http://localhost:3000`
 | `GET` | `/api/reports` | Report data |
 | `GET` | `/api/reports/export` | Report export |
 
-### Notes, requirements, vendors, and fields
+### 📝 Notes, Requirements, Vendors, and Fields
 
 | Methods | Route | Purpose |
-| --- | --- | --- |
+|---------|-------|---------|
 | `GET`, `POST` | `/api/notes` | Lead/customer notes |
 | `PATCH`, `DELETE` | `/api/notes/[id]` | One note |
 | `GET`, `POST` | `/api/fields` | Work Fields catalog |
@@ -625,10 +1100,10 @@ All paths below are relative to the CRM origin, normally `http://localhost:3000`
 | `POST`, `GET` | `/api/leads/[id]/requirement` | Lead requirements |
 | `GET` | `/api/leads/[id]/financial-logs` | Lead financial logs |
 
-### Settings, backup, mobile, and tunnel
+### ⚙️ Settings, Backup, Mobile, and Tunnel
 
 | Methods | Route | Purpose |
-| --- | --- | --- |
+|---------|-------|---------|
 | `GET`, `PATCH` | `/api/settings` | System settings |
 | `GET`, `POST`, `DELETE` | `/api/settings/schedule` | Backup schedule |
 | `GET` | `/api/settings/backup` | Create/download backup behavior |
@@ -641,9 +1116,11 @@ All paths below are relative to the CRM origin, normally `http://localhost:3000`
 | `GET` | `/api/mobile/sync` | Mobile sync status/handshake |
 | `GET`, `POST` | `/api/system/tunnel` | Tunnel status/reconnect behavior |
 
-Route handlers can add authentication, validation, or business-rule checks beyond the method/route summary above. Treat the source files under `src/app/api/` as authoritative.
+> Route handlers can add authentication, validation, or business-rule checks beyond the method/route summary above. Treat the source files under `src/app/api/` as authoritative.
 
-## Mobile app
+---
+
+## Mobile App
 
 The mobile client is in `mobile/` and uses Vite, React, Capacitor 7, and `@capacitor-community/sqlite`.
 
@@ -669,9 +1146,12 @@ MOBILE_SYNC_SECRET="same-secret-as-the-mobile-app"
 
 The mobile app queues local work in SQLite when offline and sends it to `/api/mobile/sync` when connectivity returns. Remote use also requires a reachable CRM URL/tunnel; a local desktop CRM does not automatically become internet-accessible.
 
+---
+
 ## Troubleshooting
 
-### The app cannot find the database
+<details>
+<summary><strong>🔴 The app cannot find the database</strong></summary>
 
 Check `DATABASE_URL`, confirm the parent directory is writable, then run:
 
@@ -682,31 +1162,53 @@ npx prisma db push
 
 Do not point two unrelated environments at the same live SQLite file while writes are occurring.
 
-### Port 3000 or 43100 is already in use
+</details>
+
+<details>
+<summary><strong>🔴 Port 3000 or 43100 is already in use</strong></summary>
 
 Stop the matching CRM process with the supplied launcher or select a different valid port in `/setup`. Do not kill unrelated Node.js services. Packaged mode reads its persisted port from `C:\ProgramData\PNP CRM\config\app-config.json`.
 
-### Auth.js reports an invalid/decryption session
+</details>
+
+<details>
+<summary><strong>🔴 Auth.js reports an invalid/decryption session</strong></summary>
 
 Ensure `AUTH_SECRET` and `NEXTAUTH_SECRET` are stable and consistent for the environment. Sign out and sign in again after changing secrets; old cookies cannot be decrypted with a different secret.
 
-### `/setup` is forbidden
+</details>
+
+<details>
+<summary><strong>🔴 /setup is forbidden</strong></summary>
 
 After the first user exists, setup writes require an authenticated `ADMIN` session. The initial setup exception is intentionally closed after initialization.
 
-### Backups do not upload to R2
+</details>
+
+<details>
+<summary><strong>🔴 Backups do not upload to R2</strong></summary>
 
 Local backup creation does not require R2. Verify the account ID, access key, secret key, bucket name, permissions, and endpoint configuration. Test a local `.pnpcrm` file before diagnosing cloud upload.
 
-### The Windows scheduled task is missing
+</details>
+
+<details>
+<summary><strong>🔴 The Windows scheduled task is missing</strong></summary>
 
 Run `tools/pnp-crm-register-backup.ps1` as an administrator and confirm that `node.exe` is discoverable. The script intentionally skips registration when Node.js is unavailable.
 
-### The mobile app does not sync
+</details>
+
+<details>
+<summary><strong>🔴 The mobile app does not sync</strong></summary>
 
 Check that the server is running, the mobile URL/tunnel is reachable, `MOBILE_SYNC_SECRET` matches the mobile environment value, and the endpoint is not being blocked by a tunnel or firewall.
 
-## Quality gates and release validation
+</details>
+
+---
+
+## Quality Gates and Release Validation
 
 Before sharing a developer build:
 
@@ -720,30 +1222,34 @@ npm run build
 
 Before a Windows release, additionally verify:
 
-1. Inno Setup compiles `installer/PNP CRM.iss`.
-2. The release payload contains the required Next.js output, Prisma Windows query engine, static assets, and a tested Node.js runtime.
-3. A clean machine installs into Program Files and creates ProgramData directories.
-4. `/setup` creates configuration and generated secrets.
-5. The desktop shortcut starts and stops only the CRM service.
-6. Port 43100 (or a saved custom port) is reachable locally.
-7. The scheduled task is registered and survives battery/sleep scenarios.
-8. SQLite `VACUUM INTO` backup and restore work with representative uploads.
-9. Optional R2 upload and restore work with real credentials.
-10. Mobile sync works through the intended local/tunnel network.
+1. ✅ Inno Setup compiles `installer/PNP CRM.iss`.
+2. ✅ The release payload contains the required Next.js output, Prisma Windows query engine, static assets, and a tested Node.js runtime.
+3. ✅ A clean machine installs into Program Files and creates ProgramData directories.
+4. ✅ `/setup` creates configuration and generated secrets.
+5. ✅ The desktop shortcut starts and stops only the CRM service.
+6. ✅ Port 43100 (or a saved custom port) is reachable locally.
+7. ✅ The scheduled task is registered and survives battery/sleep scenarios.
+8. ✅ SQLite `VACUUM INTO` backup and restore work with representative uploads.
+9. ✅ Optional R2 upload and restore work with real credentials.
+10. ✅ Mobile sync works through the intended local/tunnel network.
 
-## Roadmap and known limitations
+---
 
-- Finish repeatable clean-Windows installer testing and document the supported Node.js/runtime payload.
-- Verify Inno Setup compiler output and release artifact checksums.
-- Test Task Scheduler registration under the intended Windows account and sleep/wake policies.
-- Test encrypted backup restore, uploads, and optional R2 against a real isolated bucket.
-- Test the mobile app on supported Android versions and network conditions.
-- Continue improving operational observability for packaged logs and recovery.
-- Consider formal release automation after the packaging path is validated.
+## Roadmap and Known Limitations
 
-These are release-validation items, not claims that the current repository lacks the corresponding source files.
+- [ ] Finish repeatable clean-Windows installer testing and document the supported Node.js/runtime payload.
+- [ ] Verify Inno Setup compiler output and release artifact checksums.
+- [ ] Test Task Scheduler registration under the intended Windows account and sleep/wake policies.
+- [ ] Test encrypted backup restore, uploads, and optional R2 against a real isolated bucket.
+- [ ] Test the mobile app on supported Android versions and network conditions.
+- [ ] Continue improving operational observability for packaged logs and recovery.
+- [ ] Consider formal release automation after the packaging path is validated.
 
-## Contributing boundaries
+> These are release-validation items, not claims that the current repository lacks the corresponding source files.
+
+---
+
+## Contributing Boundaries
 
 This is a private CRM with business-specific workflows. Before changing code:
 
@@ -754,8 +1260,18 @@ This is a private CRM with business-specific workflows. Before changing code:
 - Do not commit secrets, customer data, SQLite databases, backup archives, or generated credentials.
 - Run the relevant type, lint, build, and environment checks before proposing a release.
 
-## License and confidentiality
+---
 
-This repository is proprietary software. The root [`LICENSE`](LICENSE) reserves all rights to PNP CRM. Do not copy, modify, publish, distribute, sublicense, sell, or disclose the source code or business data without written permission from the owner.
+## License and Confidentiality
+
+This repository is **proprietary software**. The root [`LICENSE`](LICENSE) reserves all rights to PNP CRM. Do not copy, modify, publish, distribute, sublicense, sell, or disclose the source code or business data without written permission from the owner.
 
 Customer records, credentials, `.env` files, ProgramData configuration, R2 keys, mobile sync keys, and backup files are confidential and must be handled as private operational data.
+
+---
+
+<div align="center">
+
+Made with ❤️ for interior design and construction teams.
+
+</div>
