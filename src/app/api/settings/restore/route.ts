@@ -101,7 +101,9 @@ export async function POST(req: Request) {
     }
 
     // Validate app signature
-    if (payload.signature !== APP_SIGNATURE) {
+    const sigA = crypto.createHash("sha256").update(payload.signature || "").digest();
+    const sigB = crypto.createHash("sha256").update(APP_SIGNATURE).digest();
+    if (!payload.signature || !crypto.timingSafeEqual(sigA, sigB)) {
       return NextResponse.json(
         { error: "Backup not created from PNP CRM" },
         { status: 400 }
@@ -112,7 +114,9 @@ export async function POST(req: Request) {
 
     // FIX (Major): Actually verify the checksum 
     const actualHash = crypto.createHash("sha256").update(zipData).digest("hex");
-    if (actualHash !== payload.hash) {
+    const hashA = crypto.createHash("sha256").update(actualHash).digest();
+    const hashB = crypto.createHash("sha256").update(payload.hash || "").digest();
+    if (!payload.hash || !crypto.timingSafeEqual(hashA, hashB)) {
       return NextResponse.json(
         { error: "Backup corrupted — checksum mismatch" },
         { status: 400 }

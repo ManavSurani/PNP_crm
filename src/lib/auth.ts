@@ -138,52 +138,22 @@ export const { handlers: { GET, POST }, auth, signIn, signOut } = NextAuth({
           where: { sessionToken: token.sessionToken as string }
         });
 
-        // AUTO-REPAIR: If DB session is missing (e.g. DB reset) but JWT is valid, re-create DB session
+        // If DB session is missing or revoked, invalidate session
         if (!dbSession) {
-          console.log(`[Auth] ⚠️ Session record missing for ${token.email}. Attempting auto-repair...`);
-          
-          try {
-            // Check if user exists by ID (cookie) or Email
-            const userExists = await prisma.user.findFirst({ 
-              where: { 
-                OR: [
-                  { id: token.id as string },
-                  { email: token.email as string }
-                ] 
-              } 
-            });
-            
-            if (!userExists) {
-              console.error("[Auth] ❌ Auto-repair failed: User no longer exists.");
-              return null as any;
-            }
+          console.log(`[Auth] ⚠️ Session record missing or revoked for ${token.email}. Invalidating session.`);
+          return null as any;
+        }
 
-            const settings = await prisma.systemSetting.findUnique({ where: { id: "global" } });
-            const maxAge = settings?.sessionMaxAge || 30 * 24 * 60 * 60;
-            
-            await prisma.session.create({
-              data: {
-                sessionToken: token.sessionToken as string,
-                userId: userExists.id,
-                expires: new Date(Date.now() + maxAge * 1000),
-                userAgent: "Auto-Repaired Session",
-              }
-            });
-            console.log("[Auth] ✅ Session auto-repaired successfully.");
-          } catch (error) {
-            console.error("[Auth] ❌ Session auto-repair critical failure:", error);
-            return null as any;
-          }
-        } else if (new Date() > dbSession.expires) {
+        if (new Date() > dbSession.expires) {
           console.log("[Auth] ⌛ Session expired. Redirecting to login.");
           return null as any; 
-        } else {
-          // Update last active if session is healthy
-          await prisma.session.update({
-            where: { id: dbSession.id },
-            data: { lastActive: new Date() }
-          }).catch(err => console.error("[Auth] Failed to update lastActive:", err));
         }
+
+        // Update last active if session is healthy
+        await prisma.session.update({
+          where: { id: dbSession.id },
+          data: { lastActive: new Date() }
+        }).catch(err => console.error("[Auth] Failed to update lastActive:", err));
       }
       return session;
     }

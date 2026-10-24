@@ -4,6 +4,11 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 
 export async function GET() {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const settings = await prisma.systemSetting.findUnique({ where: { id: "global" } });
   return NextResponse.json(settings || { sessionMaxAge: 2592000, whatsappDispatchNumber: "" });
 }
@@ -23,6 +28,10 @@ export async function PATCH(req: Request) {
 
     // If changing password, verify current password
     if (newPassword) {
+      if (newPassword.length < 8) {
+        return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });
+      }
+
       const isMatch = await bcrypt.compare(currentPassword, user.password);
       if (!isMatch) return NextResponse.json({ error: "Incorrect current password" }, { status: 400 });
       

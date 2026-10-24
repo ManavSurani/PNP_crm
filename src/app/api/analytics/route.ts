@@ -7,6 +7,11 @@ export async function GET() {
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    const role = (session.user as any)?.role;
+    if (role !== "ADMIN" && role !== "MANAGER") {
+      return NextResponse.json({ error: "Forbidden: Insufficient role" }, { status: 403 });
+    }
+
     const stats = await Promise.all([
       prisma.lead.findMany({
         where: { initialDealAmount: { not: null }, isCancelled: false } as any,

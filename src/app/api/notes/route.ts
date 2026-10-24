@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { auth } from "@/lib/auth";
 
 // GET /api/notes?leadId=xxx
 export async function GET(req: NextRequest) {
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const leadId = req.nextUrl.searchParams.get("leadId");
   if (!leadId) return NextResponse.json({ error: "leadId required" }, { status: 400 });
   const notes = await prisma.leadNote.findMany({
@@ -14,6 +18,9 @@ export async function GET(req: NextRequest) {
 
 // POST /api/notes
 export async function POST(req: NextRequest) {
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const body = await req.json();
   const { leadId, content, isCompleted } = body;
   if (!leadId || !content) {

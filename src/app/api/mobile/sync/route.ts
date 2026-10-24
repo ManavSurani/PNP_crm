@@ -11,6 +11,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import crypto from 'crypto';
 
 const prisma = new PrismaClient();
 
@@ -64,7 +65,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (authHeader !== expectedKey) {
+    const a = crypto.createHash('sha256').update(authHeader || '').digest();
+    const b = crypto.createHash('sha256').update(expectedKey).digest();
+    const isKeyValid = Boolean(authHeader && crypto.timingSafeEqual(a, b));
+
+    if (!isKeyValid) {
       return NextResponse.json(
         { error: 'Unauthorized. Invalid sync key.' },
         { status: 401 }

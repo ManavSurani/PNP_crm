@@ -16,7 +16,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "PIN not setup" }, { status: 400 });
     }
 
-    console.log("[VERIFY_PIN] Attempting match for PIN hash:", settings.analyticsPin);
     const isMatch = await bcrypt.compare(pin, settings.analyticsPin);
     console.log("[VERIFY_PIN] Match result:", isMatch);
     
