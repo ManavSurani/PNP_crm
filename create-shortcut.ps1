@@ -8,31 +8,52 @@ $IconFile = Join-Path $AppRoot "public\crm_icon.ico"
 
 $WshShell = New-Object -ComObject WScript.Shell
 
-# 1. Gather all target desktop directories
-$DesktopTargets = @(
-    [Environment]::GetFolderPath('Desktop'),
-    "C:\Users\Jay\Desktop",
-    "C:\Users\Jay\OneDrive\Desktop",
-    "C:\Users\Public\Desktop"
-) | Select-Object -Unique | Where-Object { Test-Path $_ }
+# 1. Idempotent Desktop Cleanup (Purge duplicates, copies, and public shortcuts)
+$PrimaryDesktop = [Environment]::GetFolderPath('Desktop')
+$CommonDesktop  = [Environment]::GetFolderPath('CommonDesktop')
+$DesktopScanDirs = @($PrimaryDesktop, $CommonDesktop, "C:\Users\Public\Desktop") | Select-Object -Unique | Where-Object { Test-Path $_ }
 
-# 2. Deploy Desktop Shortcuts
-foreach ($dir in $DesktopTargets) {
-    try {
-        $lnkPath = Join-Path $dir "PNP CRM.lnk"
-        $shortcut = $WshShell.CreateShortcut($lnkPath)
-        $shortcut.TargetPath = "C:\Windows\System32\wscript.exe"
-        $shortcut.Arguments = "`"$LaunchVbs`""
-        $shortcut.WorkingDirectory = $AppRoot
-        $shortcut.Description = "PNP CRM - Enterprise Management System"
-        if (Test-Path $IconFile) {
-            $shortcut.IconLocation = "$IconFile,0"
+foreach ($dir in $DesktopScanDirs) {
+    Get-ChildItem -Path $dir -Filter "*PNP CRM*" -File -ErrorAction SilentlyContinue | ForEach-Object {
+        $isPrimaryTarget = ($_.DirectoryName -eq $PrimaryDesktop) -and ($_.Name -eq "PNP CRM.lnk")
+        if (-not $isPrimaryTarget) {
+            try {
+                Remove-Item -LiteralPath $_.FullName -Force -ErrorAction Stop
+                Write-Host "Cleaned up duplicate/surplus shortcut: $($_.FullName)" -ForegroundColor Yellow
+            } catch {
+                Write-Warning "Could not remove duplicate shortcut $($_.FullName): $_"
+            }
         }
-        $shortcut.Save()
-        Write-Host "Created Desktop Shortcut: $lnkPath" -ForegroundColor Green
-    } catch {
-        Write-Warning "Could not write shortcut to $($dir): $_"
     }
+}
+
+# 2. Deploy Single Desktop Shortcut (User Personal Desktop Only)
+try {
+    $lnkPath = Join-Path $PrimaryDesktop "PNP CRM.lnk"
+    $existingIcon = $null
+    if (Test-Path $lnkPath) {
+        try {
+            $existingShortcut = $WshShell.CreateShortcut($lnkPath)
+            if ($existingShortcut.IconLocation) {
+                $existingIcon = $existingShortcut.IconLocation
+            }
+        } catch { }
+    }
+
+    $shortcut = $WshShell.CreateShortcut($lnkPath)
+    $shortcut.TargetPath = "C:\Windows\System32\wscript.exe"
+    $shortcut.Arguments = "`"$LaunchVbs`""
+    $shortcut.WorkingDirectory = $AppRoot
+    $shortcut.Description = "PNP CRM - Enterprise Management System"
+    if ($existingIcon) {
+        $shortcut.IconLocation = $existingIcon
+    } elseif (Test-Path $IconFile) {
+        $shortcut.IconLocation = "$IconFile,0"
+    }
+    $shortcut.Save()
+    Write-Host "Configured Single Desktop Shortcut: $lnkPath" -ForegroundColor Green
+} catch {
+    Write-Warning "Could not write desktop shortcut: $_"
 }
 
 # 3. Deploy Windows Start Menu Shortcut (Enables Win + S Search)
