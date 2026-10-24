@@ -144,7 +144,7 @@ export const { handlers: { GET, POST }, auth, signIn, signOut } = NextAuth({
           
           try {
             // Check if user exists by ID (cookie) or Email
-            let userExists = await prisma.user.findFirst({ 
+            const userExists = await prisma.user.findFirst({ 
               where: { 
                 OR: [
                   { id: token.id as string },
@@ -153,21 +153,6 @@ export const { handlers: { GET, POST }, auth, signIn, signOut } = NextAuth({
               } 
             });
             
-            // If admin is totally missing from DB, re-seed them
-            if (!userExists && token.email === "admin@pnp.com") {
-              console.log("[Auth] 🔨 Re-seeding Super Admin to repair ghost session...");
-              const hashedPassword = await bcrypt.hash("pnpadmin123", 10);
-              userExists = await prisma.user.create({
-                data: {
-                  id: token.id as string,
-                  email: "admin@pnp.com",
-                  name: "Super Admin",
-                  password: hashedPassword,
-                  role: "ADMIN",
-                }
-              });
-            }
-
             if (!userExists) {
               console.error("[Auth] ❌ Auto-repair failed: User no longer exists.");
               return null as any;

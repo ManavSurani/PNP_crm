@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { spawn } from 'child_process';
 import { existsSync } from 'fs';
+import { auth } from '@/lib/auth';
 
-const NGROK_EXE = 'C:\\ngrok\\ngrok.exe';
-const NGROK_DOMAIN = 'research-reshuffle-bagful.ngrok-free.dev';
+const NGROK_EXE = process.env.NGROK_EXE || 'C:\\ngrok\\ngrok.exe';
+const NGROK_DOMAIN = process.env.NGROK_DOMAIN || 'research-reshuffle-bagful.ngrok-free.dev';
 const NGROK_API = 'http://127.0.0.1:4040/api/tunnels';
 
 /**
@@ -50,6 +51,11 @@ async function checkInternet(): Promise<boolean> {
  * GET /api/system/tunnel — Check current tunnel status
  */
 export async function GET() {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   // Layer 1: Is the ngrok process running locally?
   const ngrokStatus = await checkNgrokStatus();
   if (!ngrokStatus.online) {
@@ -71,6 +77,11 @@ export async function GET() {
  * POST /api/system/tunnel — Start or Reconnect Ngrok tunnel
  */
 export async function POST() {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   // 1. Check if ngrok process is already running
   const ngrokRunning = await checkNgrokStatus();
   if (ngrokRunning.online) {

@@ -1,6 +1,22 @@
 import type { NextConfig } from "next";
 
+const isDev = process.env.NODE_ENV !== "production";
+
+const cspHeader = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://maps.googleapis.com`,
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "img-src 'self' data: blob: https://maps.googleapis.com https://maps.gstatic.com *.google.com *.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com data:",
+  "connect-src 'self' https://maps.googleapis.com http://127.0.0.1:4040 https://*.ngrok-free.dev https://*.trycloudflare.com",
+  "frame-ancestors 'none'",
+  "form-action 'self'",
+  "base-uri 'self'",
+].join("; ");
+
 const securityHeaders = [
+  // Content Security Policy
+  { key: "Content-Security-Policy", value: cspHeader },
   // Prevent clickjacking
   { key: "X-Frame-Options", value: "DENY" },
   // Prevent MIME-type sniffing

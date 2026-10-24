@@ -7,8 +7,6 @@ import AdmZip from "adm-zip";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import prisma from "@/lib/prisma";
 
-const BACKUP_SECRET =
-  process.env.BACKUP_SECRET ?? "PNP_CRM_ENTERPRISE_SECRET_2026_SECURE_V1";
 const APP_SIGNATURE = "PNP_CRM_APP_SIG";
 const BACKUP_VERSION = "1.0";
 
@@ -48,6 +46,15 @@ export async function GET(req: Request) {
 
   if (!isAuthorized) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const backupSecret = process.env.BACKUP_SECRET;
+  if (!backupSecret) {
+    console.error("[Backup] BACKUP_SECRET is not configured in environment.");
+    return NextResponse.json(
+      { error: "Server backup configuration error" },
+      { status: 500 }
+    );
   }
 
   try {
@@ -93,7 +100,7 @@ export async function GET(req: Request) {
     const hash = crypto.createHash("sha256").update(zipData).digest("hex");
 
     // ── Encrypt ───────────────────────────────────────────────────────────────
-    const key = crypto.createHash("sha256").update(BACKUP_SECRET).digest();
+    const key = crypto.createHash("sha256").update(backupSecret).digest();
     const iv = crypto.randomBytes(16);
     const cipher = crypto.createCipheriv("aes-256-cbc", key, iv);
 

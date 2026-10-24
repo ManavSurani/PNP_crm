@@ -161,7 +161,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('[Mobile Sync] Error:', error);
     return NextResponse.json(
-      { error: 'Internal server error during sync', detail: error.message },
+      { error: 'Internal server error during sync' },
       { status: 500 }
     );
   }

@@ -11,8 +11,6 @@ import { promisify } from "util";
 
 const execAsync = promisify(exec);
 
-const BACKUP_SECRET =
-  process.env.BACKUP_SECRET ?? "PNP_CRM_ENTERPRISE_SECRET_2026_SECURE_V1";
 const APP_SIGNATURE = "PNP_CRM_APP_SIG";
 
 // 500 MB sanity limit — prevents memory exhaustion from malicious uploads
@@ -22,6 +20,15 @@ export async function POST(req: Request) {
   const session = await auth();
   if (session?.user?.role !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const backupSecret = process.env.BACKUP_SECRET;
+  if (!backupSecret) {
+    console.error("[Restore] BACKUP_SECRET is not configured in environment.");
+    return NextResponse.json(
+      { error: "Server backup configuration error" },
+      { status: 500 }
+    );
   }
 
   // ── Step 1: Parse & validate uploaded file BEFORE touching the database ───
@@ -57,7 +64,7 @@ export async function POST(req: Request) {
     const iv = buffer.subarray(0, 16);
     const encryptedData = buffer.subarray(16);
 
-    const key = crypto.createHash("sha256").update(BACKUP_SECRET).digest();
+    const key = crypto.createHash("sha256").update(backupSecret).digest();
 
     let decrypted: Buffer;
     try {
@@ -141,7 +148,6 @@ export async function POST(req: Request) {
     // Files to restore — src paths inside the ZIP, dest paths in project root
     const filesToRestore = [
       { src: path.join(tempDir, "_data", "crm.db"), dest: dbPath },
-      { src: path.join(tempDir, ".env"),             dest: path.join(process.cwd(), ".env") },
       { src: path.join(tempDir, "public", "logo.png"), dest: path.join(process.cwd(), "public", "logo.png") },
     ];
 
